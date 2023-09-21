@@ -1,0 +1,41 @@
+﻿@using System.Text.Json;
+@inject GlobalData data
+<form class="form-control" method="dialog">
+	<label for="tipus">A szöveg típusa</label>
+	<select class="form-select" id="tipus" @bind=selectedType>
+		<option disabled>Válaszd ki a szöveg típusát...</option>
+		<option value="pos">pozitív</option>
+		<option value="neg">negatív</option>
+	</select>
+	<label for="text">A szöveg:</label>
+	<input id="text" placeholder="A szöveg" class="form-control" @bind-value=Text/>
+	<button type="submit" @onclick=Save>Mentés</button>
+	<button type="reset" @onclick=@(()=>SaveText.InvokeAsync())>Mégsem</button>
+</form>
+@code {
+	[Parameter] public EventCallback SaveText { get; set; }
+	string selectedType;
+	string Text;
+	string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
+
+	List<DataSzoveg> dataSzoveg = new();
+	void Save()
+	{
+		if (selectedType == "pos") data.pSzoveg.Add(Text);
+		else if(selectedType == "neg") data.nSzoveg.Add(Text);
+		foreach (var item in data.pSzoveg)
+		{
+			dataSzoveg.Add(new DataSzoveg() { Type = "pos", Text = item });
+		}
+		foreach (var item in data.nSzoveg)
+		{
+			dataSzoveg.Add(new DataSzoveg() { Type = "neg", Text = item });
+		}
+		var text = JsonSerializer.Serialize(dataSzoveg);
+		using (StreamWriter sw = new StreamWriter(path))
+		{
+			sw.WriteLine(text);
+		}
+		SaveText.InvokeAsync();
+	}
+}

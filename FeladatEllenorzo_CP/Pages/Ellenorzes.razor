@@ -1,0 +1,346 @@
+﻿@page "/ell"
+@inject GraphService graph
+@inject GlobalData data
+@inject NavigationManager navi
+@inject IDialogService dialog
+<div class="row">
+	<div class="col-1">
+		<button class="btn btn-toolbar" @onclick=Back>Vissza</button>
+	</div>
+	<div class=" col-11">
+		@if (data.Members.Count > 0)
+		{
+			<select @onchange="(e)=>SelectedMember(e.Value)">
+				
+					<optgroup label="Beadta">
+
+					@{
+
+						i = 0;
+						@foreach (var item in data.Members.Where(m=>m.Status=="Beadva"))
+						{
+
+							if (item.SubmissionId == data.SubmissionId)
+							{
+								submitted = true;
+								index = i;
+								<option value="@item.SubmissionId" selected>@item.MemberName</option>
+							}
+							else
+							{
+								<option value="@item.SubmissionId">@item.MemberName  (@i)</option>
+							}
+							i++;
+						}
+					}
+				</optgroup>
+					<optgroup label="Visszaküldve">
+						@foreach (var item in data.Members.Where(m=>m.Status=="Visszaküldve"))
+						{
+
+							if (item.SubmissionId== data.SubmissionId)
+							{
+								submitted = false;
+								index = i;
+								<option value="@item.SubmissionId" selected>@item.MemberName</option>
+							}
+							else
+							{
+								<option value="@item.SubmissionId">@item.MemberName (@i)</option>
+							}
+							i++;
+						}
+					</optgroup>
+				<optgroup label="Többiek">
+					@foreach (var item in data.Members.Where(m => m.Status != "Visszaküldve" && m.Status!="Beadva"))
+					{
+
+						if (item.SubmissionId == data.SubmissionId)
+						{
+							index = i;
+							<option value="@item.SubmissionId" selected>@item.MemberName</option>
+						}
+						else
+						{
+							<option value="@item.SubmissionId">@item.MemberName (@i)</option>
+						}
+						i++;
+					}
+				</optgroup>
+
+				}
+			</select>
+			<button @onclick="Next">Next</button>
+		}
+	</div>
+</div>
+<div class="row">
+	<div class="col-8">
+		@if (url.Equals(string.Empty))
+		{
+			<p>Nincs beküldve ...</p>
+		}
+		else
+		{
+			<iframe width="800" height="600" src="@url"></iframe>
+		}
+	</div>
+	<div class=" col-4">
+		<div>
+			@if (mediaResource.Count > 0)
+			{
+				@foreach (var item in mediaResource)
+				{
+					<button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+				}
+			}
+		</div>
+		<div class="row">
+			<div class="col">
+				<ul style="list-style-type:none">
+					@foreach (var item in data.pSzoveg)
+					{
+						if (item.Length>15)
+						{
+							<li @onclick=@(()=>AddText(item)) title="@item">@item.Substring(0,15)</li>
+						}
+						else
+						{
+							<li @onclick=@(()=>AddText(item))>@item</li>
+						}
+					}
+				</ul>
+			</div>
+			<div class="col">
+				<ul style="list-style-type:none">
+						@foreach (var item in data.nSzoveg)
+						{
+							if (item.Length > 15)
+							{
+									<li @onclick=@(()=>AddText(item))>@item.Substring(0,15)</li>
+							}
+							else
+							{
+									<li @onclick=@(()=>AddText(item))>@item</li>
+							}
+						}
+				</ul>
+			</div>
+		</div>
+		<div>
+            <button class="btn" @onclick=AddNewText>Új</button>
+		</div>
+		<div hidden="@visibleNewText">
+			<FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
+		</div>
+		<div>
+			<textarea rows="3"
+					  placeholder="Visszajelzés..."
+					  style="resize:vertical; width:100%; max-height:50%"
+					  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" 
+					  @onchange=@((e) => Valtozas(false, e)) 
+					  value="@Valasz">@Valasz</textarea>
+		</div>
+		<div>
+			<input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
+			<button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
+		</div>
+	</div>
+</div>
+@if (valasz is not null && valasz.Feedback is not null)
+{
+	<p>@valasz.Feedback.Text.Content</p>
+}
+
+@if (pont is not null && pont.Points is not null)
+{
+	<p>@pont.Points.Points.Value pont</p>
+}
+@code {
+	private EducationSubmissionResourceCollectionResponse feladatForrasok;
+	private List<EducationMediaResource> mediaResource = new();
+	private EducationOutcomeCollectionResponse feladatValaszok;
+	private EducationFeedbackOutcome valasz;
+	private EducationPointsOutcome pont;
+	private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty;
+	private bool submitted = true,changed=false, changedValasz = false, changedPont=false,IsNotSaved=true,visibleNewText=true;
+	private int index = 0,i=0;
+	private float Pont=0;
+	// private string[] pAjanlat = new string[]{"tökéletes", "nagyon jó", "rendben." ,"rendben hibátlan","rendben majdnem hibátlan" };
+	// private string[] nAjanlat = new string[] { "hiányos feladat", "feladat rész hiányzik", "miért nincs kész a feladatod?" };
+	protected override Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			nev = data.Name.Split(" ")[1];
+
+			DataInit();
+		}
+		return base.OnAfterRenderAsync(firstRender);
+	}
+	private async void DataInit()
+	{
+		feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
+		foreach (var item in feladatForrasok.Value)
+		{
+			var response = item.Resource.DisplayName;
+			if (item.Resource.GetType()==typeof(EducationMediaResource))
+			{
+				mediaResource.Add((EducationMediaResource)item.Resource);
+			}
+			if (mediaResource.Count>0)
+			{
+				url = await GetUrl(mediaResource.FirstOrDefault().FileUrl);
+				Pont = 2;
+			}
+			else
+			{
+				url = string.Empty;
+			}
+		}
+		feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
+		foreach (var item in feladatValaszok.Value)
+		{
+			valasz = (EducationFeedbackOutcome)item;
+			@if (valasz is not null && valasz.Feedback is not null)
+			{
+				Valasz = valasz.Feedback.Text.Content;
+			}
+			else
+			{
+				Valasz = "Kedves "+nev;
+			}
+		}
+		var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
+		foreach (var item in feladatPontok.Value)
+		{
+			pont = (EducationPointsOutcome)item;
+			@if (pont is not null && pont.Points is not null)
+			{
+				Pont = pont.Points.Points.Value;
+			}
+		}
+		StateHasChanged();
+	}
+	private void Next()
+	{
+		var j = data.Members.FindIndex(m => m.SubmissionId == data.SubmissionId);
+		if (j<data.Members.Count-1)
+		{
+			data.SubmissionId = data.Members[j + 1].SubmissionId;
+			nev = data.Members[j + 1].MemberName.Split(" ")[1];
+		}
+		else
+		{
+			data.SubmissionId = data.Members[0].SubmissionId;
+			nev = data.Members[0].MemberName.Split(" ")[1];
+		}
+		changed = false;
+		changedPont = false;
+		changedValasz = false;
+		IsNotSaved = true;
+		mediaResource.Clear();
+		url = string.Empty;
+		Pont = 0;
+		DataInit();
+	}
+	private async Task<string> GetUrl(string fileUrl)
+	{
+		var lenght = fileUrl.Length;
+		if (lenght>34)
+		{
+			ItemId = fileUrl.Substring(lenght - 34);
+			DriveId = fileUrl.Substring(40, 66);
+			var fileInfo = await graph.GetFile(DriveId, ItemId);
+			if (fileInfo is not null)
+			{
+				return fileInfo.GetUrl;
+			}
+		}
+		return string.Empty;
+	}
+	private async void ShowImage(string fileUrl)
+	{
+		url = await GetUrl(fileUrl);
+		StateHasChanged();
+	}
+	private void SelectedMember(object args)
+	{
+		data.SubmissionId = args.ToString();
+		try
+		{
+			nev = data.Members.FirstOrDefault(m=>m.SubmissionId== args.ToString()).MemberName.Split(" ")[1];
+			data.Name = data.Members.FirstOrDefault(m=>m.SubmissionId== args.ToString()).MemberName;
+
+		}
+		catch (Exception e)
+		{
+			throw new Exception(e.Message, e);
+		}
+		mediaResource.Clear();
+		Pont = 0;
+		DataInit();
+	}
+	private void Valtozas(bool changePont,ChangeEventArgs args)
+	{
+		changed = true;
+		IsNotSaved = true;
+		if (changePont)
+		{
+			changedPont = true;
+			Pont = float.Parse(args.Value.ToString());
+		}
+		else
+		{
+			changedValasz = true;
+			Valasz = args.Value.ToString();
+		}
+	}
+	private void Back()
+	{
+		navi.NavigateTo($"feladatok/{data.ClassId}");
+	}
+	private async void Save()
+	{
+		var response = false;
+		if (valasz is not null && changedValasz)
+		{
+			response=await graph.UpdateValasz(data.ClassId, data.AssignmentId, data.SubmissionId, valasz.Id, Valasz);
+		}
+		if (valasz is not null && changedPont)
+		{
+			response=await graph.UpdatePont(data.ClassId, data.AssignmentId, data.SubmissionId, pont.Id, Pont);
+		}
+		if (!response)
+		{
+			await dialog.DisplayAlert("Hiba!", "A mentés nem sikerült!", "Rendben");
+		}
+		else
+		{
+			await graph.Return(data.ClassId, data.AssignmentId, data.SubmissionId);
+			if (submitted)
+			{
+				data.ReturnedMembers.Add(data.SubmissionId, data.Name);
+				data.SubmittedMembers.Remove(data.SubmissionId);
+			}
+			Next();
+			//changed = false;
+			//IsNotSaved = true;
+			//StateHasChanged();
+		}
+	}
+	private void AddText(string text)
+	{
+		Valasz = Valasz+$" {text}";
+		changed = true;
+		changedValasz = true;
+	}
+	void AddNewText()
+	{
+		visibleNewText = false;
+	}
+	void SaveText()
+	{
+		visibleNewText = true;
+	}
+}

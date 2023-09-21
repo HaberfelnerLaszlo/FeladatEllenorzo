@@ -1,0 +1,295 @@
+﻿@page "/feladatok/{id}"
+@inject GraphService graph
+@inject GlobalData data
+@inject NavigationManager navi
+@inject IDialogService dialog
+
+<div class="row">
+	<div class="col-1">
+		<button class="btn btn-toolbar" @onclick=Back>Vissza</button>
+	</div>
+	<div class=" col-11">
+		<h3>Feladatok</h3>
+	</div>
+</div>
+@if (feladatok is null)
+{
+	<p>Még nincs feladat...</p>
+}
+else
+{
+	<select @onchange="(e)=>SelectedFeladat(e.Value)">
+		<option disabled selected>Válasz feladatot...</option>
+	@foreach (var item in feladatok.Value)
+	{
+		<option value="@item.Id">@item.DisplayName</option>
+	}
+	</select>
+}
+@if (submissions is not null)
+{
+	<div class="row row-cols-3">
+		<button type="button" class="btn btn-info" @onclick="@(()=>Select("Working"))" disabled="@disableWorking">Megtekintettek kijelölése</button>
+		<button type="button" class="btn btn-info" @onclick="@(()=>Select("Submitted"))" disabled="@disableSubmitted">Beadottak kijelölése</button>
+		<button type="button" class="btn btn-info" @onclick="@(()=>Select("None"))" disabled="@disableNone">Nem tekintették kijelölése</button>
+	</div>
+	<div class="row">
+		<div class="col-6">
+			<form>
+			<ul class="list-group">
+				@foreach (var item in data.Members)
+				{
+					switch (item.Status)
+						{
+							case "Beadva":
+								hatter = "lightblue";
+								break;
+							case "Visszaküldve":
+								hatter = "lightgreen";
+								break;
+							case "Megtekintve":
+								hatter = "lightcoral";
+								break;
+							default:
+								hatter = "lightgray";
+							break;
+						}
+					<li class="list-group-item" style="background-color:@hatter">
+						<div class="row">
+							<div class="col-1">
+									<input type="checkbox" @onclick="()=>ItemSelectChange(item)" checked="@item.Selected">
+							</div>
+							<div class="col-7">
+									<span>@item.MemberName</span>
+							</div>
+							<div class="col">
+									<button type="button" @onclick="()=>SelectedFeladatEll(item)">@item.Status</button>
+							</div>
+						</div>
+				
+						@*<span>@item.Selected.ToString()</span>*@
+					</li>
+				}
+				</ul>
+			</form>
+		</div>
+		@if (i>0)
+		{
+		<div class="col-6">
+			<p>Kijelölve @i tanuló</p>
+			<textarea rows="3"
+					placeholder="Visszajelzés..."
+					style="resize:vertical; width:100%; max-height:50%"
+					oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+					@onchange=@((e) => Valtozas(false, e))
+					value="@Valasz">@Valasz</textarea>
+			<input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
+			<button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
+		</div>
+		}
+	</div>
+}
+
+@code {
+	[Parameter] public string Id { get; set; }
+	private EducationAssignmentCollectionResponse feladatok;
+	private EducationUserCollectionResponse tagok;
+	private EducationSubmissionCollectionResponse submissions;
+	private EducationOutcomeCollectionResponse feladatValaszok;
+	private EducationFeedbackOutcome valasz;
+	private EducationPointsOutcome pont;
+	private List<MemberData> SelectedMembers = new(), saveError=new();
+	private int i = 0;
+	private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true,disableWorking=false,disableSubmitted=false , disableNone=false,isError=false;
+	private float Pont = 0;
+	private string Valasz = string.Empty, hatter = "$gray-100";
+	protected override async Task OnParametersSetAsync()
+	{
+		feladatok = await graph.GetFeladatok(Id);
+		tagok = await graph.GetMembers(Id);
+		data.ClassId = Id;
+		data.Members.Clear();
+		foreach (var item in tagok.Value.OrderBy(t=>t.DisplayName))
+		{
+			if (item.PrimaryRole!=EducationUserRole.Teacher)
+			{
+				data.Members.Add(new() { MemberId = item.Id, MemberName = item.DisplayName});
+			}
+		}
+	}
+	private async void SelectedFeladat(object value)
+	{
+		@if (value is not null)
+		{
+			data.AssignmentId = value.ToString();
+			submissions = await graph.GetFeladat(Id, data.AssignmentId);
+			data.SubmittedMembers.Clear();
+			data.ReturnedMembers.Clear();
+			SelectedMembers.Clear();
+			foreach (var item in submissions.Value)
+			{
+				if (item.Status==EducationSubmissionStatus.Submitted)
+				{
+					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+					member.Status = "Beadva";
+					member.SubmissionId = item.Id;
+					data.SubmittedMembers.Add(item.Id, data.Members.FirstOrDefault(m=>m.MemberId==item.SubmittedBy.User.Id).MemberName);
+				}
+				else if (item.Status==EducationSubmissionStatus.Returned)
+				{
+					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+					member.Status = "Visszaküldve";
+					member.SubmissionId = item.Id;
+					data.ReturnedMembers.Add(item.Id, data.Members.FirstOrDefault(m=>m.MemberId==item.SubmittedBy.User.Id).MemberName);
+				}
+				else if (item.Status==EducationSubmissionStatus.Working)
+				{
+					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+					member.Status = "Megtekintve";
+					member.SubmissionId = item.Id;
+				}
+			}
+		data.Members=data.Members.OrderBy(m => m.Status).ToList();
+		if (i>0)
+			{
+				data.Members.ForEach(delegate (MemberData m) { m.Selected = false; });
+				i = 0;
+			}
+				disableNone = false;
+				disableSubmitted = false;
+				disableWorking = false;
+			StateHasChanged();
+		}
+	}
+	private void SelectedFeladatEll(MemberData item)
+	{
+		data.SubmissionId = item.SubmissionId;
+		data.Name = item.MemberName;
+		navi.NavigateTo("ell");
+	}
+	private void ItemSelectChange(MemberData item)
+	{
+		if (item.Selected)
+		{
+			//item.Selected = false;
+			SelectedMembers.Remove(item);
+			i--;
+		}
+		else
+		{
+			//item.Selected = true;
+			SelectedMembers.Add(item);
+			i++;
+		}
+	}
+	private void Back()
+	{
+		navi.NavigateTo("/");
+	}
+	private void Valtozas(bool changePont, ChangeEventArgs args)
+	{
+		changed = true;
+		IsNotSaved = true;
+		if (changePont)
+		{
+			changedPont = true;
+			Pont = float.Parse(args.Value.ToString());
+		}
+		else
+		{
+			changedValasz = true;
+			Valasz = args.Value.ToString();
+		}
+	}
+	private async void Save()
+	{
+		var response = false;
+		saveError.Clear();
+		foreach (var item in SelectedMembers)
+		{
+			feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, item.SubmissionId);
+			foreach (var v in feladatValaszok.Value)
+			{
+				valasz = (EducationFeedbackOutcome)v;
+				var Valasz_2= (valasz is not null && valasz.Feedback is not null)? valasz.Feedback.Text.Content: "Kedves " + item.MemberName.Split(" ")[1]+" "+ Valasz;
+
+				response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, item.SubmissionId, valasz.Id, Valasz_2);
+				if (!response)
+				{
+					await dialog.DisplayAlert("Hiba!", $"A válasz mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+					isError = true;
+					break;
+				}
+			}
+			var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, item.SubmissionId);
+			foreach (var p in feladatPontok.Value)
+			{
+				pont = (EducationPointsOutcome)p;
+				@if (pont is not null && pont.Points is not null)
+				{
+					Pont = pont.Points.Points.Value;
+					break;
+				}
+				response = await graph.UpdatePont(data.ClassId, data.AssignmentId,item.SubmissionId, pont.Id, Pont);
+				if (!response)
+				{
+					await dialog.DisplayAlert("Hiba!", $"A pont mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+					isError = true;
+					break;
+				}
+			}
+			if (isError)
+			{
+				saveError.Add(item);
+				continue;
+			}
+			else
+			{
+				await graph.Return(data.ClassId, data.AssignmentId, item.SubmissionId);
+				var m = data.Members.First(m => m.MemberId == item.MemberId);
+				m.Selected = false;
+				m.Status = "Visszaküldve";
+				i--;
+				StateHasChanged();
+			}
+		}
+		SelectedMembers.Clear();
+		if (saveError.Count>0)
+		{
+			SelectedMembers = saveError.ToList();
+		}
+		changed = false;
+		IsNotSaved = true;
+	}
+	private void Select(string mode)
+	{
+		switch (mode)
+		{
+			case "Working":
+				{
+					data.Members.Where(m => m.Status == "Megtekintve").ToList().ForEach(delegate (MemberData m) 
+					{
+						m.Selected = true;
+						SelectedMembers.Add(m);
+						i++;
+					});
+					disableWorking = true;
+				}
+				break;
+			case "Submitted":
+				{
+					data.Members.Where(m => m.Status == "Beadva").ToList().ForEach(delegate (MemberData m) 
+					{
+						m.Selected = true;
+						SelectedMembers.Add(m);
+						i++;
+					});
+					disableSubmitted = true;
+				}
+				break;
+			default: disableNone = true;
+				break;
+		}
+		StateHasChanged();
+	}
+}

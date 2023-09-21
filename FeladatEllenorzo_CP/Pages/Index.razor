@@ -1,0 +1,125 @@
+﻿@page "/"
+@using FeladatEllenorzo_CP.Data
+@using Microsoft.Graph.Models
+@using System.Text;
+@using System.Text.Json;
+@inject GraphService graph
+@inject GlobalData data
+@inject NavigationManager navi
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+@if (classes is not null)
+{
+	<select @onchange="(e)=>SelectedClass(e.Value)">
+	@foreach (var item in classes.Value.Where(c=>!c.DisplayName.Contains("Exp")))
+	{
+		<option value="@item.Id">@item.DisplayName</option>
+	}
+	</select>
+
+	}
+@if (Me is null)
+{
+	<p>Ez nullra ment</p>
+	<button @onclick="Token">Token</button>
+}
+else
+{
+	<p>Nevem: @Me.DisplayName</p>
+	<p>Emailem: @Me.Mail></p>
+	<p>Id: @Me.Id</p>
+}
+
+@code{
+	private EducationClassCollectionResponse classes;
+	private User Me=null;
+	private string SelectedClassId = string.Empty;
+	string path = Path.Combine(FileSystem.Current.AppDataDirectory,"szoveg.json");
+	private List<DataSzoveg> dataSzoveg = new();
+	protected override async Task OnInitializedAsync()
+	{
+		Me = await graph.GetMe();
+		classes = await graph.GetTaughtClasses(Me.Id);
+		if (File.Exists(path))
+		{
+			await ReadSzoveg();
+		}
+		else
+		{
+			// Create the file.
+			var text = InitSzoveg();
+			using (StreamWriter sw = new StreamWriter(path))
+			{
+				sw.WriteLine(text);
+			}
+			await ReadSzoveg();
+		}
+	}
+	private string InitSzoveg()
+	{
+		var data = new List<DataSzoveg>()
+			{
+				new DataSzoveg(){ Type = "poz", Text = "tökéletes" },
+				new DataSzoveg(){ Type = "poz", Text = "nagyon jó"},
+				new DataSzoveg(){ Type = "poz", Text = "rendben."},
+				new DataSzoveg(){ Type = "poz", Text = "rendben hibátlan"},
+				new DataSzoveg(){ Type = "poz", Text = "rendben majdnem hibátlan"},
+				new DataSzoveg(){ Type = "neg", Text = "hiányos feladat"},
+				new DataSzoveg(){ Type = "neg", Text = "feladat rész hiányzik"},
+				new DataSzoveg(){ Type = "neg", Text = "miért nincs kész a feladatod?"}
+		};
+		return JsonSerializer.Serialize(data);
+	}
+	private async Task ReadSzoveg()
+	{
+		try
+		{
+			using (StreamReader sr = File.OpenText(path))
+			{
+				string s = "";
+				s = await sr.ReadToEndAsync();
+				dataSzoveg = JsonSerializer.Deserialize<List<DataSzoveg>>(s);
+			}
+			if (dataSzoveg.Count>0)
+			{
+				data.pSzoveg.Clear();
+				data.nSzoveg.Clear();
+				foreach (var item in dataSzoveg)
+				{
+					if (item.Type == "poz")
+					{
+						data.pSzoveg.Add(item.Text);
+					}
+					else data.nSzoveg.Add(item.Text);
+				}
+			}
+		}
+		catch (Exception)
+		{
+			throw;
+		}
+	}
+	private void SelectedClass(object value)
+	{
+		if (value is not null)
+		{
+			SelectedClassId = value.ToString();
+			navi.NavigateTo($"feladatok/{SelectedClassId}");
+		}
+	}
+	private async void Token()
+	{
+		try
+		{
+			var userToken = await graph.GetUserTokenAsync();
+			Console.WriteLine($"User token: {userToken}");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error getting user access token: {ex.Message}");
+		}
+
+	}
+}
