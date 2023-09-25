@@ -3,7 +3,7 @@
 <form class="form-control" method="dialog">
 	<label for="tipus">A szöveg típusa</label>
 	<select class="form-select" id="tipus" @bind=selectedType>
-		<option disabled>Válaszd ki a szöveg típusát...</option>
+		<option disabled selected>Válaszd ki a szöveg típusát...</option>
 		<option value="pos">pozitív</option>
 		<option value="neg">negatív</option>
 	</select>
@@ -21,11 +21,11 @@
 	List<DataSzoveg> dataSzoveg = new();
 	void Save()
 	{
-		if (selectedType == "pos") data.pSzoveg.Add(Text);
+		if (selectedType == "poz") data.pSzoveg.Add(Text);
 		else if(selectedType == "neg") data.nSzoveg.Add(Text);
 		foreach (var item in data.pSzoveg)
 		{
-			dataSzoveg.Add(new DataSzoveg() { Type = "pos", Text = item });
+			dataSzoveg.Add(new DataSzoveg() { Type = "poz", Text = item });
 		}
 		foreach (var item in data.nSzoveg)
 		{

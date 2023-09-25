@@ -11,7 +11,5 @@ namespace FeladatEllenorzo_CP.Data
 		public List<MemberData> Members { get; set; } = new();
 		public List<string> pSzoveg { get; set; }= new();
 		public List<string> nSzoveg { get; set; }=new();
-	public Dictionary<string, string> SubmittedMembers { get; set; } = new();
-		public Dictionary<string,string> ReturnedMembers { get; set; }= new();
 	}
 }

@@ -163,7 +163,7 @@ class GraphService
 			return  _appClient.Education.Classes[id].Assignments.GetAsync((config) =>
 			{
 				// Only request specific properties
-				config.QueryParameters.Select = new[] { "displayName", "id","resources", "submissions", "assignTo" };
+				config.QueryParameters.Select = new[] { "displayName", "id","resources", "submissions", "assignTo", "dueDateTime" };
 				config.QueryParameters.Expand = new[] { "*"};
 			});
 		}
@@ -172,6 +172,26 @@ class GraphService
 		_ = _appClient ??
 			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 			return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync();
+		}
+	public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id)
+		{
+		_ = _appClient ??
+			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+			return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
+			{
+				requestConfiguration.QueryParameters.Filter = "status eq 'submitted'";
+				requestConfiguration.QueryParameters.Count = true;
+			});
+		}
+	public Task<EducationSubmissionCollectionResponse?> GetWorkingFeladat(string classId, string id)
+		{
+		_ = _appClient ??
+			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+			return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
+			{
+				requestConfiguration.QueryParameters.Filter = "status eq 'working'";
+				requestConfiguration.QueryParameters.Count = true;
+			});
 		}
 	public Task<EducationSubmissionResourceCollectionResponse?> GetFeladatForras(string classId, string FeladatId,string BedandoId)
 		{
@@ -253,14 +273,13 @@ class GraphService
 			var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
 			return result is not null;
 		}
-	public async Task Return(string classId, string FeladatId,string BeadandoId)
+	public async Task<bool> Return(string classId, string FeladatId,string BeadandoId)
 		{
-			// Code snippets are only available for the latest version. Current version is 5.x
-
 		_ = _appClient ??
 			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 
 			var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Return.PostAsync();
+			return result is not null;
 		}
 }
 }
