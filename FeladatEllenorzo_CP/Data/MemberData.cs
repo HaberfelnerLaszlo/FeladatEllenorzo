@@ -13,5 +13,6 @@ namespace FeladatEllenorzo_CP.Data
         public string SubmissionId { get; set; } = string.Empty;
         public string Status { get; set;} = "Nincs";
         public bool Selected { get; set; }=false;
+        public int ResourceCount { get; set; } = 0;
     }
 }

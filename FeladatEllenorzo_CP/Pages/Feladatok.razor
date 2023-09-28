@@ -78,8 +78,9 @@
                                         <div class="col-1">
                                             <input type="checkbox" @onclick="()=>ItemSelectChange(item)" checked="@item.Selected">
                                         </div>
-                                        <div class="col-7">
+										<div class="col-7 d-flex justify-content-between align-items-center">
                                             <span>@item.MemberName</span>
+											<span class="badge bg-primary rounded-pill">@item.ResourceCount</span>
                                         </div>
                                         <div class="col">
                                             <button type="button" @onclick="()=>SelectedFeladatEll(item)">@item.Status</button>
@@ -196,23 +197,27 @@
 			SelectedMembers.Clear();
 			foreach (var item in submissions.Value)
 			{
+				var count = await graph.GetResourcesCount(Id, data.AssignmentId, item.Id);
 				if (item.Status==EducationSubmissionStatus.Submitted)
 				{
 					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
 					member.Status = "Beadva";
 					member.SubmissionId = item.Id;
+					member.ResourceCount = (int)count.OdataCount;
 				}
 				else if (item.Status==EducationSubmissionStatus.Returned)
 				{
 					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
 					member.Status = "Visszaküldve";
 					member.SubmissionId = item.Id;
+					member.ResourceCount = (int)count.OdataCount;
 				}
 				else if (item.Status==EducationSubmissionStatus.Working)
 				{
 					var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
-					member.Status = "Megtekintve";
+					member.Status = (int)count.OdataCount > 0 ? "Beadva" : "Megtekintve";
 					member.SubmissionId = item.Id;
+					member.ResourceCount = (int)count.OdataCount;
 				}
 			}
 		data.Members=data.Members.OrderBy(m => m.Status).ToList();
@@ -364,5 +369,4 @@
 		changed = true;
 		changedValasz = true;
 	}
-
 }

@@ -31,9 +31,19 @@ class GraphService
 			AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
 			RedirectUri = new Uri("https://localhost"),
 		};
+			try
+			{
+				NetworkAccess accessType = Connectivity.Current.NetworkAccess;
 
-		_interactiveCredential = new(options);
-		_userClient = new GraphServiceClient(_interactiveCredential, settings.GraphUserScopes);
+				if (accessType == NetworkAccess.Internet)
+				{
+				_interactiveCredential = new(options);
+				_userClient = new GraphServiceClient(_interactiveCredential, settings.GraphUserScopes);
+				}
+			}
+			catch (Exception ex) {
+				throw new Exception(ex.ToString());
+			}
 	}
 	// </UserAuthConfigSnippet>
 	// <GetUserTokenSnippet>
@@ -61,23 +71,33 @@ class GraphService
 		_ = settings ??
 			throw new System.NullReferenceException("Settings cannot be null");
 		_settings = settings;
+			NetworkAccess accessType = Connectivity.Current.NetworkAccess;
 
-		if (_clientSecretCredential == null)
-		{
-			_clientSecretCredential = new ClientSecretCredential(
-			_settings.TenantId, _settings.ClientId, _settings.ClientSecret);
-		}
+			if (accessType == NetworkAccess.Internet)
+			{
+				try
+				{
+					if (_clientSecretCredential == null)
+					{
+					_clientSecretCredential = new ClientSecretCredential(
+					_settings.TenantId, _settings.ClientId, _settings.ClientSecret);
+					}
+					if (_appClient == null)
+					{
+						_appClient = new GraphServiceClient(_clientSecretCredential,
+							// Use the default scope, which will request the scopes
+							// configured on the app registration
+							new[] { "https://graph.microsoft.com/.default" });
+					}
+				}
+				catch (Exception ex)
+				{
 
-		if (_appClient == null)
-		{
-			_appClient = new GraphServiceClient(_clientSecretCredential,
-				// Use the default scope, which will request the scopes
-				// configured on the app registration
-				new[] { "https://graph.microsoft.com/.default" });
-		}
+					throw new Exception(ex.Message);
+				}
+			}
 	}
 	// </AppOnlyAuthConfigSnippet>
-
 	// <GetAppOnlyTokenSnippet>
 	public static async Task<string> GetAppOnlyTokenAsync()
 	{
@@ -172,6 +192,12 @@ class GraphService
 		_ = _appClient ??
 			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 			return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync();
+		}
+	public Task<EducationSubmissionResourceCollectionResponse?> GetResourcesCount(string classId, string feladatid,string submissionId)
+		{
+		_ = _appClient ??
+			throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+			return _appClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].SubmittedResources.GetAsync((config) => config.QueryParameters.Count = true) ;
 		}
 	public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id)
 		{
