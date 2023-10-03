@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Graph.Models;
+
+using System.Reflection;
 
 namespace FeladatEllenorzo_CP
 {
@@ -13,6 +16,7 @@ namespace FeladatEllenorzo_CP
 		{
 			// Load settings
 			IConfiguration config = new ConfigurationBuilder()
+				//.SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location))
 				// appsettings.json is required
 				.AddJsonFile("appsettings.json", optional: false)
 				// appsettings.Development.json" is optional, values override appsettings.json
