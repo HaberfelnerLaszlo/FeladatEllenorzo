@@ -92,7 +92,6 @@ class GraphService
 				}
 				catch (Exception ex)
 				{
-
 					throw new Exception(ex.Message);
 				}
 			}
@@ -271,7 +270,7 @@ class GraphService
 			};
 			try
 			{
-				var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
+				var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes [outcomeId].PatchAsync(requestBody);
 				return result is not null;
 			}
 			catch (Exception e)

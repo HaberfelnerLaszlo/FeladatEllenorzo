@@ -70,6 +70,7 @@
 			</select>
 			<button @onclick="Next">Next</button>
 		}
+		<p>@DisplayMessage</p>
 	</div>
 </div>
 <div class="row">
@@ -163,7 +164,7 @@
 	private EducationOutcomeCollectionResponse feladatValaszok;
 	private EducationFeedbackOutcome valasz;
 	private EducationPointsOutcome pont;
-	private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty;
+	private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage=string.Empty;
 	private bool submitted = true,changed=false, changedValasz = false, changedPont=false,IsNotSaved=true,visibleNewText=true;
 	private int index = 0,i=0;
 	private float Pont=0;
@@ -193,6 +194,7 @@
 			{
 				url = await GetUrl(mediaResource.FirstOrDefault().FileUrl);
 				Pont = 2;
+				changedPont = true;
 			}
 			else
 			{
@@ -250,12 +252,27 @@
 		var lenght = fileUrl.Length;
 		if (lenght>34)
 		{
-			ItemId = fileUrl.Substring(lenght - 34);
-			DriveId = fileUrl.Substring(40, 66);
-			var fileInfo = await graph.GetFile(DriveId, ItemId);
-			if (fileInfo is not null)
+			try
 			{
-				return fileInfo.GetUrl;
+				ItemId = fileUrl.Substring(lenght - 34);
+				DriveId = fileUrl.Substring(40, 66);
+				var fileInfo = await graph.GetFile(DriveId, ItemId);
+				if (fileInfo is not null)
+				{
+					if (DisplayMessage.Length>0)
+					{
+						DisplayMessage = string.Empty;
+					}
+					return fileInfo.GetUrl;
+				}
+			}
+			catch (System.Net.Http.HttpRequestException)
+			{
+				DisplayMessage = "Sajnos hálozati hiba történt!";
+			}
+			catch (Exception ex)
+			{
+				DisplayMessage = $"Valami hiba történt a fájl lekérésekor: {ex.Message}";
 			}
 		}
 		return string.Empty;

@@ -39,6 +39,46 @@
         <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-maccatalyst|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-windows10.0.19041.0|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-ios|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-maccatalyst|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-windows10.0.19041.0|AnyCPU'">
+      <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
+      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+    </PropertyGroup>
+
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
@@ -59,6 +99,7 @@
 
     <ItemGroup>
       <Content Remove="appsettings.json" />
+      <Content Remove="Main.razor" />
     </ItemGroup>
 
     <ItemGroup>
@@ -69,9 +110,10 @@
       <EmbeddedResource Include="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </EmbeddedResource>
-      <EmbeddedResource Include="FeladatEllenorzo_CP_TemporaryKey.pfx">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </EmbeddedResource>
+      <EmbeddedResource Include="Main.razor" />
+      <Content Include="FeladatEllenorzo_CP_TemporaryKey.pfx">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>
