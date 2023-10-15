@@ -6,10 +6,12 @@ using Microsoft.Graph.Drives.Item.Items.Item.CreateLink;
 using Microsoft.Graph.Drives.Item.Items.Item.Preview;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions;
-
+using Microsoft.Identity.Client;
+using System.Net.Http;
+using System.Net.Http.Headers;
 namespace FeladatEllenorzo_CP.Data
 {
-class GraphService 
+class GraphService_2 
 {
 	private static Settings? _settings;
 	// App-ony auth token credential
@@ -37,27 +39,35 @@ class GraphService
 
 				if (accessType == NetworkAccess.Internet)
 				{
-				_interactiveCredential = new(options);
-				_userClient = new GraphServiceClient(_interactiveCredential, settings.GraphUserScopes);
+#if ANDROID
+		//var PCA = PublicClientApplicationBuilder
+  //          .Create(settings.ClientId)
+  //          .WithAuthority(AzureCloudInstance.AzurePublic, "common")
+  //          .WithRedirectUri($"msal{settings.ClientId}://auth")
+  //          .WithParentActivityOrWindow(() => Platform.CurrentActivity)
+  //          .Build();
+#else
+					_interactiveCredential = new(options);
+				_userClient = new GraphServiceClient(_interactiveCredential, settings.GraphScopes);
+#endif
 				}
 			}
 			catch (Exception ex) {
 				throw new Exception(ex.ToString());
 			}
 	}
-	// </UserAuthConfigSnippet>
-	// <GetUserTokenSnippet>
-	public async Task<string> GetUserTokenAsync()
+		// <GetUserTokenSnippet>
+		public async Task<string> GetUserTokenAsync()
 	{
 		// Ensure credential isn't null
 		_ = _interactiveCredential ??
 			throw new System.NullReferenceException("Graph has not been initialized for user auth");
 
 		// Ensure scopes isn't null
-		_ = _settings?.GraphUserScopes ?? throw new System.ArgumentNullException("Argument 'scopes' cannot be null");
+		_ = _settings?.GraphScopes ?? throw new System.ArgumentNullException("Argument 'scopes' cannot be null");
 
 		// Request token with given scopes
-		var context = new TokenRequestContext(_settings.GraphUserScopes);
+		var context = new TokenRequestContext(_settings.GraphScopes);
 		var response = await _interactiveCredential.GetTokenAsync(context);
 		return response.Token;
 	}
@@ -65,7 +75,7 @@ class GraphService
 
 		public static void InitializeGraphForAppOnlyAuth(Settings settings)
 	{
-		_settings = settings;
+		//_settings = settings;
 
 		// Ensure settings isn't null
 		_ = settings ??

@@ -3,6 +3,7 @@ namespace FeladatEllenorzo_CP.Data
 {
 	public class GlobalData
 	{
+		public static string AccessToken = null;
 		public string ClassId { get; set; }= string.Empty;
 		public string AssignmentId { get; set; }= string.Empty;
 		public string SubmissionId { get; set; }= string.Empty;

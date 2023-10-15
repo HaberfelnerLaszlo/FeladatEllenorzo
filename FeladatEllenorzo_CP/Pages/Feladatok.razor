@@ -1,5 +1,7 @@
 ﻿@page "/feladatok/{id}"
-@inject GraphService graph
+@using FeladatEllenorzo_CP.Data
+@using FeladatEllenorzo_CP.Services;
+@inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IDialogService dialog

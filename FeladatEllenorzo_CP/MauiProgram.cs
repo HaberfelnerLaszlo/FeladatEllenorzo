@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using FeladatEllenorzo_CP.Data;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
 using System.Reflection;
+using FeladatEllenorzo_CP.Services;
+using CommunityToolkit.Maui;
 
 namespace FeladatEllenorzo_CP;
 
@@ -12,41 +15,51 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-			});
+			})
+			.AddAppSettings()
+			.RegisterAppServices();
 
 		builder.Services.AddMauiBlazorWebView();
-		builder.Services.AddScoped<GraphService>();
-		builder.Services.AddSingleton<GlobalData>();
-		builder.Services.AddSingleton<IDialogService,DialogService>();
-
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
 #endif
-
-		//builder.Services.AddSingleton<WeatherForecastService>();
-		// <ProgramSnippet>
-		Console.WriteLine(".NET Graph App-only Tutorial\n");
-#if ANDROID
-		var a = Assembly.GetExecutingAssembly();
-		using var stream = a.GetManifestResourceStream("FeladatEllenorzo_CP.appsettings.json");
-
-		var config = new ConfigurationBuilder()
-					.AddJsonStream(stream)
-					.Build();
-		builder.Configuration.AddConfiguration(config);
-var settings=config.GetRequiredSection("Settings").Get<Settings>() ??
-			   throw new Exception("Could not load app settings. See README for configuration instructions.");
-#else
-		var settings = Settings.LoadSettings();
-#endif   
-		// Initialize Graph
-		GraphService.InitializeGraphForUserAuth(settings);
-		GraphService.InitializeGraphForAppOnlyAuth(settings);
-
 		return builder.Build();
+	}
+	private static MauiAppBuilder AddAppSettings(this MauiAppBuilder builder)
+	{
+#if ANDROID
+		var assembly = typeof(App).GetTypeInfo().Assembly;
+		var config = new ConfigurationBuilder() .SetBasePath(Directory.GetCurrentDirectory()) .AddJsonFile(new EmbeddedFileProvider(assembly),"appsettings.json", optional: true, reloadOnChange: false) .Build();
+		builder.Configuration.AddConfiguration(config);
+#else
+		// Load settings
+		IConfiguration config = new ConfigurationBuilder()
+            //.SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location))
+            // appsettings.json is required
+            .AddJsonFile("appsettings.json", optional: false)
+            // appsettings.Development.json" is optional, values override appsettings.json
+            .AddJsonFile($"appsettings.Development.json", optional: true)
+            // User secrets are optional, values override both JSON files
+            //.AddUserSecrets<MauiProgram>()
+            .Build();
+		builder.Configuration.AddConfiguration(config);
+#endif
+		return builder;
+	}
+	private static MauiAppBuilder RegisterAppServices(this MauiAppBuilder builder)
+	{
+		builder.Services.AddSingleton<ISettingsService, SettingsService>();
+		builder.Services.AddSingleton<IAlertService, AlertService>();
+		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+		builder.Services.AddSingleton<IGraphService, GraphService>();
+		builder.Services.AddSingleton<INavigationService, MauiNavigationService>();
+		builder.Services.AddSingleton<GlobalData>();
+		builder.Services.AddSingleton<IDialogService,DialogService>();
+		return builder;
 	}
 }
