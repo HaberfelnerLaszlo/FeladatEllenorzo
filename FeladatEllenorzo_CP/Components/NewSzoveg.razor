@@ -4,7 +4,7 @@
 	<label for="tipus">A szöveg típusa</label>
 	<select class="form-select" id="tipus" @bind=selectedType>
 		<option disabled selected>Válaszd ki a szöveg típusát...</option>
-		<option value="pos">pozitív</option>
+		<option value="poz">pozitív</option>
 		<option value="neg">negatív</option>
 	</select>
 	<label for="text">A szöveg:</label>
@@ -14,24 +14,32 @@
 </form>
 @code {
 	[Parameter] public EventCallback SaveText { get; set; }
-	string selectedType;
-	string Text;
+	[Parameter] public DataSzoveg szoveg { get; set; }
+	string selectedType,Text;
+	bool editing = false;
 	string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
-
+	protected override void OnParametersSet()
+	{
+		if (szoveg is not null)
+		{
+			editing = true;
+			selectedType = szoveg.Type;
+			Text = szoveg.Text;
+		}
+		base.OnParametersSet();
+	}
 	List<DataSzoveg> dataSzoveg = new();
 	void Save()
 	{
-		if (selectedType == "poz") data.pSzoveg.Add(Text);
-		else if(selectedType == "neg") data.nSzoveg.Add(Text);
-		foreach (var item in data.pSzoveg)
+		if (editing)
 		{
-			dataSzoveg.Add(new DataSzoveg() { Type = "poz", Text = item });
+			var updateSzoveg = data.Szovegek.FirstOrDefault(s => s.Equals(szoveg));
+			updateSzoveg.Type = selectedType;
+			updateSzoveg.Text = Text;
 		}
-		foreach (var item in data.nSzoveg)
-		{
-			dataSzoveg.Add(new DataSzoveg() { Type = "neg", Text = item });
-		}
-		var text = JsonSerializer.Serialize(dataSzoveg);
+		else
+			data.Szovegek.Add(new DataSzoveg() { Type = selectedType, Text = Text });
+		var text = JsonSerializer.Serialize(data.Szovegek);
 		using (StreamWriter sw = new StreamWriter(path))
 		{
 			sw.WriteLine(text);

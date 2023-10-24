@@ -13,6 +13,7 @@
 @inject INavigationService _navigationService
 @inject IAuthenticationService auth
 @inject ISettingsService settingsService
+@inject IAlertService alert
 
 @if (Me is null)
 {
@@ -23,6 +24,11 @@ else
 {
 	<h2>Hello, @Me.DisplayName!</h2>
 }
+@if (data.Szovegek.Count>0)
+{
+    <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+}
+
 @if (classes is not null)
 {
 	<h4 class="my-3">Tanított osztályok:</h4>
@@ -39,7 +45,6 @@ else
     private User Me=null;
     private string SelectedClassId = string.Empty;
     string path = Path.Combine(FileSystem.Current.AppDataDirectory,"szoveg.json");
-    private List<DataSzoveg> dataSzoveg = new();
     public ICommand SignInOrOutCommand { get; private set; }
     public bool IsSignedIn
     {
@@ -47,29 +52,39 @@ else
     }
     protected override async Task OnInitializedAsync()
     {
-        auth.PropertyChanged += OnPropertyChanged;
-        SignInOrOutCommand = new Command(
-    execute: async () => await OnSignInOrOut());
-        _graphService.InitializeGraphForAppOnlyAuth(settingsService);
-        if (File.Exists(path))
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
         {
-            await ReadSzoveg();
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return;
         }
-        else
+        if (!IsSignedIn)
         {
-            // Create the file.
-            var text = InitSzoveg();
-            using (StreamWriter sw = new StreamWriter(path))
+            SignInOrOutCommand = new Command(
+        execute: async () => await OnSignInOrOut());
+            await OnSignInOrOut();
+            _graphService.InitializeGraphForAppOnlyAuth(settingsService);
+            if (File.Exists(path))
             {
-                sw.WriteLine(text);
+                await ReadSzoveg();
             }
-            await ReadSzoveg();
+            else
+            {
+                // Create the file.
+                var text = InitSzoveg();
+                using (StreamWriter sw = new StreamWriter(path))
+                {
+                    sw.WriteLine(text);
+                }
+                //await ReadSzoveg();
+            }
         }
-       await OnSignInOrOut();
+        GetUserDetailsAsync();
+        auth.PropertyChanged += OnPropertyChanged;
     }
     private string InitSzoveg()
     {
-        var data = new List<DataSzoveg>()
+        data.Szovegek = new List<DataSzoveg>()
 			{
 				new DataSzoveg(){ Type = "poz", Text = "tökéletes" },
 				new DataSzoveg(){ Type = "poz", Text = "nagyon jó"},
@@ -80,35 +95,23 @@ else
 				new DataSzoveg(){ Type = "neg", Text = "feladat rész hiányzik"},
 				new DataSzoveg(){ Type = "neg", Text = "miért nincs kész a feladatod?"}
 		};
-        return JsonSerializer.Serialize(data);
+        return JsonSerializer.Serialize(data.Szovegek);
     }
     private async Task ReadSzoveg()
     {
         try
         {
+            data.Szovegek.Clear();
             using (StreamReader sr = File.OpenText(path))
             {
                 string s = "";
                 s = await sr.ReadToEndAsync();
-                dataSzoveg = JsonSerializer.Deserialize<List<DataSzoveg>>(s);
-            }
-            if (dataSzoveg.Count>0)
-            {
-                data.pSzoveg.Clear();
-                data.nSzoveg.Clear();
-                foreach (var item in dataSzoveg)
-                {
-                    if (item.Type == "poz")
-                    {
-                        data.pSzoveg.Add(item.Text);
-                    }
-                    else data.nSzoveg.Add(item.Text);
-                }
+                data.Szovegek = JsonSerializer.Deserialize<List<DataSzoveg>>(s);
             }
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            throw;
+            await alert.ShowAlertAsync($"Hiba: {e.Message}", "Szöveg beolvasási hiba", "Rendben");
         }
     }
     private void SelectedClass(object value)
@@ -119,19 +122,6 @@ else
             navi.NavigateTo($"feladatok/{SelectedClassId}");
         }
     }
-    // private async void Token()
-    // {
-    //     try
-    //     {
-    //         var userToken = await graph.GetUserTokenAsync();
-    //         Console.WriteLine($"User token: {userToken}");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error getting user access token: {ex.Message}");
-    //     }
-
-    // }
     /// <summary>
     /// Event handler for property change event on authentication service's IsSignedIn property
     /// </summary>
@@ -145,12 +135,6 @@ else
             HandleSignInChange();
         }
     }
-    /// <summary>
-    /// Override this to take action when IsSignedIn changes
-    /// </summary>
-    // protected virtual void HandleSignInChange()
-    // {
-    // }
     private string _signInOrOutText = "Bejelentkezés";
     /// <summary>
     /// The text to display on the sign in/out button
@@ -216,13 +200,22 @@ else
     /// </summary>
     private async void GetUserDetailsAsync()
     {
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
+        {
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return;
+        }
         // Get user
-        var user = await _graphService.GetUserInfoAsync();
-        Me = user;
+        Me = await _graphService.GetUserInfoAsync();
         classes = await _graphService.GetTaughtClasses(Me.Id);
 
-        UserName = user.DisplayName;
-        UserEmail = user.Mail ?? user.UserPrincipalName;
+        // UserName = user.DisplayName;
+        // UserEmail = user.Mail ?? user.UserPrincipalName;
         StateHasChanged();
+    }
+    void ManageSzovegOpen()
+    {
+        navi.NavigateTo("szoveg/");
     }
 }

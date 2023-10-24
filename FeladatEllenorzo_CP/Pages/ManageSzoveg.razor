@@ -1,0 +1,70 @@
+﻿@page "/szoveg"
+@page "/szoveg/{url}"
+@using System.Text.Json;
+@inject GlobalData data
+@inject NavigationManager navi
+<h3>ManageSzoveg</h3>
+<button @onclick=Save>Mentés</button>
+<button class="btn btn-close d-flex justify-content-end" @onclick=Close></button>
+<table class="table table-sm table-striped" hidden="@(!EditHiden)">
+    <thead>
+        <tr>
+            <th scope="col">Típusa</th>
+            <th scope="col">Szöveg</th>
+            <th scope="col">Művelet</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in data.Szovegek)
+        {
+            <tr>
+                <td>@item.Type</td>
+                <td>@item.Text</td>
+                <td>
+                    <button @onclick=@(()=>Edit(item))>Szerkesztés</button>
+                    <button class="btn btn-danger" @onclick=@(()=>Delete(item))>Törlés</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<dir hidden="@EditHiden">
+    <FeladatEllenorzo_CP.Components.NewSzoveg szoveg="editedSzoveg" SaveText="EditingEnd"></FeladatEllenorzo_CP.Components.NewSzoveg>
+</dir>
+@code {
+    [Parameter] public string Url { get; set; } = "/";
+    string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
+    bool EditHiden = true;
+    DataSzoveg editedSzoveg = new();
+    void Edit(DataSzoveg szoveg)
+    {
+        EditHiden = false;
+        editedSzoveg = szoveg;
+    }
+    void EditingEnd()
+    {
+        EditHiden = true;
+    }
+    void Delete(DataSzoveg szoveg)
+    {
+        data.Szovegek.Remove(szoveg);
+        Save();
+        StateHasChanged();
+    }
+    void Save()
+    {
+        var text = JsonSerializer.Serialize(data.Szovegek);
+        using (StreamWriter sw = new StreamWriter(path))
+        {
+            sw.WriteLine(text);
+        }
+    }
+    void Close()
+    {
+        if (Url is null)
+        {
+            Url = "/";
+        }
+        navi.NavigateTo(Url);
+    }
+}

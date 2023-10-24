@@ -210,7 +210,7 @@ namespace FeladatEllenorzo_CP.Services
         {
             _ = _appClient ??
                 throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].SubmittedResources.GetAsync((config) => config.QueryParameters.Count = true);
+            return _appClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].Resources.GetAsync((config) => config.QueryParameters.Count = true);
         }
         public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id)
         {

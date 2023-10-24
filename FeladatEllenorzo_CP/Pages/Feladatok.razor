@@ -5,6 +5,7 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IDialogService dialog
+@inject IAlertService alert
 
 <div class="row">
 	<div class="col-1">
@@ -16,29 +17,52 @@
 </div>
 <div class="row" style="height:100%">
 	<div class="col-2">
-        @if (feladatok is null)
+        @if (data.Feladatok.Count==0)
         {
-            <p>Még nincs feladat...</p>
+			if (feladatok is null)
+			{
+				<p>Feladatok betöltése ...</p>
+			}
+			else
+			{
+				<p>Még nincs feladat...</p>
+			}
         }
         else
         {
             <ul class="list-group list-unstyled p-2" >
-                @foreach (var item in feladatok.Value)
+                @foreach (var item in data.Feladatok)
                 {
-					if (data.AssignmentId==item.Id)
+					if (data.AssignmentId==item.Feladat.Id)
 					{
-						<li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue; background-color:#dcdcdc" @onclick="@(()=>SelectedFeladat(item.Id))">@item.DisplayName
-                            <span class="badge bg-primary rounded-pill">@SubmittedCount.GetValueOrDefault(item.Id)</span>
-                            <span class="badge bg-danger rounded-pill">@WorkingCount.GetValueOrDefault(item.Id)</span>
+						<li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue; background-color:#dcdcdc" @onclick="@(()=>SelectedFeladat(item.Feladat.Id))">
+							@if (item.Feladat.DisplayName.Length > 10)
+							{
+								<span title="@item.Feladat.DisplayName">@item.Feladat.DisplayName.Substring(0,10);</span>
+							}
+							else
+							{
+								@item.Feladat.DisplayName
+							}
+                            <span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
+                            <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
                         </li>
 					}
 					else
 					{
-						<li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue" @onclick="@(()=>SelectedFeladat(item.Id))">@item.DisplayName
-							<span class="badge bg-primary rounded-pill">@SubmittedCount.GetValueOrDefault(item.Id)</span>
-							@if (WorkingCount.GetValueOrDefault(item.Id)>0)
+						<li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue" @onclick="@(()=>SelectedFeladat(item.Feladat.Id))">
+							@if (item.Feladat.DisplayName.Length>10)
 							{
-                            <span class="badge bg-danger rounded-pill">@WorkingCount.GetValueOrDefault(item.Id)</span>
+								<span title="@item.Feladat.DisplayName">@item.Feladat.DisplayName.Substring(0,10);</span>
+							}
+							else
+							{
+								@item.Feladat.DisplayName
+							}
+							<span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
+							@if (item.WorkingCount>0)
+							{
+                            <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
 							}
                         </li>
 					}
@@ -102,30 +126,30 @@
 						<div class="row">
 							<div class="col">
 								<ul style="list-style-type:none">
-									@foreach (var item in data.pSzoveg)
+									@foreach (var item in data.Szovegek.Where(s=>s.Type=="poz"))
 									{
-										if (item.Length > 15)
+										if (item.Text.Length > 15)
 										{
-											<li @onclick=@(()=>AddText(item)) title="@item">@item.Substring(0,15)</li>
+											<li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0,15)</li>
 										}
 										else
 										{
-											<li @onclick=@(()=>AddText(item))>@item</li>
+											<li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
 										}
 									}
 								</ul>
 							</div>
 							<div class="col">
 								<ul style="list-style-type:none">
-									@foreach (var item in data.nSzoveg)
+									@foreach (var item in data.Szovegek.Where(s=>s.Type=="neg"))
 									{
-										if (item.Length > 15)
+										if (item.Text.Length > 15)
 										{
-											<li @onclick=@(()=>AddText(item))>@item.Substring(0,15)</li>
+											<li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0,15)</li>
 										}
 										else
 										{
-											<li @onclick=@(()=>AddText(item))>@item</li>
+											<li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
 										}
 									}
 								</ul>
@@ -150,7 +174,7 @@
 	</div>
 </div>
 @code {
-	[Parameter] public string Id { get; set; }
+	[Parameter] public string Id { get; set; } //ClassId
 	private EducationAssignmentCollectionResponse feladatok;
 	private EducationUserCollectionResponse tagok;
 	private EducationSubmissionCollectionResponse submissions;
@@ -158,42 +182,79 @@
 	private EducationFeedbackOutcome valasz;
 	private EducationPointsOutcome pont;
 	private List<MemberData> SelectedMembers = new(), saveError=new();
-	private int i = 0;
+	private int i = 0; //kijelölt tanulók száma
 	private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true,disableWorking=false,disableSubmitted=false , disableNone=false,isError=false;
 	private float Pont = 0;
 	private string Valasz = string.Empty, hatter = "$gray-100";
-	private Dictionary<string, int> SubmittedCount = new Dictionary<string,int>();
-	private Dictionary<string, int> WorkingCount = new Dictionary<string,int>();
+	//private Dictionary<string, int> SubmittedCount = new Dictionary<string,int>();
+	//private Dictionary<string, int> WorkingCount = new Dictionary<string,int>();
 	protected override async Task OnParametersSetAsync()
 	{
-		feladatok = await graph.GetFeladatok(Id);
-		tagok = await graph.GetMembers(Id);
-		data.ClassId = Id;
-		data.Members.Clear();
-		foreach (var item in tagok.Value.OrderBy(t=>t.DisplayName))
+		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+		if (accessType != NetworkAccess.Internet)
 		{
-			if (item.PrimaryRole!=EducationUserRole.Teacher)
+			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+			return;
+		}
+		data.ClassId = Id;
+		if (data.Feladatok.Count == 0)
+		{
+			feladatok = await graph.GetFeladatok(Id);
+			data.AssignmentId = feladatok.Value[0].Id;
+			await GetCount();
+		}
+		else UpdateCount(data.AssignmentId);
+		if (data.Members.Count==0)
+		{
+			tagok = await graph.GetMembers(Id);
+			foreach (var item in tagok.Value.OrderBy(t=>t.DisplayName))
 			{
-				data.Members.Add(new() { MemberId = item.Id, MemberName = item.DisplayName});
+				if (item.PrimaryRole!=EducationUserRole.Teacher)
+				{
+					data.Members.Add(new() { MemberId = item.Id, MemberName = item.DisplayName});
+				}
 			}
 		}
-		SelectedFeladat(feladatok.Value[0].Id);
-		await GetCount();
+		SelectedFeladat(data.AssignmentId);
 	}
 	private async Task GetCount()
 	{
+		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+		if (accessType != NetworkAccess.Internet)
+		{
+			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+			return;
+		}
 		foreach (var item in feladatok.Value)
 		{
 			var i = await graph.GetSubmittedFeladat(Id, item.Id);
-			SubmittedCount.Add(item.Id, (int)i.OdataCount);
-			i = await graph.GetWorkingFeladat(Id, item.Id);
-			WorkingCount.Add(item.Id, (int)i.OdataCount);
+			//SubmittedCount.Add(item.Id, (int)i.OdataCount);
+			var j = await graph.GetWorkingFeladat(Id, item.Id);
+			//WorkingCount.Add(item.Id, (int)j.OdataCount);
+			if ((int)i.OdataCount > 0 || (int)j.OdataCount > 0)
+			{
+				data.Feladatok.Add(new() { Feladat = item, SubmittedCount = (int)i.OdataCount, WorkingCount = (int)j.OdataCount });
+			}
 		}
+	}
+	private async void UpdateCount(string feladatId)
+	{
+		var feladat = data.Feladatok.FirstOrDefault(f => f.Feladat.Id == feladatId);
+		var i = await graph.GetSubmittedFeladat(Id, feladat.Feladat.Id);
+		var j = await graph.GetWorkingFeladat(Id, feladat.Feladat.Id);
+		feladat.SubmittedCount = (int)i.OdataCount;
+		feladat.WorkingCount = (int)j.OdataCount;
 	}
 	private async void SelectedFeladat(object value)
 	{
 		@if (value is not null)
 		{
+			NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+			if (accessType != NetworkAccess.Internet)
+			{
+				await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+				return;
+			}
 			data.AssignmentId = value.ToString();
 			submissions = await graph.GetFeladat(Id, data.AssignmentId);
 			SelectedMembers.Clear();
@@ -257,6 +318,8 @@
 	}
 	private void Back()
 	{
+		data.Feladatok.Clear();
+		data.Members.Clear();
 		navi.NavigateTo("/");
 	}
 	private void Valtozas(bool changePont, ChangeEventArgs args)
@@ -272,10 +335,16 @@
 		{
 			changedValasz = true;
 			Valasz = args.Value.ToString();
-		}
+		} 
 	}
 	private async void Save()
 	{
+		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+		if (accessType!=NetworkAccess.Internet)
+		{
+			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+			return;
+		}
 		var response = false;
 		saveError.Clear();
 		foreach (var item in SelectedMembers)
