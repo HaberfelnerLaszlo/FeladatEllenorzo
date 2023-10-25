@@ -17,8 +17,8 @@
 </div>
 <div class="row" style="height:100%">
 	<div class="col-2">
-        @if (data.Feladatok.Count==0)
-        {
+		@if (data.Feladatok.Count==0)
+		{
 			if (feladatok is null)
 			{
 				<p>Feladatok betöltése ...</p>
@@ -27,12 +27,12 @@
 			{
 				<p>Még nincs feladat...</p>
 			}
-        }
-        else
-        {
-            <ul class="list-group list-unstyled p-2" >
-                @foreach (var item in data.Feladatok)
-                {
+		}
+		else
+		{
+			<ul class="list-group list-unstyled p-2" >
+				@foreach (var item in data.Feladatok)
+				{
 					if (data.AssignmentId==item.Feladat.Id)
 					{
 						<li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue; background-color:#dcdcdc" @onclick="@(()=>SelectedFeladat(item.Feladat.Id))">
@@ -44,9 +44,9 @@
 							{
 								@item.Feladat.DisplayName
 							}
-                            <span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
-                            <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
-                        </li>
+							<span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
+							<span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
+						</li>
 					}
 					else
 					{
@@ -62,67 +62,65 @@
 							<span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
 							@if (item.WorkingCount>0)
 							{
-                            <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
+							<span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
 							}
-                        </li>
+						</li>
 					}
-                }  
-            </ul>
-        }
+				}  
+			</ul>
+		}
 	</div>
 	<div class="col">
 		@if (submissions is not null)
-        {
-            <div class="row row-cols-4 p-2">
-                <button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("Working"))" disabled="@disableWorking">Megtekintettek kijelölése</button>
-                <button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("Submitted"))" disabled="@disableSubmitted">Beadottak kijelölése</button>
-                <button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("None"))" disabled="@disableNone">Nem tekintették kijelölése</button>
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    <form>
-                        <ul class="list-group">
-                            @foreach (var item in data.Members)
-                            {
-                                switch (item.Status)
-                                {
-                                    case "Beadva":
-                                        hatter = "lightblue";
-                                        break;
-                                    case "Visszaküldve":
-                                        hatter = "lightgreen";
-                                        break;
-                                    case "Megtekintve":
-                                        hatter = "lightcoral";
-                                        break;
-                                    default:
-                                        hatter = "lightgray";
-                                        break;
-                                }
-                                <li class="list-group-item" style="background-color:@hatter">
-                                    <div class="row">
-                                        <div class="col-1">
-                                            <input type="checkbox" @onclick="()=>ItemSelectChange(item)" checked="@item.Selected">
-                                        </div>
+		{
+			<div class="row row-cols-4 p-2">
+				<button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("Working"))" disabled="@disableWorking">Megtekintettek kijelölése</button>
+				<button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("Submitted"))" disabled="@disableSubmitted">Beadottak kijelölése</button>
+				<button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("None"))" disabled="@disableNone">Nem tekintették kijelölése</button>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<form>
+						<ul class="list-group">
+							@foreach (var item in data.Members)
+							{
+								switch (item.Status)
+								{
+									case "Beadva":
+										hatter = "lightblue";
+										break;
+									case "Visszaküldve":
+										hatter = "lightgreen";
+										break;
+									case "Megtekintve":
+										hatter = "lightcoral";
+										break;
+									default:
+										hatter = "lightgray";
+										break;
+								}
+								<li class="list-group-item" style="background-color:@hatter">
+									<div class="row">
+										<div class="col-1">
+											<input type="checkbox" @onclick="()=>ItemSelectChange(item)" checked="@item.Selected">
+										</div>
 										<div class="col-7 d-flex justify-content-between align-items-center">
-                                            <span>@item.MemberName</span>
+											<span>@item.MemberName</span>
 											<span class="badge bg-primary rounded-pill">@item.ResourceCount</span>
-                                        </div>
-                                        <div class="col">
-                                            <button type="button" @onclick="()=>SelectedFeladatEll(item)">@item.Status</button>
-                                        </div>
-                                    </div>
-
-                                    @*<span>@item.Selected.ToString()</span>*@
-                                </li>
-                            }
-                        </ul>
-                    </form>
-                </div>
-                @if (i > 0)
-                {
-                    <div class="col-6">
-                        <p>Kijelölve @i tanuló</p>
+										</div>
+										<div class="col">
+											<button type="button" @onclick="()=>SelectedFeladatEll(item)">@item.Status</button>
+										</div>
+									</div>
+								</li>
+							}
+						</ul>
+					</form>
+				</div>
+				@if (i > 0)
+				{
+					<div class="col-6">
+						<p>Kijelölve @i tanuló</p>
 						<div class="row">
 							<div class="col">
 								<ul style="list-style-type:none">
@@ -155,22 +153,26 @@
 								</ul>
 							</div>
 						</div>
-
-                        <textarea rows="3"
-                                  placeholder="Visszajelzés..."
-                                  style="resize:vertical; width:100%; max-height:50%"
-                                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-                        @onchange=@((e) => Valtozas(false, e))
-                                  value="@Valasz"
-								  lang="hu">
+						@if (data.Szovegek.Count > 0)
+						{
+							<button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+						}
+						<textarea rows="3"
+								  placeholder="Visszajelzés..."
+								  style="resize:vertical; width:100%; max-height:50%"
+								  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+						@onchange=@((e) => Valtozas(false, e))
+								  value="@Valasz"
+								  lang="hu"
+								  spellcheck="false">
 								  @Valasz
 						</textarea>
-                        <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
-                        <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
-                    </div>
-                }
-            </div>
-        }
+						<input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
+						<button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
+					</div>
+				}
+			</div>
+		}
 	</div>
 </div>
 @code {
@@ -255,6 +257,8 @@
 				await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
 				return;
 			}
+			try
+			{
 			data.AssignmentId = value.ToString();
 			submissions = await graph.GetFeladat(Id, data.AssignmentId);
 			SelectedMembers.Clear();
@@ -283,16 +287,21 @@
 					member.ResourceCount = (int)count.OdataCount;
 				}
 			}
-		data.Members=data.Members.OrderBy(m => m.Status).ToList();
-		if (i>0)
-			{
-				data.Members.ForEach(delegate (MemberData m) { m.Selected = false; });
-				i = 0;
+			data.Members=data.Members.OrderBy(m => m.Status).ToList();
+			if (i>0)
+				{
+					data.Members.ForEach(delegate (MemberData m) { m.Selected = false; });
+					i = 0;
+				}
+					disableNone = false;
+					disableSubmitted = false;
+					disableWorking = false;
+				StateHasChanged();
 			}
-				disableNone = false;
-				disableSubmitted = false;
-				disableWorking = false;
-			StateHasChanged();
+			catch (Exception e)
+			{
+				await alert.ShowAlertAsync(e.Message,"Kivétel történt","Ok");
+			}
 		}
 	}
 	private void SelectedFeladatEll(MemberData item)
@@ -440,4 +449,9 @@
 		changed = true;
 		changedValasz = true;
 	}
+	void ManageSzovegOpen()
+	{
+		navi.NavigateTo($"szoveg/feladatok");
+	}
+
 }

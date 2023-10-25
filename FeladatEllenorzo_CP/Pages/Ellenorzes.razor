@@ -95,7 +95,35 @@
 					<button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
 				}
 			}
-		</div>
+			@if (fileResource.Count>0)
+			{
+				@foreach (var item in fileResource)
+				{
+					<button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+				}
+			}
+            @if (excelResource.Count > 0)
+            {
+                @foreach (var item in excelResource)
+                {
+                    <button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+                }
+            }
+            @if (wordResource.Count > 0)
+            {
+                @foreach (var item in wordResource)
+                {
+                    <button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+                }
+            }
+            @if (ppResource.Count > 0)
+            {
+                @foreach (var item in ppResource)
+                {
+                    <button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+                }
+            }
+        </div>
 		<div class="row">
 			<div class="col">
 				<ul style="list-style-type:none">
@@ -130,6 +158,11 @@
 		</div>
 		<div>
             <button class="btn" @onclick=AddNewText>Új</button>
+			@if (data.Szovegek.Count > 0)
+			{
+				<button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+			}
+
 		</div>
 		<div hidden="@visibleNewText">
 			<FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
@@ -164,6 +197,10 @@
 @code {
 	private EducationSubmissionResourceCollectionResponse feladatForrasok;
 	private List<EducationMediaResource> mediaResource = new();
+	private List<EducationFileResource> fileResource = new();
+	private List<EducationExcelResource> excelResource = new();
+	private List<EducationWordResource> wordResource = new();
+	private List<EducationPowerPointResource> ppResource = new();
 	private EducationOutcomeCollectionResponse feladatValaszok;
 	private EducationFeedbackOutcome valasz;
 	private EducationPointsOutcome pont;
@@ -171,8 +208,6 @@
 	private bool submitted = true,changed=false, changedValasz = false, changedPont=false,IsNotSaved=true,visibleNewText=true;
 	private int index = 0,i=0;
 	private float Pont=0;
-	// private string[] pAjanlat = new string[]{"tökéletes", "nagyon jó", "rendben." ,"rendben hibátlan","rendben majdnem hibátlan" };
-	// private string[] nAjanlat = new string[] { "hiányos feladat", "feladat rész hiányzik", "miért nincs kész a feladatod?" };
 	protected override Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender)
@@ -191,26 +226,48 @@
 			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
 			return;
 		}
-
+		try
+		{
 		feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
 		foreach (var item in feladatForrasok.Value)
 		{
-			var response = item.Resource.DisplayName;
-			if (item.Resource.GetType()==typeof(EducationMediaResource))
+			string fileUrl = string.Empty;
+			switch (item.Resource.GetType().Name)
 			{
-				mediaResource.Add((EducationMediaResource)item.Resource);
+				case nameof(EducationMediaResource):
+					mediaResource.Add((EducationMediaResource)item.Resource);
+				fileUrl = mediaResource.FirstOrDefault().FileUrl;
+					break;
+				case nameof(EducationFileResource):
+					fileResource.Add((EducationFileResource)item.Resource);
+				fileUrl = fileResource.FirstOrDefault().FileUrl;
+					break;
+				case nameof(EducationExcelResource):
+					excelResource.Add((EducationExcelResource)item.Resource);
+				fileUrl = excelResource.FirstOrDefault().FileUrl;
+					break;
+				case nameof(EducationWordResource):
+					wordResource.Add((EducationWordResource)item.Resource);
+				fileUrl = wordResource.FirstOrDefault().FileUrl;
+					break;
+				case nameof(EducationPowerPointResource):
+					ppResource.Add((EducationPowerPointResource)item.Resource);
+				fileUrl = ppResource.FirstOrDefault().FileUrl;
+					break;
+				default:
+					break;
 			}
-			if (mediaResource.Count>0)
+			if (fileUrl.Length>0)
 			{
-				url = await GetUrl(mediaResource.FirstOrDefault().FileUrl);
-				Pont = 2;
-				changedPont = true;
+				url = await GetUrl(fileUrl);
 			}
 			else
 			{
 				url = string.Empty;
 			}
 		}
+		Pont = 2;
+		changedPont = true;
 		feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
 		foreach (var item in feladatValaszok.Value)
 		{
@@ -231,7 +288,12 @@
 			@if (pont is not null && pont.Points is not null)
 			{
 				Pont = pont.Points.Points.Value;
+				}
 			}
+		}
+		catch (Exception e)
+		{
+			await alert.ShowAlertAsync(e.Message, "Kivétel történt", "Ok");
 		}
 		StateHasChanged();
 	}
@@ -253,6 +315,10 @@
 		changedValasz = false;
 		IsNotSaved = true;
 		mediaResource.Clear();
+		fileResource.Clear();
+		wordResource.Clear();
+		excelResource.Clear();
+		ppResource.Clear();
 		url = string.Empty;
 		Pont = 0;
 		DataInit();
@@ -312,6 +378,10 @@
 			throw new Exception(e.Message, e);
 		}
 		mediaResource.Clear();
+		fileResource.Clear();
+		wordResource.Clear();
+		excelResource.Clear();
+		ppResource.Clear();
 		Pont = 0;
 		DataInit();
 	}
@@ -381,4 +451,9 @@
 	{
 		visibleNewText = true;
 	}
+	void ManageSzovegOpen()
+	{
+		navi.NavigateTo("szoveg/ell");
+	}
+
 }

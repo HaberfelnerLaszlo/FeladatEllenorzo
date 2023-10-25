@@ -24,10 +24,12 @@ namespace FeladatEllenorzo_CP.Services
         private static ClientSecretCredential? _clientSecretCredential;
         // Client configured with app-only authentication
         private static GraphServiceClient? _appClient;
+        static GraphServiceClient graphClient;
 
         public GraphService(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService;
+            graphClient = _authenticationService.GraphClient;
         }
         public void InitializeGraphForAppOnlyAuth(ISettingsService settings)
         {
@@ -163,60 +165,49 @@ namespace FeladatEllenorzo_CP.Services
         }
         public Task<EducationClassCollectionResponse?> GetTaughtClasses(string id)
         {
-            // Code snippets are only available for the latest version. Current version is 5.x
 
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-
-            return _appClient.Education.Users[id].TaughtClasses.GetAsync();
-            //return _appClient.Education.Users[id].TaughtClasses.GetAsync((config) =>
-            //	{
-            //		// Only request specific properties
-            //		config.QueryParameters.Select = new[] { "displayName", "id" };
-            //	});
+            return graphClient.Education.Me.TaughtClasses.GetAsync((config) =>
+            {
+            		config.QueryParameters.Select = new[] { "displayName", "id" };
+            });
         }
         public Task<EducationUserCollectionResponse?> GetMembers(string id)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[id].Members.GetAsync(
-                (config) =>
+             return graphClient.Education.Classes[id].Members.GetAsync(
+               (config) =>
                 {
-                    // Only request specific properties
                     config.QueryParameters.Select = new[] { "displayName", "id", "primaryRole" };
-                    //config.QueryParameters.Expand = new[] { "*"};
                 }
             );
 
         }
         public Task<EducationAssignmentCollectionResponse?> GetFeladatok(string id)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[id].Assignments.GetAsync((config) =>
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[id].Assignments.GetAsync((config) =>
             {
-                // Only request specific properties
                 config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "dueDateTime" };
                 config.QueryParameters.Expand = new[] { "*" };
             });
         }
         public Task<EducationSubmissionCollectionResponse?> GetFeladat(string classId, string id)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync();
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync();
         }
         public Task<EducationSubmissionResourceCollectionResponse?> GetResourcesCount(string classId, string feladatid, string submissionId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].Resources.GetAsync((config) => config.QueryParameters.Count = true);
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].Resources.GetAsync((config) => config.QueryParameters.Count = true);
         }
         public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "status eq 'submitted'";
                 requestConfiguration.QueryParameters.Count = true;
@@ -224,9 +215,9 @@ namespace FeladatEllenorzo_CP.Services
         }
         public Task<EducationSubmissionCollectionResponse?> GetWorkingFeladat(string classId, string id)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "status eq 'working'";
                 requestConfiguration.QueryParameters.Count = true;
@@ -234,41 +225,41 @@ namespace FeladatEllenorzo_CP.Services
         }
         public Task<EducationSubmissionResourceCollectionResponse?> GetFeladatForras(string classId, string FeladatId, string BedandoId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Resources.GetAsync();
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Resources.GetAsync();
         }
         public Task<EducationOutcomeCollectionResponse?> GetFeladatValasz(string classId, string FeladatId, string BedandoId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "isof('microsoft.graph.educationFeedbackOutcome')";
             });
         }
         public Task<EducationOutcomeCollectionResponse?> GetFeladatPont(string classId, string FeladatId, string BedandoId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-            return _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "isof('microsoft.graph.educationPointsOutcome')";
             });
         }
         public Task<ItemPreviewInfo?> GetFile(string driveId, string itemId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
             PreviewPostRequestBody body = new PreviewPostRequestBody();
-            return _appClient.Drives[driveId].Items[itemId].Preview.PostAsync(body);
+            return graphClient.Drives[driveId].Items[itemId].Preview.PostAsync(body);
         }
         public async Task<bool> UpdateValasz(string classId, string FeladatId, string BeadandoId, string outcomeId, string valasz)
         {
             // Code snippets are only available for the latest version. Current version is 5.x
 
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 
             var requestBody = new EducationFeedbackOutcome
             {
@@ -284,7 +275,7 @@ namespace FeladatEllenorzo_CP.Services
             };
             try
             {
-                var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
+                var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
                 return result is not null;
             }
             catch (Exception e)
@@ -297,8 +288,8 @@ namespace FeladatEllenorzo_CP.Services
         {
             // Code snippets are only available for the latest version. Current version is 5.x
 
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 
             var requestBody = new EducationPointsOutcome
             {
@@ -309,15 +300,15 @@ namespace FeladatEllenorzo_CP.Services
                     Points = pont,
                 },
             };
-            var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
+            var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Outcomes[outcomeId].PatchAsync(requestBody);
             return result is not null;
         }
         public async Task<bool> Return(string classId, string FeladatId, string BeadandoId)
         {
-            _ = _appClient ??
-                throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+            //_ = _appClient ??
+            //    throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
 
-            var result = await _appClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Return.PostAsync();
+            var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Return.PostAsync();
             return result is not null;
         }
 

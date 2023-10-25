@@ -65,6 +65,10 @@
         {
             Url = "/";
         }
+        else if (Url.Equals("feladatok"))
+        {
+            Url = Url + $"/{data.ClassId}";
+        }
         navi.NavigateTo(Url);
     }
 }
