@@ -59,7 +59,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IGraphService, GraphService>();
 		builder.Services.AddSingleton<INavigationService, MauiNavigationService>();
 		builder.Services.AddSingleton<GlobalData>();
-		builder.Services.AddSingleton<IDialogService,DialogService>();
 		return builder;
 	}
 }

@@ -3,7 +3,6 @@
 @inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
-@inject IDialogService dialog
 @inject IAlertService alert
 <div class="row">
 	<div class="col-1">
@@ -423,7 +422,7 @@
 		}
 		if (!response)
 		{
-			await dialog.DisplayAlert("Hiba!", "A mentés nem sikerült!", "Rendben");
+			await alert.ShowAlertAsync("Hiba!", "A mentés nem sikerült!", "Rendben");
 		}
 		else
 		{

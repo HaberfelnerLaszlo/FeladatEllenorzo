@@ -9,5 +9,7 @@ namespace FeladatEllenorzo_CP.Services
         /// Show an alert to the user
         /// </summary>
         Task ShowAlertAsync(string message, string title, string buttonLabel);
-    }
+        Task<bool> DisplayConfirm(string title, string message, string accept, string cansel);
+
+	}
 }

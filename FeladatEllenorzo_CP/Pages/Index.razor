@@ -63,7 +63,7 @@ else
             SignInOrOutCommand = new Command(
         execute: async () => await OnSignInOrOut());
             await OnSignInOrOut();
-            _graphService.InitializeGraphForAppOnlyAuth(settingsService);
+           // _graphService.InitializeGraphForAppOnlyAuth(settingsService);
             if (File.Exists(path))
             {
                 await ReadSzoveg();
