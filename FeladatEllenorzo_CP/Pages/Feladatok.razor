@@ -6,17 +6,18 @@
 @inject NavigationManager navi
 @inject IDialogService dialog
 @inject IAlertService alert
-
+@inject IHianyService hiany
 <div class="row">
-	<div class="col-1">
+	<div class="col">
 		<button class="btn btn-toolbar" @onclick=Back>Vissza</button>
 	</div>
-	<div class=" col-11">
+	<div class=" col">
 		<h3>Feladatok</h3>
 	</div>
 </div>
+<div class="container">
 <div class="row" style="height:100%">
-	<div class="col-2">
+	<div class="col-4 col-md-4">
 		@if (data.Feladatok.Count==0)
 		{
 			if (feladatok is null)
@@ -70,7 +71,7 @@
 			</ul>
 		}
 	</div>
-	<div class="col">
+	<div class="col col-md">
 		@if (submissions is not null)
 		{
 			<div class="row row-cols-4 p-2">
@@ -79,7 +80,7 @@
 				<button type="button" class="btn btn-info m-1" @onclick="@(()=>Select("None"))" disabled="@disableNone">Nem tekintették kijelölése</button>
 			</div>
 			<div class="row">
-				<div class="col-6">
+				<div class="col-6 col-md">
 					<form>
 						<ul class="list-group">
 							@foreach (var item in data.Members)
@@ -119,8 +120,12 @@
 				</div>
 				@if (i > 0)
 				{
-					<div class="col-6">
+					<div class="col-6 col-md">
 						<p>Kijelölve @i tanuló</p>
+						<label for="ishiany">Hiány könyvelése: </label>
+						<InputCheckbox id="ishiany" DisplayName="Lecke hiany könyvelése" @bind-Value=isHiany/>
+						<label for="datum">Könyvelés dátuma: </label>
+						<InputDate id="datum" DisplayName="Hiány napja:" @bind-Value="datumHiany"/>
 						<div class="row">
 							<div class="col">
 								<ul style="list-style-type:none">
@@ -174,6 +179,7 @@
 			</div>
 		}
 	</div>
+    </div>
 </div>
 @code {
 	[Parameter] public string Id { get; set; } //ClassId
@@ -185,9 +191,10 @@
 	private EducationPointsOutcome pont;
 	private List<MemberData> SelectedMembers = new(), saveError=new();
 	private int i = 0; //kijelölt tanulók száma
-	private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true,disableWorking=false,disableSubmitted=false , disableNone=false,isError=false;
+	private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true,disableWorking=false,disableSubmitted=false , disableNone=false,isError=false, isHiany=false;
 	private float Pont = 0;
 	private string Valasz = string.Empty, hatter = "$gray-100";
+	DateTime datumHiany = DateTime.Today;
 	//private Dictionary<string, int> SubmittedCount = new Dictionary<string,int>();
 	//private Dictionary<string, int> WorkingCount = new Dictionary<string,int>();
 	protected override async Task OnParametersSetAsync()
@@ -369,6 +376,12 @@
 				{
 					await dialog.DisplayAlert("Hiba!", $"A válasz mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
 					isError = true;
+					break;
+				}
+				var mainResponse=await hiany.Add(new() { Name = item.MemberName, Datum = DateOnly.FromDateTime(datumHiany), Osztaly=data.Osztalynev });
+				if (!mainResponse.IsSuccess)
+				{
+					await dialog.DisplayAlert("Hiba!", $"A hiba mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
 					break;
 				}
 			}

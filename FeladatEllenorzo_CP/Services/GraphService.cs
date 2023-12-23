@@ -6,6 +6,7 @@ using Azure.Identity;
 using Microsoft.Graph;
 using Microsoft.Graph.Drives.Item.Items.Item.Preview;
 using Microsoft.Graph.Models;
+using Microsoft.Kiota.Abstractions;
 
 using System.Runtime;
 
@@ -311,6 +312,92 @@ namespace FeladatEllenorzo_CP.Services
             var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Return.PostAsync();
             return result is not null;
         }
+        public async Task<bool> SendMe(string data) 
+        {
+            try
+            {
+                //		var requestBody = new Chat
+                //		{
+                //			ChatType = ChatType.OneOnOne,
+                //			Members = new List<ConversationMember>
+                //{
+                //	new AadUserConversationMember
+                //	{
+                //		OdataType = "#microsoft.graph.aadUserConversationMember",
+                //		Roles = new List<string>
+                //		{
+                //			"owner",
+                //		},
+                //		AdditionalData = new Dictionary<string, object>
+                //		{
+                //			{
+                //				"user@odata.bind" , "https://graph.microsoft.com/v1.0/users('haberfelner@peterfysulil.hu')"
+                //			},
+                //		},
+                //	},
+                //	new AadUserConversationMember
+                //	{
+                //		OdataType = "#microsoft.graph.aadUserConversationMember",
+                //		Roles = new List<string>
+                //		{
+                //			"owner",
+                //		},
+                //		AdditionalData = new Dictionary<string, object>
+                //		{
+                //			{
+                //				"user@odata.bind" , "https://graph.microsoft.com/v1.0/users('haberfelner@peterfysulil.hu')"
+                //			},
+                //		},
+                //	},
+                //},
+                //		};
 
+                //		// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp
+                //		var result = await graphClient.Chats.PostAsync(requestBody);
+                var chatMessage = new ChatMessage
+                {
+                    Body = new ItemBody
+                    {
+                        Content = data,
+                    },
+                };
+
+                var result_2 = await graphClient.Me.Chats["48:notes"].Messages.PostAsync(chatMessage);
+
+
+                var requestBody = new Microsoft.Graph.Me.SendMail.SendMailPostRequestBody
+				{
+					Message = new Message
+					{
+						Subject = "Lecke hiány_"+DateTime.Today.ToShortDateString(),
+						Body = new ItemBody
+						{
+							ContentType = BodyType.Text,
+							Content = data,
+						},
+						ToRecipients = new List<Recipient>
+		{
+			new Recipient
+			{
+				EmailAddress = new EmailAddress
+				{
+					Address = "haberfelner@peterfysuli.hu",
+				},
+			},
+		},
+					},
+				};
+				await graphClient.Me.SendMail.PostAsync(requestBody);
+
+				if (result_2 is not null) {return true; }
+            return false;
+            }
+            catch (Exception ex)
+            {
+                 await Console.Out.WriteLineAsync(ex.Message);
+                return false;
+                throw;
+            }
+       }
     }
 }

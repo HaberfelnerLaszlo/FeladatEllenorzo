@@ -14,11 +14,12 @@
 @inject IAuthenticationService auth
 @inject ISettingsService settingsService
 @inject IAlertService alert
+@inject ISzovegService szoveg
 
 @if (Me is null)
 {
 	<p>Belépés folyamatban...</p>
-    <button @onclick="OnSignInOrOut">@_signInOrOutText</button>
+	<button @onclick="OnSignInOrOut">@_signInOrOutText</button>
 }
 else
 {
@@ -26,65 +27,77 @@ else
 }
 @if (data.Szovegek.Count>0)
 {
-    <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+	<button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
 }
 
 @if (classes is not null)
 {
 	<h4 class="my-3">Tanított osztályok:</h4>
-	<ul class="list-unstyled list-group w-50 m-3">
+	<ul class="list-unstyled list-group m-3">
 	@foreach (var item in classes.Value.Where(c => !c.DisplayName.Contains("Exp")))
 	{
-		<li class="list-group-item-action" @onclick="(()=>SelectedClass(item.Id))">@item.DisplayName</li>
+		@if (item.Id==SelectedClassId)
+		{
+			<li class="list-group-item-action bg-info" @onclick="(()=>SelectedClass(item.Id))">@item.DisplayName</li>
+		}
+		else
+		{
+			<li class="list-group-item-action" @onclick="(()=>SelectedClass(item.Id))">@item.DisplayName</li>
+		}
 	}
 	</ul>
+	<button class="btn btn-outline-primary" @onclick=Feladat_btn>Feladatok</button>
+	<button class="btn btn-outline-secondary" @onclick=Hiany_btn>Hiányzó feladat</button>
+	<button class="btn btn-outline-info" @onclick=Hiba_btn>Feladat hibák</button>
+
 }
 
 @code{
-    private EducationClassCollectionResponse classes;
-    private User Me=null;
-    private string SelectedClassId = string.Empty;
-    string path = Path.Combine(FileSystem.Current.AppDataDirectory,"szoveg.json");
-    public ICommand SignInOrOutCommand { get; private set; }
-    public bool IsSignedIn
-    {
-        get => auth?.IsSignedIn ?? false;
-    }
-    protected override async Task OnInitializedAsync()
-    {
-        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-        if (accessType != NetworkAccess.Internet)
-        {
-            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
-            return;
-        }
-        if (!IsSignedIn)
-        {
-            SignInOrOutCommand = new Command(
-        execute: async () => await OnSignInOrOut());
-            await OnSignInOrOut();
-            _graphService.InitializeGraphForAppOnlyAuth(settingsService);
-            if (File.Exists(path))
-            {
-                await ReadSzoveg();
-            }
-            else
-            {
-                // Create the file.
-                var text = InitSzoveg();
-                using (StreamWriter sw = new StreamWriter(path))
-                {
-                    sw.WriteLine(text);
-                }
-                //await ReadSzoveg();
-            }
-        }
-        GetUserDetailsAsync();
-        auth.PropertyChanged += OnPropertyChanged;
-    }
-    private string InitSzoveg()
-    {
-        data.Szovegek = new List<DataSzoveg>()
+	private EducationClassCollectionResponse classes;
+	private User Me=null;
+	private string SelectedClassId = string.Empty;
+	string path = Path.Combine(FileSystem.Current.AppDataDirectory,"szoveg.json");
+	public ICommand SignInOrOutCommand { get; private set; }
+	public bool IsSignedIn
+	{
+		get => auth?.IsSignedIn ?? false;
+	}
+	protected override async Task OnInitializedAsync()
+	{
+		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+		if (accessType != NetworkAccess.Internet)
+		{
+			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+			return;
+		}
+		if (!IsSignedIn)
+		{
+			SignInOrOutCommand = new Command(
+		execute: async () => await OnSignInOrOut());
+			await OnSignInOrOut();
+			_graphService.InitializeGraphForAppOnlyAuth(settingsService);
+			data.Szovegek = await szoveg.GetSzovegek();
+			if (File.Exists(path) && data.Szovegek.Count==0)
+			{
+				await ReadSzoveg();
+			}
+			else if (data.Szovegek.Count==0)
+			{
+				// Create the file.
+				var text = await InitSzoveg();
+				using (StreamWriter sw = new StreamWriter(path))
+				{
+					sw.WriteLine(text);
+				}
+				//await ReadSzoveg();
+			}
+		}
+		GetUserDetailsAsync();
+		auth.PropertyChanged += OnPropertyChanged;
+	}
+	private async Task<string> InitSzoveg()
+	{
+		data.Szovegek = new List<DataSzoveg>()
 			{
 				new DataSzoveg(){ Type = "poz", Text = "tökéletes" },
 				new DataSzoveg(){ Type = "poz", Text = "nagyon jó"},
@@ -95,127 +108,163 @@ else
 				new DataSzoveg(){ Type = "neg", Text = "feladat rész hiányzik"},
 				new DataSzoveg(){ Type = "neg", Text = "miért nincs kész a feladatod?"}
 		};
-        return JsonSerializer.Serialize(data.Szovegek);
-    }
-    private async Task ReadSzoveg()
-    {
-        try
-        {
-            data.Szovegek.Clear();
-            using (StreamReader sr = File.OpenText(path))
-            {
-                string s = "";
-                s = await sr.ReadToEndAsync();
-                data.Szovegek = JsonSerializer.Deserialize<List<DataSzoveg>>(s);
-            }
-        }
-        catch (Exception e)
-        {
-            await alert.ShowAlertAsync($"Hiba: {e.Message}", "Szöveg beolvasási hiba", "Rendben");
-        }
-    }
-    private void SelectedClass(object value)
-    {
-        if (value is not null)
-        {
-            SelectedClassId = value.ToString();
-            navi.NavigateTo($"feladatok/{SelectedClassId}");
-        }
-    }
-    /// <summary>
-    /// Event handler for property change event on authentication service's IsSignedIn property
-    /// </summary>
-    private void OnPropertyChanged(object sender, PropertyChangedEventArgs args)
-    {
-        var v = nameof(auth.IsSignedIn);
-        if (args.PropertyName == nameof(auth.IsSignedIn))
-        {
-            // Bubble up the change to any views bound to this view model
-            //OnPropertyChanged(nameof(IsSignedIn));
-            HandleSignInChange();
-        }
-    }
-    private string _signInOrOutText = "Bejelentkezés";
-    /// <summary>
-    /// The text to display on the sign in/out button
-    /// </summary>
-    public string SignInOrOutText
-    {
-        get => _signInOrOutText;
-        set => _signInOrOutText= value ;
-    }
+		foreach (var item in data.Szovegek)
+		{
+			var response=await szoveg.Add(item);
+			if (response.IsSuccess)
+			{
+				await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
+			}
+			else
+			{
+				await alert.ShowAlertAsync(response.ErrorMessage,"Rendszer üzenet","Rendben");
+			}
+		}
+		return JsonSerializer.Serialize(data.Szovegek);
+	}
+	private async Task ReadSzoveg()
+	{
+		try
+		{
+			data.Szovegek.Clear();
+			using (StreamReader sr = File.OpenText(path))
+			{
+				string s = "";
+				s = await sr.ReadToEndAsync();
+				data.Szovegek = JsonSerializer.Deserialize<List<DataSzoveg>>(s);
+			}
+			foreach (var item in data.Szovegek)
+			{
+				var response=await szoveg.Add(item);
+				if (response.IsSuccess)
+				{
+					await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
+				}
+				else
+				{
+					await alert.ShowAlertAsync(response.ErrorMessage,"Rendszer üzenet","Rendben");
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			await alert.ShowAlertAsync($"Hiba: {e.Message}", "Szöveg beolvasási hiba", "Rendben");
+		}
+	}
+	private void SelectedClass(object value)
+	{
+		if (value is not null)
+		{
+			SelectedClassId = value.ToString();
+			data.Osztalynev = classes.Value.Find(c => c.Id == SelectedClassId).DisplayName;
+		}
+	}
+	private void Feladat_btn()
+	{
+		navi.NavigateTo($"feladatok/{SelectedClassId}");
+	}
+	private void Hiany_btn()
+	{
+		navi.NavigateTo($"hiany");
+	}
+	private void Hiba_btn()
+	{
+		navi.NavigateTo($"hiba");
+	}
+	/// <summary>
+	/// Event handler for property change event on authentication service's IsSignedIn property
+	/// </summary>
+	private void OnPropertyChanged(object sender, PropertyChangedEventArgs args)
+	{
+		var v = nameof(auth.IsSignedIn);
+		if (args.PropertyName == nameof(auth.IsSignedIn))
+		{
+			// Bubble up the change to any views bound to this view model
+			//OnPropertyChanged(nameof(IsSignedIn));
+			HandleSignInChange();
+		}
+	}
+	private string _signInOrOutText = "Bejelentkezés";
+	/// <summary>
+	/// The text to display on the sign in/out button
+	/// </summary>
+	public string SignInOrOutText
+	{
+		get => _signInOrOutText;
+		set => _signInOrOutText= value ;
+	}
 
-    private string _userName;
-    /// <summary>
-    /// The user's display name
-    /// </summary>
-    public string UserName
-    {
-        get => _userName;
-        set => _userName=value;
-    }
+	private string _userName;
+	/// <summary>
+	/// The user's display name
+	/// </summary>
+	public string UserName
+	{
+		get => _userName;
+		set => _userName=value;
+	}
 
-    private string _userEmail;
-    /// <summary>
-    /// The user's email address
-    /// </summary>
-    public string UserEmail
-    {
-        get => _userEmail;
-        set =>_userEmail =value;
-    }
+	private string _userEmail;
+	/// <summary>
+	/// The user's email address
+	/// </summary>
+	public string UserEmail
+	{
+		get => _userEmail;
+		set =>_userEmail =value;
+	}
 
-    private async Task OnSignInOrOut()
-    {
-        if (IsSignedIn)
-        {
-            await auth.SignOutAsync();
-            //await _navigationService.NavigatePostSignOut();
-        }
-        else
-        {
-            var success = await auth.SignInAsync();
-            //await _navigationService.NavigatePostSignIn();
-        }
-    }
+	private async Task OnSignInOrOut()
+	{
+		if (IsSignedIn)
+		{
+			await auth.SignOutAsync();
+			//await _navigationService.NavigatePostSignOut();
+		}
+		else
+		{
+			var success = await auth.SignInAsync();
+			//await _navigationService.NavigatePostSignIn();
+		}
+	}
 
-    protected void HandleSignInChange()
-    {
-        // Update the button text
-        SignInOrOutText = IsSignedIn ? "Kijelentkezés" : "Bejelentkezés";
+	protected void HandleSignInChange()
+	{
+		// Update the button text
+		SignInOrOutText = IsSignedIn ? "Kijelentkezés" : "Bejelentkezés";
 
-        if (IsSignedIn)
-        {
-            GetUserDetailsAsync();
-        }
-        else
-        {
-            UserName = string.Empty;
-            UserEmail = string.Empty;
-        }
-    }
+		if (IsSignedIn)
+		{
+			GetUserDetailsAsync();
+		}
+		else
+		{
+			UserName = string.Empty;
+			UserEmail = string.Empty;
+		}
+	}
 
-    /// <summary>
-    /// Get the user's info and photo from Microsoft Graph
-    /// </summary>
-    private async void GetUserDetailsAsync()
-    {
-        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-        if (accessType != NetworkAccess.Internet)
-        {
-            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
-            return;
-        }
-        // Get user
-        Me = await _graphService.GetUserInfoAsync();
-        classes = await _graphService.GetTaughtClasses(Me.Id);
+	/// <summary>
+	/// Get the user's info and photo from Microsoft Graph
+	/// </summary>
+	private async void GetUserDetailsAsync()
+	{
+		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+		if (accessType != NetworkAccess.Internet)
+		{
+			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+			return;
+		}
+		// Get user
+		Me = await _graphService.GetUserInfoAsync();
+		classes = await _graphService.GetTaughtClasses(Me.Id);
 
-        // UserName = user.DisplayName;
-        // UserEmail = user.Mail ?? user.UserPrincipalName;
-        StateHasChanged();
-    }
-    void ManageSzovegOpen()
-    {
-        navi.NavigateTo("szoveg/");
-    }
+		// UserName = user.DisplayName;
+		// UserEmail = user.Mail ?? user.UserPrincipalName;
+		StateHasChanged();
+	}
+	void ManageSzovegOpen()
+	{
+		navi.NavigateTo("szoveg/");
+	}
 }

@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FeladatEllenorzo_CP.Data
+namespace FeladatEllenorzo_CP.Models
 {
 	public class DataSzoveg
 	{
-		public string Type { get; set; }
+        public int Id { get; set; }
+        public string Type { get; set; }
 		public string Text { get; set; }
 	}
 }

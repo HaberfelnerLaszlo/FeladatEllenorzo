@@ -1,0 +1,38 @@
+@Data_Api_HostAddress = http://localhost:7130
+
+GET {{Data_Api_HostAddress}}/
+
+###
+
+GET {{Data_Api_HostAddress}}/maihianyok
+###
+
+POST {{Data_Api_HostAddress}}/hiany
+Content-Type: application/json
+
+{
+  "name":"Próba Emõke",
+  "osztaly":"10 c.",
+  "datum":"2023-12-17"
+}
+###
+
+GET {{Data_Api_HostAddress}}/hianyok/2023-12-16
+
+###
+
+PUT {{Data_Api_HostAddress}}/hiany/5
+Content-Type: application/json
+
+{
+  "name":"Próba Emõke",
+  "osztaly":"10 a.",
+  "datum":"2023-12-16",
+  "hianyzik":true
+}
+
+###
+
+DELETE {{Data_Api_HostAddress}}/hiany/1
+
+###

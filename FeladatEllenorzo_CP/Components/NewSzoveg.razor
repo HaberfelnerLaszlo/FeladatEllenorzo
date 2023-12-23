@@ -1,5 +1,7 @@
 ﻿@using System.Text.Json;
 @inject GlobalData data
+@inject ISzovegService szService
+@inject IAlertService alert
 <form class="form-control" method="dialog">
 	<label for="tipus">A szöveg típusa</label>
 	<select class="form-select" id="tipus" @bind=selectedType>
@@ -29,21 +31,42 @@
 		base.OnParametersSet();
 	}
 	List<DataSzoveg> dataSzoveg = new();
-	void Save()
+	async void Save()
 	{
 		if (editing)
 		{
 			var updateSzoveg = data.Szovegek.FirstOrDefault(s => s.Equals(szoveg));
 			updateSzoveg.Type = selectedType;
 			updateSzoveg.Text = Text;
+			var response= await szService.Update(updateSzoveg);
+			if (response.IsSuccess)
+			{
+				await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
+			}
+			else
+			{
+				await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+			}
 		}
-		else
-			data.Szovegek.Add(new DataSzoveg() { Type = selectedType, Text = Text });
+		else{
+			var newSzoveg = new DataSzoveg() { Type = selectedType, Text = Text };
+			data.Szovegek.Add(newSzoveg) ;
+			var response = await szService.Add(newSzoveg);
+			if (response.IsSuccess)
+			{
+				await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
+			}
+			else
+			{
+				await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+			}
+
+		}
 		var text = JsonSerializer.Serialize(data.Szovegek);
 		using (StreamWriter sw = new StreamWriter(path))
 		{
 			sw.WriteLine(text);
 		}
-		SaveText.InvokeAsync();
+		await SaveText.InvokeAsync();
 	}
 }

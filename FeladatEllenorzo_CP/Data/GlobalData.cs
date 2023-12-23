@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.Graph.Models;
+using FeladatEllenorzo_CP.Models;
 
 namespace FeladatEllenorzo_CP.Data
 {
@@ -11,7 +12,8 @@ namespace FeladatEllenorzo_CP.Data
 		public string SubmissionId { get; set; }= string.Empty;
 		public string UserId { get; set; } = string.Empty;
 		public string Name { get; set; } = string.Empty;
-		public List<MemberData> Members { get; set; } = new();
+        public string Osztalynev { get; set; }=string.Empty;
+        public List<MemberData> Members { get; set; } = new();
 		public List<DataSzoveg> Szovegek { get; set; } = new();
 		public List<DataFeladat> Feladatok = new();
 	}

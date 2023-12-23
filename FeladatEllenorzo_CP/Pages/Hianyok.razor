@@ -1,0 +1,133 @@
+﻿@page "/hiany"
+@inject GlobalData data
+@inject IHianyService hiany
+@inject IDialogService dialog
+@inject IGraphService graph
+<div class="container">
+	<div class="row">
+		<div class="col-2 col-md-4">
+            <a href="/" hidden="@(!isSaved)">Vissza...</a>
+            <button class="btn btn-outline-info" @onclick=Save hidden="@isSaved">Mentés</button>
+        </div>
+        <div class="col col-md">
+            <h5>Leckét nem feltöltött tanulók</h5>
+		</div>
+        <div class="col-3 col-md-4">
+            <InputDate DisplayName="Időpont" Value=datum ValueChanged="((DateTime value)=>ChangeDatum(value))" ValueExpression="(()=>datum)"/>
+		</div>
+		<button class="btn btn-outline-light" @onclick=Send >Küldés</button>
+	</div>
+	@if (hianyok.Count== 0)
+	{
+		<p>@message</p>
+	}
+	else
+	{
+	<div class="table-responsive">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Név</th>
+					<th>Tényleges hiány</th>
+					<th>Művelet</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var osztaly in osztalyok)
+				{
+					<tr>
+                        <td colspan="3">@osztaly</td>
+					</tr>
+					@foreach (var item in hianyok.Where(h=>h.Osztaly==osztaly))
+					{
+						<tr>
+							<td>@item.Name</td>
+							<td>
+								<div class="form-check form-switch">
+									<input class="form-check-input" type="checkbox" role="switch" checked=@item.Hianyzik @onclick="(()=>ChangeHiany(item))"/>
+								</div>
+							 </td>
+							 <td>
+								 <button class="btn-sm" @onclick="(()=>Delete(item))">Törlés</button>
+							 </td>
+						</tr>
+					}
+                }
+            </tbody>
+		</table>
+	</div>
+    }
+</div>
+@code {
+	List<FeladatHiany> hianyok = new();
+	List<FeladatHiany> changed = new();
+	string[] osztalyok;
+	string message = string.Empty;
+	bool isSaved = true;
+	DateTime datum=DateTime.Today;
+	protected async override Task OnInitializedAsync()
+	{
+		try
+		{
+			message = "Betöltés alatt...";
+			hianyok = await hiany.GetMaiHiany();
+			message = "Nincsenek a mai napon lecke hiányok.";
+			osztalyok = hianyok.Select(h=>h.Osztaly).Distinct().ToArray();
+		}
+		catch (Exception)
+		{
+			throw;
+		}
+	}
+	void ChangeHiany(FeladatHiany hiany)
+	{
+		isSaved = false;
+		hiany.Hianyzik=hiany.Hianyzik ? false : true;
+		changed.Add(hiany);
+	}
+	async void ChangeDatum(DateTime arg)
+	{//datum = DateTime.Parse(arg);
+		datum = arg;
+		hianyok=await hiany.GetHianyok(datum.ToShortDateString());
+		StateHasChanged();
+	}
+	public async Task Save()
+	{
+		foreach (var item in changed)
+		{
+			var response = await hiany.Update(item);
+			if (!response.IsSuccess)
+			{
+				message = response.ErrorMessage;
+			}
+		}
+		isSaved = true;
+	}
+	public async Task Delete(FeladatHiany _hiany)
+	{
+		if (await dialog.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a {_hiany.Name} lecke hiányát?", "Igen", "Nem"))
+		{
+			var response = await hiany.Remove(_hiany);
+			if (response.IsSuccess)
+			{
+				await dialog.DisplayAlert("Sikeres művelet", response.Content.ToString(), "Ok");
+				hianyok.Remove(_hiany);
+				StateHasChanged();
+			}
+		}
+	}
+	public void Send()
+	{
+		string data = datum.ToLongDateString()+": ";
+		foreach (var item in hianyok)
+		{
+			data = data + item.Name + System.Environment.NewLine;
+		}
+		var response=graph.SendMe(data).GetAwaiter().GetResult();
+		if (response)
+		{
+			dialog.DisplayAlert("Rendszer üzenet","Sikeres küldés.","Rendben");
+		}
+		else dialog.DisplayAlert("Rendszer üzenet","Sikertelen küldés.","Rendben");
+	}
+}

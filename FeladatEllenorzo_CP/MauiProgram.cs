@@ -58,6 +58,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 		builder.Services.AddSingleton<IGraphService, GraphService>();
 		builder.Services.AddSingleton<INavigationService, MauiNavigationService>();
+		builder.Services.AddSingleton<IHianyService, HianyService>();
+		builder.Services.AddSingleton<IHibaService, HibaService>();
+		builder.Services.AddSingleton<ISzovegService, SzovegService>();
 		builder.Services.AddSingleton<GlobalData>();
 		builder.Services.AddSingleton<IDialogService,DialogService>();
 		return builder;

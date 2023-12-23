@@ -5,6 +5,9 @@
 @inject NavigationManager navi
 @inject IDialogService dialog
 @inject IAlertService alert
+@inject IHibaService hibaService
+@inject IHianyService hianyService
+<div class="container">
 <div class="row">
 	<div class="col-1">
 		<button class="btn btn-toolbar" @onclick=Back>Vissza</button>
@@ -180,20 +183,29 @@
 			</textarea>
 		</div>
 		<div>
+                <div class="form-check form-switch">
+                    <label for="hibaLehet">Hibaként menteni: </label>
+					<input id="hibaLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiba @onclick="(()=>ChangeHiba())" />
+                </div>
+				<div class="form-check form-switch">
+                        <label for="hianyLehet">Hiányként menteni: </label>
+                    <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
+                </div>
 			<input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
 			<button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
 		</div>
 	</div>
-</div>
-@if (valasz is not null && valasz.Feedback is not null)
-{
-	<p>@valasz.Feedback.Text.Content</p>
-}
+    </div>
+	@if (valasz is not null && valasz.Feedback is not null)
+	{
+		<p>@valasz.Feedback.Text.Content</p>
+	}
 
-@if (pont is not null && pont.Points is not null)
-{
-	<p>@pont.Points.Points.Value pont</p>
-}
+	@if (pont is not null && pont.Points is not null)
+	{
+		<p>@pont.Points.Points.Value pont</p>
+	}
+</div>
 @code {
 	private EducationSubmissionResourceCollectionResponse feladatForrasok;
 	private List<EducationMediaResource> mediaResource = new();
@@ -205,7 +217,7 @@
 	private EducationFeedbackOutcome valasz;
 	private EducationPointsOutcome pont;
 	private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage=string.Empty;
-	private bool submitted = true,changed=false, changedValasz = false, changedPont=false,IsNotSaved=true,visibleNewText=true;
+	private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false,isHiany=false;
 	private int index = 0,i=0;
 	private float Pont=0;
 	protected override Task OnAfterRenderAsync(bool firstRender)
@@ -310,6 +322,7 @@
 			data.SubmissionId = data.Members[0].SubmissionId;
 			nev = data.Members[0].MemberName.Split(" ")[1];
 		}
+		data.Name = nev;
 		changed = false;
 		changedPont = false;
 		changedValasz = false;
@@ -421,6 +434,32 @@
 		{
 			response=await graph.UpdatePont(data.ClassId, data.AssignmentId, data.SubmissionId, pont.Id, Pont);
 		}
+		if (isHiba)
+		{
+			var res = await hibaService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Leiras = Valasz, Name = data.Name, Osztaly = data.Osztalynev });
+			isHiba = false;
+			if (res.IsSuccess)
+			{
+				await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+			}
+			else
+			{
+				await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
+			}
+		}
+		if (isHiany)
+		{
+			var res = await hianyService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Hianyzik=false, Name = data.Name, Osztaly = data.Osztalynev });
+			isHiany = false;
+			if (res.IsSuccess)
+			{
+				await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+			}
+			else
+			{
+				await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
+			}
+		}
 		if (!response)
 		{
 			await dialog.DisplayAlert("Hiba!", "A mentés nem sikerült!", "Rendben");
@@ -431,8 +470,6 @@
 			if (returned)
 			{
 				data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId).Status = "Visszaküldve";
-				//data.ReturnedMembers.Add(data.SubmissionId, data.Name);
-				//data.SubmittedMembers.Remove(data.SubmissionId);
 			}
 			Next();
 		}
@@ -455,5 +492,12 @@
 	{
 		navi.NavigateTo("szoveg/ell");
 	}
-
+	void ChangeHiba()
+	{
+		isHiba=isHiba ? false : true;
+	}
+	void ChangeHiany()
+	{
+		isHiany=isHiany ? false : true;
+	}
 }

@@ -3,6 +3,8 @@
 @using System.Text.Json;
 @inject GlobalData data
 @inject NavigationManager navi
+@inject ISzovegService szovegService
+@inject IAlertService alert
 <h3>ManageSzoveg</h3>
 <button @onclick=Save>Mentés</button>
 <button class="btn btn-close d-flex justify-content-end" @onclick=Close></button>
@@ -45,9 +47,19 @@
     {
         EditHiden = true;
     }
-    void Delete(DataSzoveg szoveg)
+    async void Delete(DataSzoveg szoveg)
     {
         data.Szovegek.Remove(szoveg);
+        var response=await szovegService.Remove(szoveg);
+        if (response.IsSuccess)
+        {
+            await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
+        }
+        else
+        {
+            await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+        }
+
         Save();
         StateHasChanged();
     }
