@@ -12,5 +12,9 @@ namespace FeladatEllenorzo_CP.Services
         {
             return Application.Current.MainPage.DisplayAlert(title, message, buttonLabel);
         }
-    }
+		public async Task<bool> DisplayConfirm(string title, string message, string accept, string cansel)
+		{
+			return await Application.Current.MainPage.DisplayAlert(title, message, accept, cansel);
+		}
+	}
 }

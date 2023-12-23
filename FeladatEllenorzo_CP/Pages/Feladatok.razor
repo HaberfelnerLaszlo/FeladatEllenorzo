@@ -4,7 +4,6 @@
 @inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
-@inject IDialogService dialog
 @inject IAlertService alert
 @inject IHianyService hiany
 <div class="row">
@@ -374,7 +373,7 @@
 				response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, item.SubmissionId, valasz.Id, Valasz_2);
 				if (!response)
 				{
-					await dialog.DisplayAlert("Hiba!", $"A válasz mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+					await alert.ShowAlertAsync("Hiba!", $"A válasz mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
 					isError = true;
 					break;
 				}
@@ -397,7 +396,7 @@
 				response = await graph.UpdatePont(data.ClassId, data.AssignmentId,item.SubmissionId, pont.Id, Pont);
 				if (!response)
 				{
-					await dialog.DisplayAlert("Hiba!", $"A pont mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+					await alert.ShowAlertAsync("Hiba!", $"A pont mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
 					isError = true;
 					break;
 				}
@@ -424,7 +423,8 @@
 		}
 		changed = false;
 		IsNotSaved = true;
-	}
+		UpdateCount(data.AssignmentId);
+	} 
 	private void Select(string mode)
 	{
 		switch (mode)

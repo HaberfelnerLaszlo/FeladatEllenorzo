@@ -62,7 +62,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IHibaService, HibaService>();
 		builder.Services.AddSingleton<ISzovegService, SzovegService>();
 		builder.Services.AddSingleton<GlobalData>();
-		builder.Services.AddSingleton<IDialogService,DialogService>();
 		return builder;
 	}
 }
