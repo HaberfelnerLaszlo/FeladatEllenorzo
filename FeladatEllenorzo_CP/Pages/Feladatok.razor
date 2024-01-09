@@ -350,7 +350,7 @@
 		{
 			changedValasz = true;
 			Valasz = args.Value.ToString();
-		} 
+		}
 	}
 	private async void Save()
 	{
@@ -380,7 +380,7 @@
 				var mainResponse=await hiany.Add(new() { Name = item.MemberName, Datum = DateOnly.FromDateTime(datumHiany), Osztaly=data.Osztalynev });
 				if (!mainResponse.IsSuccess)
 				{
-					await dialog.DisplayAlert("Hiba!", $"A hiba mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+					await alert.ShowAlertAsync( $"A hiba mentése {item.MemberName} tanulónál nem sikerült!", "Hiba!", "Rendben");
 					break;
 				}
 			}

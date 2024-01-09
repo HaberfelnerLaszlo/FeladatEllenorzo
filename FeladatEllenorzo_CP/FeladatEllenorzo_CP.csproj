@@ -12,10 +12,10 @@
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
 
         <!-- Display name -->
-        <ApplicationTitle>FeladatEllenorzo_CP</ApplicationTitle>
+        <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.feladatellenorzo_cp</ApplicationId>
+        <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
         <ApplicationIdGuid>91E31921-AD45-485A-A5E3-D1692C08A3BB</ApplicationIdGuid>
 
         <!-- Versions -->
@@ -32,7 +32,7 @@
         <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
         <PackageCertificateThumbprint>E91AC845907D9D7EF13FA52626A767D9308779DF</PackageCertificateThumbprint>
         <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-        <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+        <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
         <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
         <GenerateTestArtifacts>True</GenerateTestArtifacts>
         <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
@@ -40,44 +40,46 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-android|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
       <RunAOTCompilation>False</RunAOTCompilation>
+      <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-ios|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-maccatalyst|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net7.0-windows10.0.19041.0|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-android|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
       <RunAOTCompilation>False</RunAOTCompilation>
+      <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-ios|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-maccatalyst|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net7.0-windows10.0.19041.0|AnyCPU'">
       <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-      <ApplicationId>com.companyname.feladatellenorzo</ApplicationId>
+      <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -128,8 +130,9 @@
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.10.4" />
         <PackageReference Include="CommunityToolkit.Maui" Version="6.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components" Version="7.0.14" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Graph" Version="5.14.0" />
+        <PackageReference Include="Microsoft.Graph" Version="5.38.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="TimeZoneConverter" Version="6.1.0" />
     </ItemGroup>
