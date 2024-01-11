@@ -3,9 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FeladatEllenorzo_CP", "FeladatEllenorzo_CP\FeladatEllenorzo_CP.csproj", "{160BEA7C-8FE7-4CBB-AA30-6A914C44C1F6}"
-	ProjectSection(ProjectDependencies) = postProject
-		{983F847D-3740-47C0-83C0-D1761D8F73AC} = {983F847D-3740-47C0-83C0-D1761D8F73AC}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Data_Api", "Data_Api\Data_Api.csproj", "{983F847D-3740-47C0-83C0-D1761D8F73AC}"
 EndProject

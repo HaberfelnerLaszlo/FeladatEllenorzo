@@ -46,7 +46,7 @@ else
 		}
 	}
 	</ul>
-	<button class="btn btn-outline-primary" @onclick=Feladat_btn>Feladatok</button>
+	<button class="btn btn-outline-primary" @onclick=Feladat_btn disabled="@(String.IsNullOrEmpty(SelectedClassId))">Feladatok</button>
 	<button class="btn btn-outline-secondary" @onclick=Hiany_btn>Hiányzó feladat</button>
 	<button class="btn btn-outline-info" @onclick=Hiba_btn>Feladat hibák</button>
 

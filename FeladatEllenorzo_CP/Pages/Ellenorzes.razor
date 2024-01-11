@@ -1,109 +1,110 @@
 ﻿@page "/ell"
 @using FeladatEllenorzo_CP.Services;
+@using Microsoft.FluentUI.AspNetCore.Components
 @inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IAlertService alert
 @inject IHibaService hibaService
 @inject IHianyService hianyService
-<div class="container">
-<div class="row">
-	<div class="col-1">
-		<button class="btn btn-toolbar" @onclick=Back>Vissza</button>
-	</div>
-	<div class=" col-11">
-		@if (data.Members.Count > 0)
-		{
-			<select @onchange="(e)=>SelectedMember(e.Value)">
-				
-					<optgroup label="Beadta">
-					@{
-						i = 0;
-						@foreach (var item in data.Members.Where(m=>m.Status=="Beadva"))
-						{
+<FluentGrid Justify="JustifyContent.FlexStart">
+    <FluentGridItem xs="12" Justify="JustifyContent.FlexStart" Gap="10px">
+        <button class="btn btn-toolbar" @onclick=Back>Vissza</button>
+        @if (data.Members.Count > 0)
+        {
+            <select @onchange="(e)=>SelectedMember(e.Value)">
 
-							if (item.SubmissionId == data.SubmissionId)
-							{
-								submitted = true;
-								index = i;
-								<option value="@item.SubmissionId" selected>@item.MemberName</option>
-							}
-							else
-							{
-								<option value="@item.SubmissionId">@item.MemberName  (@i)</option>
-							}
-							i++;
-						}
-					}
-				</optgroup>
-					<optgroup label="Visszaküldve">
-						@foreach (var item in data.Members.Where(m=>m.Status=="Visszaküldve"))
-						{
+                <optgroup label="Beadta">
+                    @{
+                        i = 0;
+                        @foreach (var item in data.Members.Where(m => m.Status == "Beadva"))
+                        {
 
-							if (item.SubmissionId== data.SubmissionId)
-							{
-								submitted = false;
-								index = i;
-								<option value="@item.SubmissionId" selected>@item.MemberName</option>
-							}
-							else
-							{
-								<option value="@item.SubmissionId">@item.MemberName (@i)</option>
-							}
-							i++;
-						}
-					</optgroup>
-				<optgroup label="Többiek">
-					@foreach (var item in data.Members.Where(m => m.Status != "Visszaküldve" && m.Status!="Beadva"))
-					{
+                            if (item.SubmissionId == data.SubmissionId)
+                            {
+                                submitted = true;
+                                index = i;
+                                <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                            }
+                            else
+                            {
+                                <option value="@item.SubmissionId">@item.MemberName  (@i)</option>
+                            }
+                            i++;
+                        }
+                    }
+                </optgroup>
+                <optgroup label="Visszaküldve">
+                    @foreach (var item in data.Members.Where(m => m.Status == "Visszaküldve"))
+                    {
 
-						if (item.SubmissionId == data.SubmissionId)
-						{
-							index = i;
-							<option value="@item.SubmissionId" selected>@item.MemberName</option>
-						}
-						else
-						{
-							<option value="@item.SubmissionId">@item.MemberName (@i)</option>
-						}
-						i++;
-					}
-				</optgroup>
+                        if (item.SubmissionId == data.SubmissionId)
+                        {
+                            submitted = false;
+                            index = i;
+                            <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                        }
+                        else
+                        {
+                            <option value="@item.SubmissionId">@item.MemberName (@i)</option>
+                        }
+                        i++;
+                    }
+                </optgroup>
+                <optgroup label="Többiek">
+                    @foreach (var item in data.Members.Where(m => m.Status != "Visszaküldve" && m.Status != "Beadva"))
+                    {
 
-				}
-			</select>
-			<button @onclick="Next">Next</button>
-		}
-		<p>@DisplayMessage</p>
-	</div>
-</div>
-<div class="row">
-	<div class="col-8">
-		@if (url.Equals(string.Empty))
-		{
-			<p>Nincs beküldve ...</p>
-		}
-		else
-		{
-			<iframe width="800" height="600" src="@url"></iframe>
-		}
-	</div>
-	<div class=" col-4">
-		<div>
-			@if (mediaResource.Count > 0)
-			{
-				@foreach (var item in mediaResource)
-				{
-					<button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
-				}
-			}
-			@if (fileResource.Count>0)
-			{
-				@foreach (var item in fileResource)
-				{
-					<button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
-				}
-			}
+                        if (item.SubmissionId == data.SubmissionId)
+                        {
+                            index = i;
+                            <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                        }
+                        else
+                        {
+                            <option value="@item.SubmissionId">@item.MemberName (@i)</option>
+                        }
+                        i++;
+                    }
+                </optgroup>
+
+                }
+            </select>
+            <button @onclick="Next">Next</button>
+        }
+        <FluentLabel>
+            @DisplayMessage
+        </FluentLabel>
+    </FluentGridItem>
+    <FluentGridItem xs="12" md="8">
+        @if (url.Equals(string.Empty))
+        {
+            <p>Nincs beküldve ...</p>
+        }
+        else
+        {
+            @*<div class="container">
+                <iframe class="responsive-iframe" src="@url"></iframe>
+            </div>*@
+            <iframe width="100%" height="600" src="@url"></iframe>
+        }
+    </FluentGridItem>
+    <FluentGridItem xs="12" md="4">
+        <div>
+            @if (mediaResource.Count > 0)
+            {
+                @foreach (var item in mediaResource)
+                {
+                    <button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+                }
+            }
+            @if (fileResource.Count > 0)
+            {
+                @foreach (var item in fileResource)
+                {
+                    <button @onclick="()=>ShowImage(item.FileUrl)">@item.DisplayName</button>
+                }
+            }
             @if (excelResource.Count > 0)
             {
                 @foreach (var item in excelResource)
@@ -126,85 +127,75 @@
                 }
             }
         </div>
-		<div class="row">
-			<div class="col">
-				<ul style="list-style-type:none">
-					@foreach (var item in data.Szovegek.Where(s=>s.Type=="poz"))
-					{
-						if (item.Text.Length>15)
-						{
-							<li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0,15)</li>
-						}
-						else
-						{
-							<li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
-						}
-					}
-				</ul>
-			</div>
-			<div class="col">
-				<ul style="list-style-type:none">
-						@foreach (var item in data.Szovegek.Where(s=>s.Type=="neg"))
-						{
-							if (item.Text.Length > 15)
-							{
-									<li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0,15)</li>
-							}
-							else
-							{
-									<li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
-							}
-						}
-				</ul>
-			</div>
-		</div>
-		<div>
+        <div class="row">
+            <div class="col">
+                <ul style="list-style-type:none">
+                    @foreach (var item in data.Szovegek.Where(s => s.Type == "poz"))
+                    {
+                        if (item.Text.Length > 15)
+                        {
+                            <li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
+                        }
+                        else
+                        {
+                            <li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
+                        }
+                    }
+                </ul>
+            </div>
+            <div class="col">
+                <ul style="list-style-type:none">
+                    @foreach (var item in data.Szovegek.Where(s => s.Type == "neg"))
+                    {
+                        if (item.Text.Length > 15)
+                        {
+                            <li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
+                        }
+                        else
+                        {
+                            <li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+        <div>
             <button class="btn" @onclick=AddNewText>Új</button>
-			@if (data.Szovegek.Count > 0)
-			{
-				<button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
-			}
+            @if (data.Szovegek.Count > 0)
+            {
+                <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+            }
 
-		</div>
-		<div hidden="@visibleNewText">
-			<FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
-		</div>
-		<div>
-			<textarea rows="3"
-					  placeholder="Visszajelzés..."
-					  style="resize:vertical; width:100%; max-height:50%"
-					  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';" 
-					  @onchange=@((e) => Valtozas(false, e)) 
-					  value="@Valasz"
-					  lang="hu"
-					  spellcheck="false">
+        </div>
+        <div hidden="@visibleNewText">
+            <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
+        </div>
+        <div>
+            <textarea rows="3"
+                      placeholder="Visszajelzés..."
+                      style="resize:vertical; width:100%; max-height:50%"
+                      oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                      @onchange=@((e) => Valtozas(false, e))
+                      value="@Valasz"
+                      lang="hu"
+                      spellcheck="false">
 						@Valasz
 			</textarea>
-		</div>
-		<div>
-                <div class="form-check form-switch">
-                    <label for="hibaLehet">Hibaként menteni: </label>
-					<input id="hibaLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiba @onclick="(()=>ChangeHiba())" />
-                </div>
-				<div class="form-check form-switch">
-                        <label for="hianyLehet">Hiányként menteni: </label>
-                    <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
-                </div>
-			<input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
-			<button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
-		</div>
-	</div>
-    </div>
-	@if (valasz is not null && valasz.Feedback is not null)
-	{
-		<p>@valasz.Feedback.Text.Content</p>
-	}
-
-	@if (pont is not null && pont.Points is not null)
-	{
-		<p>@pont.Points.Points.Value pont</p>
-	}
-</div>
+        </div>
+        <div>
+            <div class="form-check form-switch">
+                <label for="hibaLehet">Hibaként menteni: </label>
+                <input id="hibaLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiba @onclick="(()=>ChangeHiba())" />
+            </div>
+            <div class="form-check form-switch">
+                <label for="hianyLehet">Hiányként menteni: </label>
+                <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
+            </div>
+            <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
+            <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
+        </div>
+    </FluentGridItem>
+</FluentGrid>
 @code {
 	private EducationSubmissionResourceCollectionResponse feladatForrasok;
 	private List<EducationMediaResource> mediaResource = new();

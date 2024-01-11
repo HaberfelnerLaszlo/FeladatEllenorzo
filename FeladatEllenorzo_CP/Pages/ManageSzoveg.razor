@@ -1,12 +1,14 @@
 ﻿@page "/szoveg"
 @page "/szoveg/{url}"
 @using System.Text.Json;
+@using Microsoft.FluentUI.AspNetCore.Components
 @inject GlobalData data
 @inject NavigationManager navi
 @inject ISzovegService szovegService
 @inject IAlertService alert
 <h3>ManageSzoveg</h3>
 <button @onclick=Save>Mentés</button>
+<FluentButton OnClick="@(() => Edit(new() { Text=string.Empty, Type="poz"}))">Új felvétele</FluentButton>
 <button class="btn btn-close d-flex justify-content-end" @onclick=Close></button>
 <table class="table table-sm table-striped" hidden="@(!EditHiden)">
     <thead>
