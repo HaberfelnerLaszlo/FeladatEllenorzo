@@ -6,7 +6,6 @@
 @using System.Text.Json;
 @using System.ComponentModel;
 @using System.Windows.Input;
-@* @inject GraphService_2 graph*@
 @inject IGraphService _graphService
 @inject GlobalData data
 @inject NavigationManager navi
@@ -14,6 +13,7 @@
 @inject IAuthenticationService auth
 @inject ISettingsService settingsService
 @inject IAlertService alert
+@inject Microsoft.FluentUI.AspNetCore.Components.IToastService toastService
 @inject ISzovegService szoveg
 
 @if (Me is null)
@@ -99,21 +99,22 @@ else
 	{
 		data.Szovegek = new List<DataSzoveg>()
 			{
-				new DataSzoveg(){ Type = "poz", Text = "tökéletes" },
+				new DataSzoveg(){ Type = "poz", Text = "tökéletes 👍" },
 				new DataSzoveg(){ Type = "poz", Text = "nagyon jó"},
-				new DataSzoveg(){ Type = "poz", Text = "rendben."},
-				new DataSzoveg(){ Type = "poz", Text = "rendben hibátlan"},
-				new DataSzoveg(){ Type = "poz", Text = "rendben majdnem hibátlan"},
+				new DataSzoveg(){ Type = "poz", Text = "rendben ✔️."},
+				new DataSzoveg(){ Type = "poz", Text = "rendben hibátlan 🥇"},
+				new DataSzoveg(){ Type = "poz", Text = "rendben majdnem hibátlan 🥈"},
 				new DataSzoveg(){ Type = "neg", Text = "hiányos feladat"},
 				new DataSzoveg(){ Type = "neg", Text = "feladat rész hiányzik"},
-				new DataSzoveg(){ Type = "neg", Text = "miért nincs kész a feladatod?"}
+				new DataSzoveg(){ Type = "neg", Text = "miért nincs feltöltve a kép a házi feladatodról⁉️"}
 		};
 		foreach (var item in data.Szovegek)
 		{
 			var response=await szoveg.Add(item);
 			if (response.IsSuccess)
 			{
-				await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
+				toastService.ShowInfo("Az üzenet mentve a szövegek közé.");
+				//await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
 			}
 			else
 			{
@@ -138,7 +139,8 @@ else
 				var response=await szoveg.Add(item);
 				if (response.IsSuccess)
 				{
-					await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
+					toastService.ShowInfo("Az üzenet mentve a szövegek közé.");
+					//await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
 				}
 				else
 				{

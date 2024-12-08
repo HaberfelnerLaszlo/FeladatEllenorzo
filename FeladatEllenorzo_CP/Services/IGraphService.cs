@@ -53,6 +53,7 @@ namespace FeladatEllenorzo_CP.Services
 		public Task<bool> UpdateValasz(string classId, string FeladatId, string BeadandoId, string outcomeId, string valasz);
 		public  Task<bool> UpdatePont(string classId, string FeladatId, string BeadandoId, string outcomeId, float pont);
 		public Task<bool> Return(string classId, string FeladatId, string BeadandoId);
-        public Task<bool> SendMe(string data);
+ 		public Task<bool> Excused(string classId, string FeladatId, string BeadandoId);
+       public Task<bool> SendMe(string data);
 	}
 }

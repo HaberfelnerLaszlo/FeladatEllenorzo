@@ -6,6 +6,7 @@
 @inject NavigationManager navi
 @inject ISzovegService szovegService
 @inject IAlertService alert
+@inject IToastService toastService
 <h3>ManageSzoveg</h3>
 <button @onclick=Save>Mentés</button>
 <FluentButton OnClick="@(() => Edit(new() { Text=string.Empty, Type="poz"}))">Új felvétele</FluentButton>
@@ -55,6 +56,7 @@
         var response=await szovegService.Remove(szoveg);
         if (response.IsSuccess)
         {
+            toastService.ShowInfo("A szöveg mentve az adatbázisba.");
             await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
         }
         else

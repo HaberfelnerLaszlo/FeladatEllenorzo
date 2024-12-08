@@ -5,6 +5,7 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IAlertService alert
+@inject IToastService toastService 
 @inject IHibaService hibaService
 @inject IHianyService hianyService
 <FluentGrid Justify="JustifyContent.FlexStart">
@@ -230,50 +231,51 @@
 		}
 		try
 		{
-		feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
-		foreach (var item in feladatForrasok.Value)
-		{
-			string fileUrl = string.Empty;
-			switch (item.Resource.GetType().Name)
+			feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
+			foreach (var item in feladatForrasok.Value)
 			{
-				case nameof(EducationMediaResource):
-					mediaResource.Add((EducationMediaResource)item.Resource);
-				fileUrl = mediaResource.FirstOrDefault().FileUrl;
-					break;
-				case nameof(EducationFileResource):
-					fileResource.Add((EducationFileResource)item.Resource);
-				fileUrl = fileResource.FirstOrDefault().FileUrl;
-					break;
-				case nameof(EducationExcelResource):
-					excelResource.Add((EducationExcelResource)item.Resource);
-				fileUrl = excelResource.FirstOrDefault().FileUrl;
-					break;
-				case nameof(EducationWordResource):
-					wordResource.Add((EducationWordResource)item.Resource);
-				fileUrl = wordResource.FirstOrDefault().FileUrl;
-					break;
-				case nameof(EducationPowerPointResource):
-					ppResource.Add((EducationPowerPointResource)item.Resource);
-				fileUrl = ppResource.FirstOrDefault().FileUrl;
-					break;
-				default:
-					break;
+				string fileUrl = string.Empty;
+				switch (item.Resource.GetType().Name)
+				{
+					case nameof(EducationMediaResource):
+						mediaResource.Add((EducationMediaResource)item.Resource);
+						fileUrl = mediaResource.FirstOrDefault().FileUrl;
+						break;
+					case nameof(EducationFileResource):
+						fileResource.Add((EducationFileResource)item.Resource);
+						fileUrl = fileResource.FirstOrDefault().FileUrl;
+						break;
+					case nameof(EducationExcelResource):
+						excelResource.Add((EducationExcelResource)item.Resource);
+						fileUrl = excelResource.FirstOrDefault().FileUrl;
+						break;
+					case nameof(EducationWordResource):
+						wordResource.Add((EducationWordResource)item.Resource);
+						fileUrl = wordResource.FirstOrDefault().FileUrl;
+						break;
+					case nameof(EducationPowerPointResource):
+						ppResource.Add((EducationPowerPointResource)item.Resource);
+						fileUrl = ppResource.FirstOrDefault().FileUrl;
+						break;
+					default:
+						break;
+				}
+				if (fileUrl.Length>0)
+				{
+					url = await GetUrl(fileUrl);
+					Pont = 2;
+					changedPont = true;
+				}
+				else
+				{
+					Pont = 0;
+					url = string.Empty;
+				}
 			}
-			if (fileUrl.Length>0)
+			feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
+			foreach (var item in feladatValaszok.Value)
 			{
-				url = await GetUrl(fileUrl);
-			}
-			else
-			{
-				url = string.Empty;
-			}
-		}
-		Pont = 2;
-		changedPont = true;
-		feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
-		foreach (var item in feladatValaszok.Value)
-		{
-			valasz = (EducationFeedbackOutcome)item;
+				valasz = (EducationFeedbackOutcome)item;
 			@if (valasz is not null && valasz.Feedback is not null)
 			{
 				Valasz = valasz.Feedback.Text.Content;
@@ -430,7 +432,8 @@
 			isHiba = false;
 			if (res.IsSuccess)
 			{
-				await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+				toastService.ShowInfo("Az üzenet mentve a hibákhoz.");
+				//await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
 			}
 			else
 			{
@@ -443,7 +446,8 @@
 			isHiany = false;
 			if (res.IsSuccess)
 			{
-				await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+				toastService.ShowInfo("Az tanuló mentve a lecke hiányhoz.");
+				//await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
 			}
 			else
 			{

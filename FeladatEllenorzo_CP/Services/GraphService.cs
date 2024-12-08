@@ -182,11 +182,12 @@ namespace FeladatEllenorzo_CP.Services
             {
                 config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "dueDateTime" };
                 config.QueryParameters.Expand = new[] { "*" };
+                config.Headers.Add("Prefer", "include-unknown-enum-members");
             });
         }
         public Task<EducationSubmissionCollectionResponse?> GetFeladat(string classId, string id)
         {
-            return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync();
+            return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((config)=>config.Headers.Add("Prefer", "include-unknown-enum-members"));
         }
         public Task<EducationSubmissionResourceCollectionResponse?> GetResourcesCount(string classId, string feladatid, string submissionId)
         {
@@ -272,6 +273,11 @@ namespace FeladatEllenorzo_CP.Services
         public async Task<bool> Return(string classId, string FeladatId, string BeadandoId)
         {
             var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Return.PostAsync();
+            return result is not null;
+        }
+        public async Task<bool> Excused (string classId, string FeladatId, string BeadandoId)
+        {
+            var result = await graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BeadandoId].Excuse.PostAsync();
             return result is not null;
         }
         public async Task<bool> SendMe(string data) 

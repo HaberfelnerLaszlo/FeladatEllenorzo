@@ -3,6 +3,7 @@
 @inject IHianyService hiany
 @inject IAlertService alert
 @inject IGraphService graph
+@inject Microsoft.FluentUI.AspNetCore.Components.IToastService toastService
 <div class="container">
     <div class="row">
         <div class="col-2 col-md-4">
@@ -110,7 +111,8 @@
             var response = await hiany.Remove(_hiany);
             if (response.IsSuccess)
             {
-                await alert.ShowAlertAsync( response.Content.ToString(), "Sikeres művelet", "Ok");
+                toastService.ShowInfo("A szöveg törlésre került.");
+                //await alert.ShowAlertAsync( response.Content.ToString(), "Sikeres művelet", "Ok");
                 hianyok.Remove(_hiany);
                 StateHasChanged();
             }
@@ -126,7 +128,8 @@
         var response = graph.SendMe(data).GetAwaiter().GetResult();
         if (response)
         {
-            alert.ShowAlertAsync( "Sikeres küldés.", "Rendszer üzenet", "Rendben");
+            toastService.ShowSuccess("Az üzenet mentése sikerült.");
+            //alert.ShowAlertAsync( "Sikeres küldés.", "Rendszer üzenet", "Rendben");
         }
         else alert.ShowAlertAsync( "Sikertelen küldés.", "Rendszer üzenet", "Rendben");
     }

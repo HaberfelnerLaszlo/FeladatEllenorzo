@@ -192,6 +192,7 @@
                             <FluentStack Orientation="Orientation.Horizontal">
                                 <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> <span>pont</span> <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
                                 <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
+                                <button class="btn btn-secondary" @onclick="Exused">Felmetve</button>
                             </FluentStack>
                         }
                     </FluentStack>
@@ -291,26 +292,66 @@
                 foreach (var item in submissions.Value)
                 {
                     var count = await graph.GetResourcesCount(Id, data.AssignmentId, item.Id);
-                    if (item.Status == EducationSubmissionStatus.Submitted)
+                    switch (item.Status)
                     {
-                        var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
-                        member.Status = "Beadva";
-                        member.SubmissionId = item.Id;
-                        member.ResourceCount = (int)count.OdataCount;
-                    }
-                    else if (item.Status == EducationSubmissionStatus.Returned)
-                    {
-                        var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
-                        member.Status = "Visszaküldve";
-                        member.SubmissionId = item.Id;
-                        member.ResourceCount = (int)count.OdataCount;
-                    }
-                    else if (item.Status == EducationSubmissionStatus.Working)
-                    {
-                        var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
-                        member.Status = (int)count.OdataCount > 0 ? "Beadva" : "Megtekintve";
-                        member.SubmissionId = item.Id;
-                        member.ResourceCount = (int)count.OdataCount;
+                        case EducationSubmissionStatus.Working:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = (int)count.OdataCount > 0 ? "Beadva" : "Megtekintve";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.Submitted:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Beadva";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.Released:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Újra_released";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.Returned:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Visszaküldve";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.UnknownFutureValue:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Ismeretlen";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.Reassigned:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Újra";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        case EducationSubmissionStatus.Excused:
+                            {
+                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                member.Status = "Felmentve";
+                                member.SubmissionId = item.Id;
+                                member.ResourceCount = (int)count.OdataCount;
+                            }
+                            break;
+                        default:
+                            break;
                     }
                 }
                 data.Members = data.Members.OrderBy(m => m.Status).ToList();
@@ -460,6 +501,31 @@
         IsNotSaved = true;
         UpdateCount(data.AssignmentId);
     }
+    private async void Exused()
+    {
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
+        {
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return;
+        }
+        var response = false;
+        saveError.Clear();
+        foreach (var item in SelectedMembers)
+        {
+            var resp=await graph.Excused(data.ClassId, data.AssignmentId, item.SubmissionId);
+            if (!resp)
+            {
+                await alert.ShowAlertAsync("Nemsikerült a mentés! Próbálja újra!", "Mentési hiba", "Rendben");
+                return;
+            }
+            var m = data.Members.First(m => m.MemberId == item.MemberId);
+            m.Selected = false;
+            m.Status = "Visszaküldve";
+            i--;
+            StateHasChanged();
+        }
+    }
     private void Select(string mode)
     {
         switch (mode)
@@ -472,6 +538,9 @@
                         SelectedMembers.Add(m);
                         i++;
                     });
+                    Valasz = "nem töltötted fel a házi feladatról a képet !?";
+                    changedValasz = true;
+                    changed = true;
                     disableWorking = true;
                 }
                 break;
@@ -483,6 +552,11 @@
                         SelectedMembers.Add(m);
                         i++;
                     });
+                    Valasz = "rendben ✔️";
+                    changedValasz = true;
+                    Pont = 2;
+                    changedPont = true;
+                    changed = true;
                     disableSubmitted = true;
                 }
                 break;
@@ -513,6 +587,7 @@
     void ChangeHiany()
     {
         isHiany = isHiany ? false : true;
+        changed = isHiany;
     }
 
 }
