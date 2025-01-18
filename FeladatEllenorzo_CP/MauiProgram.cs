@@ -6,7 +6,7 @@ using System.Reflection;
 using FeladatEllenorzo_CP.Services;
 using CommunityToolkit.Maui;
 using Microsoft.FluentUI.AspNetCore.Components;
-
+using Microsoft.Maui;
 namespace FeladatEllenorzo_CP;
 
 public static class MauiProgram
@@ -24,7 +24,7 @@ public static class MauiProgram
 			.AddAppSettings()
 			.RegisterAppServices();
 
-		builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddFluentUIComponents();
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

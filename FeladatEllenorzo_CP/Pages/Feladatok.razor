@@ -93,7 +93,7 @@
                     <FluentButton BackgroundColor="gray" OnClick="@(() => Select("Submitted"))" Disabled="@disableSubmitted">Beadottak</FluentButton>
                     <FluentButton BackgroundColor="lightgreen" OnClick="@(() => Select("None"))" Disabled="@disableNone">Nem tekintették meg</FluentButton>
                 </FluentStack>
-                <FluentStack>
+                <FluentStack HorizontalGap="20">
                     <FluentStack>
                         <ul class="list-group">
                             @foreach (var item in data.Members)
@@ -191,12 +191,14 @@
             </textarea>
                             <FluentStack Orientation="Orientation.Horizontal">
                                 <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> <span>pont</span> <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
+                            </FluentStack>
+                            <FluentStack Orientation="Orientation.Horizontal">
                                 <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
                                 <button class="btn btn-secondary" @onclick="Exused">Felmetve</button>
                             </FluentStack>
                         }
                     </FluentStack>
-                </FluentStack>
+                        </FluentStack>
             }
         </FluentStack>
     </FluentGridItem>
@@ -230,6 +232,7 @@
         {
             feladatok = await graph.GetFeladatok(Id);
             data.AssignmentId = feladatok.Value[0].Id;
+            var utasitas = feladatok.Value[0].Instructions.Content;
             await GetCount();
         }
         else UpdateCount(data.AssignmentId);
