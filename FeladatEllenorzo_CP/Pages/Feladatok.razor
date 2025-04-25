@@ -7,6 +7,8 @@
 @inject NavigationManager navi
 @inject IAlertService alert
 @inject IHianyService hiany
+@inject List<Tanulo> tanulok
+
 <FluentGrid Justify="JustifyContent.FlexStart"
             Style="background-color: var(--neutral-layer-3);">
     <FluentGridItem xs="12">
@@ -116,7 +118,7 @@
                                 <li class="list-group-item" style="background-color:@hatter">
                                     <FluentStack Orientation="Orientation.Horizontal">
                                         <input class="form-check-input" type="checkbox" checked="@item.Selected" @onclick="() => ItemSelectChange(item)" />
-                                        <span>@item.MemberName</span>
+                                        <span>@item.Name</span>
                                         <FluentStack HorizontalAlignment="HorizontalAlignment.End">
                                             <button type="button" @onclick="() => SelectedFeladatEll(item)">@item.Status</button>
                                             <span class="badge bg-primary rounded-pill">@item.ResourceCount</span>
@@ -130,11 +132,12 @@
                         @if (i > 0)
                         {
                             <FluentLabel Weight="FontWeight.Bolder">Kijelölve @i tanuló</FluentLabel>
-                            <div class="form-check form-switch">
-                                <label for="hianyLehet">Hiányként menteni </label>
-                                <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
-                            </div>
-
+                            <FluentSwitch Value="isHiany" Label=" Hiányként menteni" @onclick="(()=>ChangeHiany())" />
+                            @*<div class="form-check form-switch">
+                <label for="hianyLehet">Hiányként menteni </label>
+                <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
+            </div>*@
+                            @*<FluentDatePicker @bind-Value="@(datumHiany)" Label="Könyvelés dátuma" />*@
                             <FluentLabel>Könyvelés dátuma:</FluentLabel>
                             <input type="datetime" @bind-value="@(datumHiany)" />
                             <FluentStack Orientation="Orientation.Horizontal">
@@ -232,7 +235,7 @@
         {
             feladatok = await graph.GetFeladatok(Id);
             data.AssignmentId = feladatok.Value[0].Id;
-            var utasitas = feladatok.Value[0].Instructions.Content;
+            var utasitas = feladatok.Value[0].Instructions?.Content?? string.Empty;
             await GetCount();
         }
         else UpdateCount(data.AssignmentId);
@@ -243,7 +246,8 @@
             {
                 if (item.PrimaryRole != EducationUserRole.Teacher)
                 {
-                    data.Members.Add(new() { MemberId = item.Id, MemberName = item.DisplayName });
+                    data.Members.Add(new() { Id = Guid.Parse(item.Id), Name = item.DisplayName });
+                    //TODO: Később a tanulók adatait is le kell kérni a feladatokhoz
                 }
             }
         }
@@ -299,7 +303,7 @@
                     {
                         case EducationSubmissionStatus.Working:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = (int)count.OdataCount > 0 ? "Beadva" : "Megtekintve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -307,7 +311,7 @@
                             break;
                         case EducationSubmissionStatus.Submitted:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Beadva";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -315,7 +319,7 @@
                             break;
                         case EducationSubmissionStatus.Released:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Újra_released";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -323,7 +327,7 @@
                             break;
                         case EducationSubmissionStatus.Returned:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Visszaküldve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -331,7 +335,7 @@
                             break;
                         case EducationSubmissionStatus.UnknownFutureValue:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Ismeretlen";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -339,7 +343,7 @@
                             break;
                         case EducationSubmissionStatus.Reassigned:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Újra";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -347,7 +351,7 @@
                             break;
                         case EducationSubmissionStatus.Excused:
                             {
-                                var member = data.Members.Find(m => m.MemberId == item.SubmittedBy.User.Id);
+                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Felmentve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -376,9 +380,17 @@
     }
     private void SelectedFeladatEll(MemberData item)
     {
-        data.SubmissionId = item.SubmissionId;
-        data.Name = item.MemberName;
-        navi.NavigateTo("ell");
+        try
+        {
+            data.SubmissionId = item.SubmissionId;
+            data.Name = item.Name;
+            data.StudentId = item.Id;
+            navi.NavigateTo("ell");
+        }
+        catch (Exception e)
+        {
+            alert.ShowAlertAsync(e.Message, "Kivétel történt", "Ok");
+        }
     }
     private void ItemSelectChange(MemberData item)
     {
@@ -447,19 +459,19 @@
             foreach (var v in feladatValaszok.Value)
             {
                 valasz = (EducationFeedbackOutcome)v;
-                var Valasz_2 = (valasz is not null && valasz.Feedback is not null) ? valasz.Feedback.Text.Content : "Kedves " + item.MemberName.Split(" ")[1] + " " + Valasz;
+                var Valasz_2 = (valasz is not null && valasz.Feedback is not null) ? valasz.Feedback.Text.Content : "Kedves " + item.Name.Split(" ")[1] + " " + Valasz;
 
                 response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, item.SubmissionId, valasz.Id, Valasz_2);
                 if (!response)
                 {
-                    await alert.ShowAlertAsync("Hiba!", $"A válasz mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+                    await alert.ShowAlertAsync("Hiba!", $"A válasz mentése {item.Name} tanulónál nem sikerült!", "Rendben");
                     isError = true;
                     break;
                 }
-                var mainResponse = await hiany.Add(new() { Name = item.MemberName, Datum = DateOnly.FromDateTime(datumHiany), Osztaly = data.Osztalynev });
+                var mainResponse = await hiany.Add(new() { TanuloId= item.Id, FeladatId= Guid.Parse(data.AssignmentId), Datum = DateOnly.FromDateTime(datumHiany), Osztaly = data.Osztalynev });
                 if (!mainResponse.IsSuccess)
                 {
-                    await alert.ShowAlertAsync($"A hiba mentése {item.MemberName} tanulónál nem sikerült!", "Hiba!", "Rendben");
+                    await alert.ShowAlertAsync($"A hiba mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
                     break;
                 }
             }
@@ -475,7 +487,7 @@
                 response = await graph.UpdatePont(data.ClassId, data.AssignmentId, item.SubmissionId, pont.Id, Pont);
                 if (!response)
                 {
-                    await alert.ShowAlertAsync("Hiba!", $"A pont mentése {item.MemberName} tanulónál nem sikerült!", "Rendben");
+                    await alert.ShowAlertAsync("Hiba!", $"A pont mentése {item.Name} tanulónál nem sikerült!", "Rendben");
                     isError = true;
                     break;
                 }
@@ -488,7 +500,7 @@
             else
             {
                 await graph.Return(data.ClassId, data.AssignmentId, item.SubmissionId);
-                var m = data.Members.First(m => m.MemberId == item.MemberId);
+                var m = data.Members.First(m => m.Id == item.Id);
                 m.Selected = false;
                 m.Status = "Visszaküldve";
                 i--;
@@ -519,10 +531,10 @@
             var resp=await graph.Excused(data.ClassId, data.AssignmentId, item.SubmissionId);
             if (!resp)
             {
-                await alert.ShowAlertAsync("Nemsikerült a mentés! Próbálja újra!", "Mentési hiba", "Rendben");
+                await alert.ShowAlertAsync("Nem sikerült a mentés! Próbálja újra!", "Mentési hiba", "Rendben");
                 return;
             }
-            var m = data.Members.First(m => m.MemberId == item.MemberId);
+            var m = data.Members.First(m => m.Id == item.Id);
             m.Selected = false;
             m.Status = "Visszaküldve";
             i--;
@@ -543,6 +555,8 @@
                     });
                     Valasz = "nem töltötted fel a házi feladatról a képet !?";
                     changedValasz = true;
+                    Pont = 0;
+                    changedPont = true;
                     changed = true;
                     disableWorking = true;
                 }

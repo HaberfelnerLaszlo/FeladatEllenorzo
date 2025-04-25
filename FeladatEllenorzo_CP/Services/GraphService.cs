@@ -6,9 +6,6 @@ using Azure.Identity;
 using Microsoft.Graph;
 using Microsoft.Graph.Drives.Item.Items.Item.Preview;
 using Microsoft.Graph.Models;
-using Microsoft.Kiota.Abstractions;
-
-using System.Runtime;
 
 using TimeZoneConverter;
 
@@ -16,13 +13,13 @@ namespace FeladatEllenorzo_CP.Services
 {
 	public class GraphService : IGraphService
     {
-        private IAuthenticationService _authenticationService;
+        private readonly IAuthenticationService _authenticationService;
 
         private User _user;
         private Stream _userPhoto;
         private TimeZoneInfo _userTimeZone;
         // App-ony auth token credential
-        private static ClientSecretCredential? _clientSecretCredential;
+        private static ClientSecretCredential _clientSecretCredential;
         // Client configured with app-only authentication
         private static GraphServiceClient? _appClient;
         static GraphServiceClient graphClient;
@@ -160,14 +157,14 @@ namespace FeladatEllenorzo_CP.Services
             }
             return _userTimeZone;
         }
-        public Task<EducationClassCollectionResponse?> GetTaughtClasses(string id)
+        public Task<EducationClassCollectionResponse> GetTaughtClasses(string id)
         {
             return graphClient.Education.Me.TaughtClasses.GetAsync((config) =>
             {
             		config.QueryParameters.Select = new[] { "displayName", "id" };
             });
         }
-        public Task<EducationUserCollectionResponse?> GetMembers(string id)
+        public Task<EducationUserCollectionResponse> GetMembers(string id)
         {
              return graphClient.Education.Classes[id].Members.GetAsync(
                (config) =>
@@ -176,24 +173,24 @@ namespace FeladatEllenorzo_CP.Services
                 }
             );
         }
-        public Task<EducationAssignmentCollectionResponse?> GetFeladatok(string id)
+        public Task<EducationAssignmentCollectionResponse> GetFeladatok(string id)
         {
             return graphClient.Education.Classes[id].Assignments.GetAsync((config) =>
             {
-                config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "dueDateTime" };
+                config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "dueDateTime","instructions" };
                 config.QueryParameters.Expand = new[] { "*" };
                 config.Headers.Add("Prefer", "include-unknown-enum-members");
             });
         }
-        public Task<EducationSubmissionCollectionResponse?> GetFeladat(string classId, string id)
+        public Task<EducationSubmissionCollectionResponse> GetFeladat(string classId, string id)
         {
             return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((config)=>config.Headers.Add("Prefer", "include-unknown-enum-members"));
         }
-        public Task<EducationSubmissionResourceCollectionResponse?> GetResourcesCount(string classId, string feladatid, string submissionId)
+        public Task<EducationSubmissionResourceCollectionResponse> GetResourcesCount(string classId, string feladatid, string submissionId)
         {
             return graphClient.Education.Classes[classId].Assignments[feladatid].Submissions[submissionId].Resources.GetAsync((config) => config.QueryParameters.Count = true);
         }
-        public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id)
+        public Task<EducationSubmissionCollectionResponse> GetSubmittedFeladat(string classId, string id)
         {
             return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
             {
@@ -201,7 +198,7 @@ namespace FeladatEllenorzo_CP.Services
                 requestConfiguration.QueryParameters.Count = true;
             });
         }
-        public Task<EducationSubmissionCollectionResponse?> GetWorkingFeladat(string classId, string id)
+        public Task<EducationSubmissionCollectionResponse> GetWorkingFeladat(string classId, string id)
         {
             return graphClient.Education.Classes[classId].Assignments[id].Submissions.GetAsync((requestConfiguration) =>
             {
@@ -209,25 +206,25 @@ namespace FeladatEllenorzo_CP.Services
                 requestConfiguration.QueryParameters.Count = true;
             });
         }
-        public Task<EducationSubmissionResourceCollectionResponse?> GetFeladatForras(string classId, string FeladatId, string BedandoId)
+        public Task<EducationSubmissionResourceCollectionResponse> GetFeladatForras(string classId, string FeladatId, string BedandoId)
         {
             return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Resources.GetAsync();
         }
-        public Task<EducationOutcomeCollectionResponse?> GetFeladatValasz(string classId, string FeladatId, string BedandoId)
+        public Task<EducationOutcomeCollectionResponse> GetFeladatValasz(string classId, string FeladatId, string BedandoId)
         {
             return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "isof('microsoft.graph.educationFeedbackOutcome')";
             });
         }
-        public Task<EducationOutcomeCollectionResponse?> GetFeladatPont(string classId, string FeladatId, string BedandoId)
+        public Task<EducationOutcomeCollectionResponse> GetFeladatPont(string classId, string FeladatId, string BedandoId)
         {
             return graphClient.Education.Classes[classId].Assignments[FeladatId].Submissions[BedandoId].Outcomes.GetAsync((requestConfiguration) =>
             {
                 requestConfiguration.QueryParameters.Filter = "isof('microsoft.graph.educationPointsOutcome')";
             });
         }
-        public Task<ItemPreviewInfo?> GetFile(string driveId, string itemId)
+        public Task<ItemPreviewInfo> GetFile(string driveId, string itemId)
         {
             PreviewPostRequestBody body = new PreviewPostRequestBody();
             return graphClient.Drives[driveId].Items[itemId].Preview.PostAsync(body);
@@ -253,6 +250,7 @@ namespace FeladatEllenorzo_CP.Services
             }
             catch (Exception e)
             {
+                await Console.Out.WriteLineAsync(e.Message);
                 throw;
             }
         }

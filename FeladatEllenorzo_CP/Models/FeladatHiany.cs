@@ -6,8 +6,10 @@ namespace FeladatEllenorzo_CP.Models
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
+        public Guid TanuloId { get; set; }
         public string Osztaly { get; set; }
+        public Guid FeladatId { get; set; }
+
         public DateOnly Datum { get; set; }
         public bool Hianyzik { get; set; }
     }

@@ -43,9 +43,9 @@ namespace FeladatEllenorzo_CP.Services
 			return returnResponse;
 		}
 
-		public async Task<List<FeladatHiany>> GetHianyok(string datum)
+		public async Task<List<Tanulo>> GetHianyok(string datum)
 		{
-			var returnResponse = new List<FeladatHiany>();
+			var returnResponse = new List<Tanulo>();
 			try
 			{
 				using (var client = new HttpClient())
@@ -60,7 +60,7 @@ namespace FeladatEllenorzo_CP.Services
 
 						if (deserilizeResponse.IsSuccess)
 						{
-							returnResponse = JsonConvert.DeserializeObject<List<FeladatHiany>>(deserilizeResponse.Content.ToString());
+							returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
 						}
 					}
 				}
@@ -72,9 +72,9 @@ namespace FeladatEllenorzo_CP.Services
 			return returnResponse;
 		}
 
-		public async Task<List<FeladatHiany>> GetMaiHiany()
+		public async Task<List<Tanulo>> GetMaiHiany()
 		{
-			var returnResponse = new List<FeladatHiany>();
+			var returnResponse = new List<Tanulo>();
 			try
 			{
 				using (var client = new HttpClient())
@@ -89,7 +89,7 @@ namespace FeladatEllenorzo_CP.Services
 
 						if (deserilizeResponse.IsSuccess)
 						{
-							returnResponse = JsonConvert.DeserializeObject<List<FeladatHiany>>(deserilizeResponse.Content.ToString());
+							returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
 						}
 					}
 				}

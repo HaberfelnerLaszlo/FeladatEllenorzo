@@ -1,38 +1,38 @@
-﻿using Microsoft.Extensions.Logging;
-using FeladatEllenorzo_CP.Data;
+﻿using FeladatEllenorzo_CP.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using System.Reflection;
 using FeladatEllenorzo_CP.Services;
 using CommunityToolkit.Maui;
 using Microsoft.FluentUI.AspNetCore.Components;
-using Microsoft.Maui;
 namespace FeladatEllenorzo_CP;
 
 public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
-	{
-		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
-			.UseMauiCommunityToolkit()
-			.ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-			})
-			.AddAppSettings()
-			.RegisterAppServices();
+    {
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+            })
+            .AddAppSettings()
+            .RegisterAppServices();
 
         builder.Services.AddMauiBlazorWebView();
-		builder.Services.AddFluentUIComponents();
+        builder.Services.AddFluentUIComponents();
+
 #if DEBUG
-		builder.Services.AddBlazorWebViewDeveloperTools();
-		builder.Logging.AddDebug();
+        builder.Services.AddBlazorWebViewDeveloperTools();
+        //builder.Logging.AddDebug();
 #endif
-		return builder.Build();
-	}
-	private static MauiAppBuilder AddAppSettings(this MauiAppBuilder builder)
+        return builder.Build();
+    }
+
+    private static MauiAppBuilder AddAppSettings(this MauiAppBuilder builder)
 	{
 #if ANDROID
 		var assembly = typeof(App).GetTypeInfo().Assembly;

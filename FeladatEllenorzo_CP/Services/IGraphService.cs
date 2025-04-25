@@ -38,18 +38,18 @@ namespace FeladatEllenorzo_CP.Services
         /// Create an event on the authenticated user's calendar
         /// </summary>
         public Task CreateEventAsync(Event newEvent);
-        public Task<EducationClassCollectionResponse?> GetTaughtClasses(string id);
+        public Task<EducationClassCollectionResponse> GetTaughtClasses(string id);
         public void InitializeGraphForAppOnlyAuth(ISettingsService settings);
-        public Task<EducationUserCollectionResponse?> GetMembers(string id);
-        public Task<EducationAssignmentCollectionResponse?> GetFeladatok(string id);
-		public Task<EducationSubmissionCollectionResponse?> GetFeladat(string classId, string id);
-		public Task<EducationSubmissionResourceCollectionResponse?> GetResourcesCount(string classId, string feladatid, string submissionId);
-		public Task<EducationSubmissionCollectionResponse?> GetSubmittedFeladat(string classId, string id);
-		public Task<EducationSubmissionCollectionResponse?> GetWorkingFeladat(string classId, string id);
-		public Task<EducationSubmissionResourceCollectionResponse?> GetFeladatForras(string classId, string FeladatId, string BedandoId);
-		public Task<EducationOutcomeCollectionResponse?> GetFeladatValasz(string classId, string FeladatId, string BedandoId);
-		public Task<EducationOutcomeCollectionResponse?> GetFeladatPont(string classId, string FeladatId, string BedandoId);
-		public Task<ItemPreviewInfo?> GetFile(string driveId, string itemId);
+        public Task<EducationUserCollectionResponse> GetMembers(string id);
+        public Task<EducationAssignmentCollectionResponse> GetFeladatok(string id);
+		public Task<EducationSubmissionCollectionResponse> GetFeladat(string classId, string id);
+		public Task<EducationSubmissionResourceCollectionResponse> GetResourcesCount(string classId, string feladatid, string submissionId);
+		public Task<EducationSubmissionCollectionResponse> GetSubmittedFeladat(string classId, string id);
+		public Task<EducationSubmissionCollectionResponse> GetWorkingFeladat(string classId, string id);
+		public Task<EducationSubmissionResourceCollectionResponse> GetFeladatForras(string classId, string FeladatId, string BedandoId);
+		public Task<EducationOutcomeCollectionResponse> GetFeladatValasz(string classId, string FeladatId, string BedandoId);
+		public Task<EducationOutcomeCollectionResponse> GetFeladatPont(string classId, string FeladatId, string BedandoId);
+		public Task<ItemPreviewInfo> GetFile(string driveId, string itemId);
 		public Task<bool> UpdateValasz(string classId, string FeladatId, string BeadandoId, string outcomeId, string valasz);
 		public  Task<bool> UpdatePont(string classId, string FeladatId, string BeadandoId, string outcomeId, float pont);
 		public Task<bool> Return(string classId, string FeladatId, string BeadandoId);

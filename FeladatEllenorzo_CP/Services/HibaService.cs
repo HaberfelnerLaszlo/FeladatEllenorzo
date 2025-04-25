@@ -1,4 +1,5 @@
 ﻿using FeladatEllenorzo_CP.Models;
+using FeladatEllenorzo_CP.Pages;
 
 using Newtonsoft.Json;
 
@@ -41,14 +42,15 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
+				returnResponse.IsSuccess = false;
+                returnResponse.ErrorMessage = ex.Message;
 			}
 			return returnResponse;
 		}
 
-		public async Task<List<HibasFeladat>> GetHibak(string datum)
+		public async Task<List<Tanulo>> GetHibak(string datum)
 		{
-			var returnResponse = new List<HibasFeladat>();
+			var returnResponse = new List<Tanulo>();
 			try
 			{
 				using (var client = new HttpClient())
@@ -63,7 +65,7 @@ namespace FeladatEllenorzo_CP.Services
 
 						if (deserilizeResponse.IsSuccess)
 						{
-							returnResponse = JsonConvert.DeserializeObject<List<HibasFeladat>>(deserilizeResponse.Content.ToString());
+							returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
 						}
 					}
 				}
@@ -74,9 +76,9 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			return returnResponse;
 		}
-	public async Task<List<HibasFeladat>> GetMaiHibak()
+	public async Task<List<Tanulo>> GetMaiHibak()
 		{
-			var returnResponse = new List<HibasFeladat>();
+			var returnResponse = new List<Tanulo>();
 			try
 			{
 				using (var client = new HttpClient())
@@ -91,7 +93,7 @@ namespace FeladatEllenorzo_CP.Services
 
 						if (deserilizeResponse.IsSuccess)
 						{
-							returnResponse = JsonConvert.DeserializeObject<List<HibasFeladat>>(deserilizeResponse.Content.ToString());
+							returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
 						}
 					}
 				}
@@ -128,9 +130,10 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
-			}
-			return returnResponse;
+                returnResponse.IsSuccess = false;
+                returnResponse.ErrorMessage = ex.Message;
+            }
+            return returnResponse;
 		}
 
 		public async Task<MainResponse> RemoveAll()
@@ -156,11 +159,43 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
-			}
-			return returnResponse;
+                returnResponse.IsSuccess = false;
+                returnResponse.ErrorMessage = ex.Message;
+            }
+            return returnResponse;
 		}
-		public async Task<MainResponse> Update(HibasFeladat hiba)
+
+        public async Task<MainResponse> RemoveClass(string osztaly, string date)
+        {
+            var returnResponse = new MainResponse();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    string url = $"{_baseUrl}/classhiba/{osztaly}/{date}";
+
+
+                    var request = new HttpRequestMessage();
+                    request.Method = HttpMethod.Delete;
+                    request.RequestUri = new Uri(url);
+                    var apiResponse = await client.SendAsync(request);
+
+                    if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        var response = await apiResponse.Content.ReadAsStringAsync();
+                        returnResponse = JsonConvert.DeserializeObject<MainResponse>(response);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                returnResponse.IsSuccess = false;
+                returnResponse.ErrorMessage = ex.Message;
+            }
+            return returnResponse;
+        }
+
+        public async Task<MainResponse> Update(HibasFeladat hiba)
 		{
 			var returnResponse = new MainResponse();
 			try
@@ -182,9 +217,10 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
-			}
-			return returnResponse;
+                returnResponse.IsSuccess = false;
+                returnResponse.ErrorMessage = ex.Message;
+            }
+            return returnResponse;
 		}
 	}
 }

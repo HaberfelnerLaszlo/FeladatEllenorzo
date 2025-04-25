@@ -48,12 +48,24 @@
                         {
                             <tr>
                                 <td>@item.Name</td>
-                                <td>
-                                    @item.Leiras
-                                </td>
-                                <td>
-                                    <button class="btn-sm" @onclick="(()=>Delete(item))">Törlés</button>
-                                </td>
+                                @if (item.Hibak.Count > 0)
+                                {
+                                    <ul>
+                                        @foreach (var hiba in item.Hibak)
+                                        {
+                                        <td>
+                                            <li>@hiba.Leiras</li>
+                                        </td>
+                                        <td>
+                                            <button class="btn-sm" @onclick="(()=>Delete(item, hiba))">Törlés</button>
+                                        </td>
+                                    }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <td colspan="2">Nincs hiábás leckéje</td>
+                                    }
                             </tr>
                         }
                     }
@@ -63,7 +75,7 @@
     }
 </div>
 @code {
-    List<HibasFeladat> hibak = new();
+    List<Tanulo> hibak = new();
     List<HibasFeladat> changed = new();
     string[] osztalyok;
     string message = string.Empty;
@@ -101,15 +113,15 @@
         }
         isSaved = true;
     }
-    async Task Delete(HibasFeladat item)
+    async Task Delete(Tanulo tanulo, HibasFeladat item)
     {
-        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a {item.Name} lecke hiányát?", "Igen", "Nem"))
+        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a {tanulo.Name} lecke hiányát?", "Igen", "Nem"))
         {
             var response = await hiba.Remove(item);
             if (response.IsSuccess)
             {
                 await alert.ShowAlertAsync(response.Content.ToString(), "Sikeres művelet", "Ok");
-                hibak.Remove(item);
+                hibak.FirstOrDefault(t=>t.Id==tanulo.Id).Hibak.Remove(item);
                 StateHasChanged();
             }
         }
@@ -132,10 +144,6 @@
     {
         var response = await hiba.RemoveAll();
 
-        foreach (var item in hibak.Where(h => h.Datum.CompareTo(DateOnly.FromDateTime(DateTime.Today.AddMonths(-1))) < 0))
-        {
-            hibak.Remove(item);
-        }
         if (response.IsSuccess)
         {
             await alert.ShowAlertAsync( response.Content.ToString(), "Rendszer üzenet", "Rendben");

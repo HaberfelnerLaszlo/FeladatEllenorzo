@@ -5,7 +5,8 @@
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IAlertService alert
-@inject IToastService toastService 
+@inject IToastService toastService
+@inject IDialogService dialogService
 @inject IHibaService hibaService
 @inject IHianyService hianyService
 <FluentGrid Justify="JustifyContent.FlexStart">
@@ -14,7 +15,6 @@
         @if (data.Members.Count > 0)
         {
             <select @onchange="(e)=>SelectedMember(e.Value)">
-
                 <optgroup label="Beadta">
                     @{
                         i = 0;
@@ -25,11 +25,11 @@
                             {
                                 submitted = true;
                                 index = i;
-                                <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                                <option value="@item.SubmissionId" selected>@item.Name</option>
                             }
                             else
                             {
-                                <option value="@item.SubmissionId">@item.MemberName  (@i)</option>
+                                <option value="@item.SubmissionId">@item.Name  (@i)</option>
                             }
                             i++;
                         }
@@ -43,11 +43,11 @@
                         {
                             submitted = false;
                             index = i;
-                            <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                            <option value="@item.SubmissionId" selected>@item.Name</option>
                         }
                         else
                         {
-                            <option value="@item.SubmissionId">@item.MemberName (@i)</option>
+                            <option value="@item.SubmissionId">@item.Name (@i)</option>
                         }
                         i++;
                     }
@@ -59,20 +59,20 @@
                         if (item.SubmissionId == data.SubmissionId)
                         {
                             index = i;
-                            <option value="@item.SubmissionId" selected>@item.MemberName</option>
+                            <option value="@item.SubmissionId" selected>@item.Name</option>
                         }
                         else
                         {
-                            <option value="@item.SubmissionId">@item.MemberName (@i)</option>
+                            <option value="@item.SubmissionId">@item.Name (@i)</option>
                         }
                         i++;
                     }
                 </optgroup>
-
                 }
             </select>
             <button @onclick="Next">Next</button>
         }
+        <FluentButton OnClick="ViewAssigment">Feladat megtekintése</FluentButton>
         <FluentLabel>
             @DisplayMessage
         </FluentLabel>
@@ -84,9 +84,6 @@
         }
         else
         {
-            @*<div class="container">
-                <iframe class="responsive-iframe" src="@url"></iframe>
-            </div>*@
             <iframe width="100%" height="600" src="@url"></iframe>
         }
     </FluentGridItem>
@@ -166,7 +163,6 @@
             {
                 <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
             }
-
         </div>
         <div hidden="@visibleNewText">
             <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
@@ -198,300 +194,318 @@
     </FluentGridItem>
 </FluentGrid>
 @code {
-	private EducationSubmissionResourceCollectionResponse feladatForrasok;
-	private List<EducationMediaResource> mediaResource = new();
-	private List<EducationFileResource> fileResource = new();
-	private List<EducationExcelResource> excelResource = new();
-	private List<EducationWordResource> wordResource = new();
-	private List<EducationPowerPointResource> ppResource = new();
-	private EducationOutcomeCollectionResponse feladatValaszok;
-	private EducationFeedbackOutcome valasz;
-	private EducationPointsOutcome pont;
-	private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage=string.Empty;
-	private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false,isHiany=false;
-	private int index = 0,i=0;
-	private float Pont=0;
-	protected override Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			nev = data.Name.Split(" ")[1];
+    private EducationSubmissionResourceCollectionResponse feladatForrasok;
+    private List<EducationMediaResource> mediaResource = new();
+    private List<EducationFileResource> fileResource = new();
+    private List<EducationExcelResource> excelResource = new();
+    private List<EducationWordResource> wordResource = new();
+    private List<EducationPowerPointResource> ppResource = new();
+    private EducationOutcomeCollectionResponse feladatValaszok;
+    private EducationFeedbackOutcome valasz;
+    private EducationPointsOutcome pont;
+    private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage = string.Empty;
+    private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false;
+    private int index = 0, i = 0;
+    private float Pont = 0;
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            nev = data.Name.Split(" ")[1];
 
-			DataInit();
-		}
-		return base.OnAfterRenderAsync(firstRender);
-	}
-	private async void DataInit()
-	{
-		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-		if (accessType != NetworkAccess.Internet)
-		{
-			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
-			return;
-		}
-		try
-		{
-			feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
-			foreach (var item in feladatForrasok.Value)
-			{
-				string fileUrl = string.Empty;
-				switch (item.Resource.GetType().Name)
-				{
-					case nameof(EducationMediaResource):
-						mediaResource.Add((EducationMediaResource)item.Resource);
-						fileUrl = mediaResource.FirstOrDefault().FileUrl;
-						break;
-					case nameof(EducationFileResource):
-						fileResource.Add((EducationFileResource)item.Resource);
-						fileUrl = fileResource.FirstOrDefault().FileUrl;
-						break;
-					case nameof(EducationExcelResource):
-						excelResource.Add((EducationExcelResource)item.Resource);
-						fileUrl = excelResource.FirstOrDefault().FileUrl;
-						break;
-					case nameof(EducationWordResource):
-						wordResource.Add((EducationWordResource)item.Resource);
-						fileUrl = wordResource.FirstOrDefault().FileUrl;
-						break;
-					case nameof(EducationPowerPointResource):
-						ppResource.Add((EducationPowerPointResource)item.Resource);
-						fileUrl = ppResource.FirstOrDefault().FileUrl;
-						break;
-					default:
-						break;
-				}
-				if (fileUrl.Length>0)
-				{
-					url = await GetUrl(fileUrl);
-					Pont = 2;
-					changedPont = true;
-				}
-				else
-				{
-					Pont = 0;
-					url = string.Empty;
-				}
-			}
-			feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
-			foreach (var item in feladatValaszok.Value)
-			{
-				valasz = (EducationFeedbackOutcome)item;
-			@if (valasz is not null && valasz.Feedback is not null)
-			{
-				Valasz = valasz.Feedback.Text.Content;
-			}
-			else
-			{
-				Valasz = "Kedves "+nev;
-			}
-		}
-		var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
-		foreach (var item in feladatPontok.Value)
-		{
-			pont = (EducationPointsOutcome)item;
-			@if (pont is not null && pont.Points is not null)
-			{
-				Pont = pont.Points.Points.Value;
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			await alert.ShowAlertAsync(e.Message, "Kivétel történt", "Ok");
-		}
-		StateHasChanged();
-	}
-	private void Next()
-	{
-		var j = data.Members.FindIndex(m => m.SubmissionId == data.SubmissionId);
-		if (j<data.Members.Count-1)
-		{
-			data.SubmissionId = data.Members[j + 1].SubmissionId;
-			nev = data.Members[j + 1].MemberName.Split(" ")[1];
-		}
-		else
-		{
-			data.SubmissionId = data.Members[0].SubmissionId;
-			nev = data.Members[0].MemberName.Split(" ")[1];
-		}
-		data.Name = nev;
-		changed = false;
-		changedPont = false;
-		changedValasz = false;
-		IsNotSaved = true;
-		mediaResource.Clear();
-		fileResource.Clear();
-		wordResource.Clear();
-		excelResource.Clear();
-		ppResource.Clear();
-		url = string.Empty;
-		Pont = 0;
-		DataInit();
-	}
-	private async Task<string> GetUrl(string fileUrl)
-	{
-		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-		if (accessType != NetworkAccess.Internet)
-		{
-			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
-			return string.Empty;
-		}
-		var lenght = fileUrl.Length;
-		if (lenght>34)
-		{
-			try
-			{
-				ItemId = fileUrl.Substring(lenght - 34);
-				DriveId = fileUrl.Substring(40, 66);
-				var fileInfo = await graph.GetFile(DriveId, ItemId);
-				if (fileInfo is not null)
-				{
-					if (DisplayMessage.Length>0)
-					{
-						DisplayMessage = string.Empty;
-					}
-					return fileInfo.GetUrl;
-				}
-			}
-			catch (System.Net.Http.HttpRequestException)
-			{
-				DisplayMessage = "Sajnos hálozati hiba történt!";
-			}
-			catch (Exception ex)
-			{
-				DisplayMessage = $"Valami hiba történt a fájl lekérésekor: {ex.Message}";
-			}
-		}
-		return string.Empty;
-	}
-	private async void ShowImage(string fileUrl)
-	{
-		url = await GetUrl(fileUrl);
-		StateHasChanged();
-	}
-	private void SelectedMember(object args)
-	{
-		data.SubmissionId = args.ToString();
-		try
-		{
-			nev = data.Members.FirstOrDefault(m=>m.SubmissionId== args.ToString()).MemberName.Split(" ")[1];
-			data.Name = data.Members.FirstOrDefault(m=>m.SubmissionId== args.ToString()).MemberName;
+            DataInit();
+        }
+        return base.OnAfterRenderAsync(firstRender);
+    }
+    private async void DataInit()
+    {
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
+        {
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return;
+        }
+        try
+        {
+            feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
+            foreach (var item in feladatForrasok.Value)
+            {
+                string fileUrl = string.Empty;
+                switch (item.Resource.GetType().Name)
+                {
+                    case nameof(EducationMediaResource):
+                        mediaResource.Add((EducationMediaResource)item.Resource);
+                        fileUrl = mediaResource.FirstOrDefault().FileUrl;
+                        break;
+                    case nameof(EducationFileResource):
+                        fileResource.Add((EducationFileResource)item.Resource);
+                        fileUrl = fileResource.FirstOrDefault().FileUrl;
+                        break;
+                    case nameof(EducationExcelResource):
+                        excelResource.Add((EducationExcelResource)item.Resource);
+                        fileUrl = excelResource.FirstOrDefault().FileUrl;
+                        break;
+                    case nameof(EducationWordResource):
+                        wordResource.Add((EducationWordResource)item.Resource);
+                        fileUrl = wordResource.FirstOrDefault().FileUrl;
+                        break;
+                    case nameof(EducationPowerPointResource):
+                        ppResource.Add((EducationPowerPointResource)item.Resource);
+                        fileUrl = ppResource.FirstOrDefault().FileUrl;
+                        break;
+                    default:
+                        break;
+                }
+                if (fileUrl.Length > 0)
+                {
+                    url = await GetUrl(fileUrl);
+                    Pont = 2;
+                    changedPont = true;
+                }
+                else
+                {
+                    Pont = 0;
+                    url = string.Empty;
+                }
+            }
+            feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
+            foreach (var item in feladatValaszok.Value)
+            {
+                valasz = (EducationFeedbackOutcome)item;
+                @if (valasz is not null && valasz.Feedback is not null)
+                {
+                    Valasz = valasz.Feedback.Text.Content;
+                }
+                else
+                {
+                    Valasz = "Kedves " + nev;
+                }
+            }
+            var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
+            foreach (var item in feladatPontok.Value)
+            {
+                pont = (EducationPointsOutcome)item;
+                @if (pont is not null && pont.Points is not null)
+                {
+                    Pont = pont.Points.Points.Value;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            await alert.ShowAlertAsync(e.Message, "Kivétel történt", "Ok");
+        }
+        StateHasChanged();
+    }
+    private void Next()
+    {
+        var j = data.Members.FindIndex(m => m.SubmissionId == data.SubmissionId);
+        if (j < data.Members.Count - 1)
+        {
+            data.SubmissionId = data.Members[j + 1].SubmissionId;
+            data.Name = data.Members[j + 1].Name.Split(" ")[1];
+            data.StudentId = data.Members[j + 1].Id;
+        }
+        else
+        {
+            data.SubmissionId = data.Members[0].SubmissionId;
+            data.Name = data.Members[0].Name.Split(" ")[1];
+            data.StudentId = data.Members[0].Id;
+        }
+        changed = false;
+        changedPont = false;
+        changedValasz = false;
+        IsNotSaved = true;
+        mediaResource.Clear();
+        fileResource.Clear();
+        wordResource.Clear();
+        excelResource.Clear();
+        ppResource.Clear();
+        url = string.Empty;
+        Pont = 0;
+        DataInit();
+    }
+    private async Task<string> GetUrl(string fileUrl)
+    {
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
+        {
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return string.Empty;
+        }
+        var lenght = fileUrl.Length;
+        if (lenght > 34)
+        {
+            try
+            {
+                ItemId = fileUrl.Substring(lenght - 34);
+                DriveId = fileUrl.Substring(40, 66);
+                var fileInfo = await graph.GetFile(DriveId, ItemId);
+                if (fileInfo is not null)
+                {
+                    if (DisplayMessage.Length > 0)
+                    {
+                        DisplayMessage = string.Empty;
+                    }
+                    return fileInfo.GetUrl;
+                }
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                DisplayMessage = "Sajnos hálozati hiba történt!";
+            }
+            catch (Exception ex)
+            {
+                DisplayMessage = $"Valami hiba történt a fájl lekérésekor: {ex.Message}";
+            }
+        }
+        return string.Empty;
+    }
+    private async void ShowImage(string fileUrl)
+    {
+        url = await GetUrl(fileUrl);
+        StateHasChanged();
+    }
+    private void SelectedMember(object args)
+    {
+        data.SubmissionId = args.ToString();
+        try
+        {
+            nev = data.Members.FirstOrDefault(m => m.SubmissionId == args.ToString()).Name.Split(" ")[1];
+            data.Name = data.Members.FirstOrDefault(m => m.SubmissionId == args.ToString()).Name;
 
-		}
-		catch (Exception e)
-		{
-			throw new Exception(e.Message, e);
-		}
-		mediaResource.Clear();
-		fileResource.Clear();
-		wordResource.Clear();
-		excelResource.Clear();
-		ppResource.Clear();
-		Pont = 0;
-		DataInit();
-	}
-	private void Valtozas(bool changePont,ChangeEventArgs args)
-	{
-		changed = true;
-		IsNotSaved = true;
-		if (changePont)
-		{
-			changedPont = true;
-			Pont = float.Parse(args.Value.ToString());
-		}
-		else
-		{
-			changedValasz = true;
-			Valasz = args.Value.ToString();
-		}
-	}
-	private void Back()
-	{
-		navi.NavigateTo($"feladatok/{data.ClassId}");
-	}
-	private async void Save()
-	{
-		NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-		if (accessType != NetworkAccess.Internet)
-		{
-			await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
-			return;
-		}
-		var response = false;
-		if (valasz is not null && changedValasz)
-		{
-			response=await graph.UpdateValasz(data.ClassId, data.AssignmentId, data.SubmissionId, valasz.Id, Valasz);
-		}
-		if (valasz is not null && changedPont)
-		{
-			response=await graph.UpdatePont(data.ClassId, data.AssignmentId, data.SubmissionId, pont.Id, Pont);
-		}
-		if (isHiba)
-		{
-			var res = await hibaService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Leiras = Valasz, Name = data.Name, Osztaly = data.Osztalynev });
-			isHiba = false;
-			if (res.IsSuccess)
-			{
-				toastService.ShowInfo("Az üzenet mentve a hibákhoz.");
-				//await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
-			}
-			else
-			{
-				await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
-			}
-		}
-		if (isHiany)
-		{
-			var res = await hianyService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Hianyzik=false, Name = data.Name, Osztaly = data.Osztalynev });
-			isHiany = false;
-			if (res.IsSuccess)
-			{
-				toastService.ShowInfo("Az tanuló mentve a lecke hiányhoz.");
-				//await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
-			}
-			else
-			{
-				await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
-			}
-		}
-		if (!response)
-		{
-			await alert.ShowAlertAsync("Hiba!", "A mentés nem sikerült!", "Rendben");
-		}
-		else
-		{
-			var returned=await graph.Return(data.ClassId, data.AssignmentId, data.SubmissionId);
-			if (returned)
-			{
-				data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId).Status = "Visszaküldve";
-			}
-			Next();
-		}
-	}
-	private void AddText(string text)
-	{
-		Valasz = Valasz+$" {text}";
-		changed = true;
-		changedValasz = true;
-	}
-	void AddNewText()
-	{
-		visibleNewText = false;
-	}
-	void SaveText()
-	{
-		visibleNewText = true;
-	}
-	void ManageSzovegOpen()
-	{
-		navi.NavigateTo("szoveg/ell");
-	}
-	void ChangeHiba()
-	{
-		isHiba=isHiba ? false : true;
-	}
-	void ChangeHiany()
-	{
-		isHiany=isHiany ? false : true;
-	}
+        }
+        catch (Exception e)
+        {
+            throw new Exception(e.Message, e);
+        }
+        mediaResource.Clear();
+        fileResource.Clear();
+        wordResource.Clear();
+        excelResource.Clear();
+        ppResource.Clear();
+        Pont = 0;
+        DataInit();
+    }
+    private void Valtozas(bool changePont, ChangeEventArgs args)
+    {
+        changed = true;
+        IsNotSaved = true;
+        if (changePont)
+        {
+            changedPont = true;
+            Pont = float.Parse(args.Value.ToString());
+        }
+        else
+        {
+            changedValasz = true;
+            Valasz = args.Value.ToString();
+        }
+    }
+    private void Back()
+    {
+        navi.NavigateTo($"feladatok/{data.ClassId}");
+    }
+    private async void Save()
+    {
+        NetworkAccess accessType = Connectivity.Current.NetworkAccess;
+        if (accessType != NetworkAccess.Internet)
+        {
+            await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
+            return;
+        }
+        var response = false;
+        if (valasz is not null && changedValasz)
+        {
+            response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, data.SubmissionId, valasz.Id, Valasz);
+        }
+        if (valasz is not null && changedPont)
+        {
+            response = await graph.UpdatePont(data.ClassId, data.AssignmentId, data.SubmissionId, pont.Id, Pont);
+        }
+        if (isHiba)
+        {
+            var res = await hibaService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Leiras = Valasz, TanuloId = data.StudentId, Osztaly = data.Osztalynev });
+            isHiba = false;
+            if (res.IsSuccess)
+            {
+                toastService.ShowInfo("Az üzenet mentve a hibákhoz.");
+                //await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+            }
+            else
+            {
+                await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
+            }
+        }
+        if (isHiany)
+        {
+            var res = await hianyService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Hianyzik = false, TanuloId = data.StudentId, FeladatId=Guid.Parse(data.AssignmentId), Osztaly = data.Osztalynev });
+            isHiany = false;
+            if (res.IsSuccess)
+            {
+                toastService.ShowInfo("Az tanuló mentve a lecke hiányhoz.");
+                //await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
+            }
+            else
+            {
+                await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
+            }
+        }
+        if (!response)
+        {
+            await alert.ShowAlertAsync("Hiba!", "A mentés nem sikerült!", "Rendben");
+        }
+        else
+        {
+            var returned = await graph.Return(data.ClassId, data.AssignmentId, data.SubmissionId);
+            if (returned)
+            {
+                data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId).Status = "Visszaküldve";
+            }
+            Next();
+        }
+    }
+    private void AddText(string text)
+    {
+        Valasz = Valasz + $" {text}";
+        changed = true;
+        changedValasz = true;
+    }
+    void AddNewText()
+    {
+        visibleNewText = false;
+    }
+    void SaveText()
+    {
+        visibleNewText = true;
+    }
+    void ManageSzovegOpen()
+    {
+        navi.NavigateTo("szoveg/ell");
+    }
+    void ChangeHiba()
+    {
+        isHiba = isHiba ? false : true;
+    }
+    void ChangeHiany()
+    {
+        isHiany = isHiany ? false : true;
+    }
+    async void ViewAssigment()
+    {
+        var message= data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId).Feladat.Instructions.Content;
+        var dialog = await dialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>()
+        {
+            Content = new()
+            {
+                Title = "Feladat kiírása",
+                MarkupMessage = new MarkupString(message),
+                Icon = new Icons.Regular.Size24.Textbox(),
+                IconColor = Color.Success,
+            },
+            PrimaryAction = "Bezár",
+            SecondaryActionEnabled=false,
+            Width = "300px",
+        });
+    }
 }

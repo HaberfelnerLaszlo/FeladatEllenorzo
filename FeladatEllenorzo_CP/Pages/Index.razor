@@ -94,6 +94,8 @@ else
 		}
 		GetUserDetailsAsync();
 		auth.PropertyChanged += OnPropertyChanged;
+		InitializeTanuloData tanuloData= new(data);
+		await tanuloData.SetupTanuloData();
 	}
 	private async Task<string> InitSzoveg()
 	{
