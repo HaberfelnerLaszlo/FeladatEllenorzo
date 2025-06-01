@@ -15,6 +15,10 @@ namespace Data_Api.Endpoints
             {
                 return await hianyService.GetFeladatHianytByDatum(date);
             });
+            app.MapGet("/hiany/{feladatId}", (string feladatId, HianyService hianyService) =>
+            {
+                return hianyService.GetFeladatHianyByFeladat(Guid.Parse(feladatId));
+            });
             app.MapPost("/hiany", async (FeladatHiany hiany, HianyService hianyService) =>
             {
                 return await hianyService.CreateFeladatHiany(hiany);

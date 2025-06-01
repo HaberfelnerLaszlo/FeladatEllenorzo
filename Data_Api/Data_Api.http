@@ -1,5 +1,4 @@
-@Data_Api_HostAddress = http://localhost:7130
-
+@Data_Api_HostAddress = http://localhost:5157
 GET {{Data_Api_HostAddress}}/
 
 ###
@@ -12,7 +11,7 @@ Content-Type: application/json
 
 {
   "name":"Próba Emõke",
-  "osztaly":"10 c.",
+  "osztaly":"8048b263-4106-4925-a316-ffdee54a91a2",
   "datum":"2023-12-17"
 }
 ###
@@ -36,3 +35,26 @@ Content-Type: application/json
 DELETE {{Data_Api_HostAddress}}/hiany/1
 
 ###
+POST {{Data_Api_HostAddress}}/pont
+Content-Type: application/json
+{
+  "tanuloId":"ad23c929-7c72-4512-93d1-1877fe290b8a",
+  "datum":"2025-05-11",
+  "jegyzet":"Próba lecke munka",
+  "pontSzam":2,
+  "pontTipus":0
+}
+###
+GET {{Data_Api_HostAddress}}/pont/1
+###
+GET {{Data_Api_HostAddress}}/pont/osztaly/8048b263-4106-4925-a316-ffdee54a91a2
+###
+POST {{Data_Api_HostAddress}}/szorgalmi
+Content-Type: application/json
+{
+  "tanuloId":"ad23c929-7c72-4512-93d1-1877fe290b8a",
+  "jegyzet":"Próba szorgalmi munka",
+  "pont":2,
+  "feladatok_szama":1,
+  "osztaly":"8048b263-4106-4925-a316-ffdee54a91a2"
+}

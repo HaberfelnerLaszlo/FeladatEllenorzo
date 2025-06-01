@@ -7,7 +7,7 @@
 @inject NavigationManager navi
 @inject IAlertService alert
 @inject IHianyService hiany
-@inject List<Tanulo> tanulok
+@inject ITanuloService tanuloService
 
 <FluentGrid Justify="JustifyContent.FlexStart"
             Style="background-color: var(--neutral-layer-3);">
@@ -234,19 +234,25 @@
         if (data.Feladatok.Count == 0)
         {
             feladatok = await graph.GetFeladatok(Id);
-            data.AssignmentId = feladatok.Value[0].Id;
-            var utasitas = feladatok.Value[0].Instructions?.Content?? string.Empty;
+            var feladat = feladatok.Value.FirstOrDefault(f => f.AssignedDateTime < DateTime.UtcNow);
+            data.AssignmentId = feladat.Id; //feladatok.Value[0].Id;
+            var utasitas = feladat.Instructions?.Content?? string.Empty;
             await GetCount();
         }
         else UpdateCount(data.AssignmentId);
         if (data.Members.Count == 0)
         {
-            tagok = await graph.GetMembers(Id);
+            tagok = await graph.GetMembers(Id); //Csoport tagok
             foreach (var item in tagok.Value.OrderBy(t => t.DisplayName))
             {
                 if (item.PrimaryRole != EducationUserRole.Teacher)
                 {
                     data.Members.Add(new() { Id = Guid.Parse(item.Id), Name = item.DisplayName });
+                    //var resp = await tanuloService.CreateTanulo(new() { Id = Guid.Parse(item.Id), Name = item.DisplayName, Osztaly=data.Osztalynev});
+                    //if (!resp.IsSuccess)
+                    //{
+                    //    await alert.ShowAlertAsync("Hiba történt a tanuló mentésekor!", "Mentési hiba", "Rendben");
+                    //}
                     //TODO: Később a tanulók adatait is le kell kérni a feladatokhoz
                 }
             }
@@ -296,14 +302,20 @@
                 data.AssignmentId = value.ToString();
                 submissions = await graph.GetFeladat(Id, data.AssignmentId);
                 SelectedMembers.Clear();
+                var feladatHianyok = await hiany.GetHianyokByFeladat(value.ToString());
+                feladatHianyok.ForEach(i => data.Members.FirstOrDefault(t => t.Id == i.TanuloId).IsHiany = i.Id);
                 foreach (var item in submissions.Value)
                 {
                     var count = await graph.GetResourcesCount(Id, data.AssignmentId, item.Id);
+                    var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                    if (member is null)
+                    {
+                        member = data.Members.Find(m => m.Id == data.StudentId)?? new();
+                    }
                     switch (item.Status)
                     {
                         case EducationSubmissionStatus.Working:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = (int)count.OdataCount > 0 ? "Beadva" : "Megtekintve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -311,7 +323,7 @@
                             break;
                         case EducationSubmissionStatus.Submitted:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Beadva";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -319,7 +331,7 @@
                             break;
                         case EducationSubmissionStatus.Released:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Újra_released";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -327,7 +339,7 @@
                             break;
                         case EducationSubmissionStatus.Returned:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Visszaküldve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -335,7 +347,7 @@
                             break;
                         case EducationSubmissionStatus.UnknownFutureValue:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Ismeretlen";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -343,7 +355,7 @@
                             break;
                         case EducationSubmissionStatus.Reassigned:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Újra";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -351,7 +363,7 @@
                             break;
                         case EducationSubmissionStatus.Excused:
                             {
-                                var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
+                                //var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                                 member.Status = "Felmentve";
                                 member.SubmissionId = item.Id;
                                 member.ResourceCount = (int)count.OdataCount;
@@ -385,6 +397,7 @@
             data.SubmissionId = item.SubmissionId;
             data.Name = item.Name;
             data.StudentId = item.Id;
+            data.IsHiany = item.IsHiany;
             navi.NavigateTo("ell");
         }
         catch (Exception e)
@@ -524,7 +537,7 @@
             await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
             return;
         }
-        var response = false;
+        //var response = false;
         saveError.Clear();
         foreach (var item in SelectedMembers)
         {
@@ -559,6 +572,7 @@
                     changedPont = true;
                     changed = true;
                     disableWorking = true;
+                    ChangeHiany();
                 }
                 break;
             case "Submitted":

@@ -10,12 +10,13 @@ namespace FeladatEllenorzo_CP.Services
 {
 	public class HianyService : IHianyService
 	{
-		private string _baseUrl = "https://fapi.haberfelner.eu";
+		public string ErrorMsg = string.Empty;
+        private string _baseUrl = "https://fapi.haberfelner.eu";
 //#if ANDROID
 //		private string _baseUrl = "http://10.0.2.2:7130";
 //#else
 //		private string _baseUrl = "http://localhost:7130";
-//#endif   
+//#endif
 		public async Task<MainResponse> Add(FeladatHiany hiany)
 		{
 			var returnResponse = new MainResponse();
@@ -72,7 +73,28 @@ namespace FeladatEllenorzo_CP.Services
 			return returnResponse;
 		}
 
-		public async Task<List<Tanulo>> GetMaiHiany()
+        public async Task<List<FeladatHiany>> GetHianyokByFeladat(string fId)
+        {
+			try
+			{
+                using var client = new HttpClient();
+                string url = $"{_baseUrl}/hiany/{fId}";
+                var apiResponse = await client.GetAsync(url);
+
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var response = await apiResponse.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<FeladatHiany>>(response);
+                }
+            }
+			catch (Exception ex)
+			{
+				ErrorMsg = ex.Message;
+			}
+            return default;
+        }
+
+        public async Task<List<Tanulo>> GetMaiHiany()
 		{
 			var returnResponse = new List<Tanulo>();
 			try
@@ -96,25 +118,25 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
+				ErrorMsg = ex.Message;
 			}
 			return returnResponse;
 		}
-		public async Task<MainResponse> Remove(FeladatHiany hiany)
+		public async Task<MainResponse> Remove(int hianyId)
 		{
 			var returnResponse = new MainResponse();
 			try
 			{
 				using (var client = new HttpClient())
 				{
-					string url = $"{_baseUrl}/hiany/{hiany.Id}";
+					string url = $"{_baseUrl}/hiany/{hianyId}";
 
-					var serializeContent = JsonConvert.SerializeObject(hiany);
+					//var serializeContent = JsonConvert.SerializeObject(hianyId);
 
 					var request = new HttpRequestMessage();
 					request.Method = HttpMethod.Delete;
 					request.RequestUri = new Uri(url);
-					request.Content = new StringContent(serializeContent, Encoding.UTF8, "application/json");
+					//request.Content = new StringContent(serializeContent, Encoding.UTF8, "application/json");
 					var apiResponse = await client.SendAsync(request);
 
 					if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
@@ -126,7 +148,7 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
+				ErrorMsg = ex.Message;
 			}
 			return returnResponse;
 		}
@@ -150,7 +172,7 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
+				ErrorMsg = ex.Message;
 			}
 			return returnResponse;
 		}
@@ -177,7 +199,7 @@ namespace FeladatEllenorzo_CP.Services
 			}
 			catch (Exception ex)
 			{
-				string msg = ex.Message;
+				ErrorMsg = ex.Message;
 			}
 			return returnResponse;
 		}

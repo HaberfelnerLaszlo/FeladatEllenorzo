@@ -4,52 +4,112 @@ using FeladatEllenorzo_CP.Data;
 using FeladatEllenorzo_CP.Models;
 using FeladatEllenorzo_CP.Services;
 
+using Microsoft.Graph.Models;
+
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace FeladatEllenorzo_CP
 {
-    internal class InitializeTanuloData(GlobalData globalData)
+    internal class InitializeTanuloData(GlobalData globalData, IGraphService graphService)
     {
-        GlobalData _data = globalData;
-        public async Task SetupTanuloData()
+        readonly GlobalData _data = globalData;
+        readonly IGraphService _graphService = graphService;
+        private List<Tanulo> tanulok = [];
+        private async Task InitTanuloData(List<EducationClass> classes) 
+        {
+            if (classes is null || classes.Count == 0)
+            {
+                return;
+            }
+            foreach (var item in classes)
+            {
+                var tagok = await _graphService.GetMembers(item.Id);
+                if (tagok != null)
+                {
+                    foreach (var tag in tagok.Value.Where(t => t.PrimaryRole != EducationUserRole.Teacher))
+                    {
+                        tanulok.Add(new Tanulo
+                        {
+                            Id = Guid.Parse(tag.Id),
+                            Name = tag.DisplayName,
+                            Osztaly = item.Id,
+                            Pont = 50,
+                            LastModify = DateTime.Now
+                        });
+                    }
+                }
+            }
+
+        }
+        private async Task CreateTanulok()
+        {
+            TanuloService tanuloService = new();
+            foreach (var item in tanulok)
+            {
+                var response = await tanuloService.CreateTanulo(item);
+                if (!response.IsSuccess)
+                {
+                    Console.WriteLine($"Hiba: {response.ErrorMessage} tanuloId: {item.Id}, név: {item.Name}");
+                }
+            }
+        }
+        public async Task SetupTanuloData(List<EducationClass> classes)
         {
             TanuloService tanuloService = new TanuloService();
             string path = Path.Combine(FileSystem.AppDataDirectory, "tanulok.json");
-            List<Tanulo> tanulok = [];
             string json = "";
             if (File.Exists(path))
             {
                 json = File.ReadAllText(path);
-                tanulok = JsonSerializer.Deserialize<List<Tanulo>>(json) ?? [];
-                if (tanulok.Count == 0)
+                if (string.IsNullOrEmpty(json)) //INFO: Üres fájl
                 {
-                    tanulok = await tanuloService.GetTanulok();
+                    await InitTanuloData(classes);
+                }
+                else 
+                { 
+                    tanulok = JsonSerializer.Deserialize<List<Tanulo>>(json) ?? [];
                     if (tanulok.Count == 0)
                     {
-                        return;
+                        tanulok = await tanuloService.GetTanulok();
+                        if (tanulok.Count == 0)
+                        {
+                            await InitTanuloData(classes);
+                            await CreateTanulok();
+                        }
                     }
-                }
-                else
-                {
-                    var data = await tanuloService.GetTanulokToIds();
-                    foreach (var item in data)
+                    else
                     {
-                        if (tanulok.Exists(t => t.Id == item.Id)) 
-                        { 
-                            var tanulo = tanulok.Find(t => t.Id == item.Id);
-                            if (tanulo.LastModify != item.LastModify)
+                        var data = await tanuloService.GetTanulokToIds();
+                        if (data == null || data.Count == 0)
+                        {
+                            await CreateTanulok();
+                            data = await tanuloService.GetTanulokToIds();
+                            if (data == null || data.Count == 0)
                             {
-                                tanulok.Remove(tanulo);
-                                tanulo = await tanuloService.GetTanulo(item.Id);
-                                tanulok.Add(tanulo);
+                                Console.WriteLine("Hiba: Nem tudok felvenni tanulot az adatbázisba!");
+                                return;
                             }
                         }
-                        else
+                        foreach (var item in data)
                         {
-                            var tanulo = await tanuloService.GetTanulo(item.Id);
-                            if (tanulo != null)
+                            if (tanulok.Exists(t => t.Id == item.Id)) 
+                            { 
+                                var tanulo = tanulok.Find(t => t.Id == item.Id);
+                                if (tanulo.LastModify != item.LastModify)
+                                {
+                                    tanulok.Remove(tanulo);
+                                    tanulo = await tanuloService.GetTanulo(item.Id);
+                                    tanulok.Add(tanulo);
+                                }
+                            }
+                            else
                             {
-                                tanulok.Add(tanulo);
+                                var tanulo = await tanuloService.GetTanulo(item.Id);
+                                if (tanulo != null)
+                                {
+                                    tanulok.Add(tanulo);
+                                }
                             }
                         }
                     }
@@ -61,18 +121,17 @@ namespace FeladatEllenorzo_CP
                 File.Create(path);
                 if (tanulok.Count == 0)
                 {
-                    return;
+                    await InitTanuloData(classes);
+                    await CreateTanulok();
                 }
             }
             json = JsonSerializer.Serialize(tanulok);
+            if (string.IsNullOrEmpty(json))
+            {
+                Console.WriteLine($"JSON serialization failed. TanuloData: tanulok száma: {tanulok.Count} fő");
+                return;
+            }
             File.WriteAllText(path, json);
-            tanulok.ForEach(tanulo => _data.Members.Add(new MemberData 
-                {Id=tanulo.Id,
-                Name=tanulo.Name,
-                LastModify=tanulo.LastModify, 
-                Osztaly=tanulo.Osztaly, 
-                Pont=tanulo.Pont })
-                );
         }
     }
 }

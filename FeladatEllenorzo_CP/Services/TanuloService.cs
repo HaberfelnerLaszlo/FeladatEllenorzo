@@ -11,11 +11,11 @@ namespace FeladatEllenorzo_CP.Services
 {
     public class TanuloService : ITanuloService
     {
-        //#if ANDROID
-        //		private string _baseUrl = "http://10.0.2.2:7130";
-        //#else
-        //		private string _baseUrl = "http://localhost:7130";
-        //#endif
+//#if ANDROID
+//        		private string _baseUrl = "http://10.0.2.2:7130";
+//#else
+//        private string _baseUrl = "http://localhost:7130";
+//#endif
         private string _baseUrl = "https://fapi.haberfelner.eu";
         public string msg = "";
 

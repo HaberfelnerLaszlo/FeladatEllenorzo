@@ -13,6 +13,13 @@ namespace FeladatEllenorzo_CP.Data
         public string SubmissionId { get; set; } = string.Empty;
         public string Status { get; set;} = "Nincs";
         public bool Selected { get; set; }=false;
+        /// <summary>
+        /// Van mentett feladat hiánya
+        /// </summary>
+        public int IsHiany { get; set; } = 0;
+        /// <summary>
+        /// Beadott fájlok száma
+        /// </summary>
         public int ResourceCount { get; set; } = 0;
     }
 }

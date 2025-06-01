@@ -9,7 +9,7 @@ namespace Data_Api.Data
         public int Id { get; set; }
         public required Guid TanuloId { get; set; }
         public required string Osztaly { get; set; }
-        public DateOnly Datum { get; set; } = DateOnly.Parse(DateTime.Today.ToString());
+        public DateTime Datum { get; set; } = DateTime.UtcNow;
         public int Feladatok_szama { get; set; }
         public int Pont { get; set; }
         public string Jegyzet { get; set; }= string.Empty;

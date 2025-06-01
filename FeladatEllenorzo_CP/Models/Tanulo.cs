@@ -12,5 +12,7 @@ namespace FeladatEllenorzo_CP.Models
         public List<Szorgalmi> Szorgalmik { get; set; } = [];
         public List<FeladatHiany> Hianyok { get; set; } = [];
         public List<HibasFeladat> Hibak { get; set; } = [];
+        public List<Pont> Pontok { get; set; } = [];
+
     }
 }

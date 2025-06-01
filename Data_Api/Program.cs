@@ -13,9 +13,9 @@ builder.Services.AddDbContext<FeladatDb>(opt => opt.UseInMemoryDatabase("Feladat
 //builder.Services.AddDbContext<FeladatSQL> (options => options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.Parse("8.2.1-mysql")));
 
 builder.Services.AddScoped<SzorgalmiService>();
-builder.Services.AddSingleton<SzovegService>();
+builder.Services.AddScoped<SzovegService>();
 builder.Services.AddScoped<HianyService>();
-builder.Services.AddSingleton<TanuloService>();
+builder.Services.AddScoped<TanuloService>();
 builder.Services.AddScoped<PontService>();
 builder.Services.AddScoped<HibaService>();
 

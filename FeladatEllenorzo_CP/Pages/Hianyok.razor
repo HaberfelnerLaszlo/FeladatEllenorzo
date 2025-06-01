@@ -111,7 +111,7 @@
     {
         if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a lecke hiányát?", "Igen", "Nem"))
         {
-            var response = await hiany.Remove(_hiany);
+            var response = await hiany.Remove(_hiany.Id);
             if (response.IsSuccess)
             {
                 toastService.ShowInfo("A szöveg törlésre került.");

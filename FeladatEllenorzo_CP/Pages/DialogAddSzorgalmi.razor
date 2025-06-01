@@ -1,0 +1,12 @@
+﻿@implements IDialogContentComponent<Szorgalmi>
+
+<FluentDialogBody>
+    <FluentNumberField @bind-Value="@Content.Feladatok_szama" Label="Feladatok száma"/>
+    <FluentNumberField @bind-Value="@Content.Pont" Label="Pont"/>
+    <FluentTextArea @bind-Value="@Content.Jegyzet" Label="Jegyzet" Rows="3"/>
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public Szorgalmi Content { get; set; } = default!;
+}

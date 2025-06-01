@@ -1,0 +1,79 @@
+﻿@page "/pontok/{id}"
+@inject IPontService pontService
+@inject GlobalData data
+@inject NavigationManager nav 
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch">
+    <h3>@osztaly csoport pontjai</h3>
+    <FluentButton OnClick="@(()=> { data.Osztalynev = string.Empty; nav.NavigateTo("/"); })">Vissza</FluentButton>
+</FluentStack>
+@if (tanulok.Count == 0)
+{
+    <p>Nincsenek pontok.</p>
+}
+else
+{
+    if (pontok.Count > 0) { magas = "50%"; }
+<FluentGrid>
+    <FluentGridItem xs="12" sm="6">
+        <table class="table" style="overflow:auto; max-height:@magas">
+            <thead>
+                <tr>
+                    <th scope="col">Név</th>
+                    <th scope="col">Pontszám</th>
+                    <th scope="col">Megjegyzés</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tanulo in tanulok.OrderBy(t=>t.Name))
+                {
+                    <tr>
+                        <td>@tanulo.Name</td>
+                        <td>@tanulo.Pont</td>
+                        <td>
+                            <FluentButton OnClick="()=>pontok=tanulo.Pontok??new()">Megtekint</FluentButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </FluentGridItem>
+    <FluentGridItem xs="12" sm="6">
+        @if (pontok.Count > 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Dátum</th>
+                        <th scope="col">Pont típusa</th>
+                        <th scope="col">Pontszám</th>
+                        <th scope="col">Megjegyzés</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var pont in pontok)
+                    {
+                        <tr>
+                            <td>@pont.Datum</td>
+                            <td>@pont.PontTipus</td>
+                            <td>@pont.PontSzam</td>
+                            <td>@pont.Jegyzet</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </FluentGridItem>
+</FluentGrid>
+}
+
+@code {
+    [Parameter] public string Id { get; set; }
+    private List<Tanulo> tanulok = new();
+    private List<Pont> pontok = new();
+    string osztaly = string.Empty, magas="100%";
+    protected override async Task OnInitializedAsync()
+    {
+        osztaly = data.Osztalynev;
+        tanulok = await pontService.GetPontByOsztaly(Id);
+    }
+}

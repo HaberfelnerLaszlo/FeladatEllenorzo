@@ -53,9 +53,22 @@ namespace Data_Api.Services
 			try
 			{
             _db.Szorgalmik.Add(szorgalmi);
-				if (_db.SaveChanges() > 0)
+                var db = _db.SaveChanges();
+				if (db > 0)
 				{
-					response.IsSuccess = true;
+                    _db.Pontok.Add(new Pont
+                    {
+                        TanuloId = szorgalmi.TanuloId,
+                        PontSzam = szorgalmi.Pont,
+                        Jegyzet = "Feladatok száma: "+ szorgalmi.Feladatok_szama +" Jegyzet: " + szorgalmi.Jegyzet,
+                        PontTipus = PontTipus.Szorgalmi
+                    });
+                    var tanulo = _db.Tanulok.FirstOrDefault(t => t.Id == szorgalmi.TanuloId);
+                    if (tanulo != null) { tanulo.Pont += szorgalmi.Pont; }
+                    else { response.ErrorMessage = "Nem található a tanuló."; response.IsSuccess = false; return response; }
+                    db=_db.SaveChanges();
+                    if (db <= 0) { response.ErrorMessage = "Nem sikerült a pont hozzáadása."; response.IsSuccess = false; return response; }
+                    response.IsSuccess = true;
 					return response;
                 }
                 else
@@ -83,6 +96,20 @@ namespace Data_Api.Services
             }
             try
             {
+                var existingSzorgalmi = _db.Szorgalmik.Find(id);
+                var ujPont = szorgalmi.Pont - existingSzorgalmi?.Pont?? 0;
+                if (ujPont != 0)
+                {
+                    _db.Pontok.Add(new Pont
+                    {
+                        TanuloId = szorgalmi.TanuloId,
+                        PontSzam = ujPont,
+                        Jegyzet = "Szorgalmi módosítás ID: " + szorgalmi.Id,
+                        PontTipus = PontTipus.Javítás
+                    });
+                    var tanulo = _db.Tanulok.FirstOrDefault(t => t.Id == szorgalmi.TanuloId);
+                    if (tanulo != null) tanulo.Pont += ujPont;
+                }
                 _db.Szorgalmik.Update(szorgalmi);
                 if (_db.SaveChanges() > 0)
                 {
@@ -118,6 +145,10 @@ namespace Data_Api.Services
                 _db.Szorgalmik.Remove(szorgalmi);
                 if (_db.SaveChanges() > 0)
                 {
+                    _db.Pontok.Add(new Pont(){TanuloId = szorgalmi.TanuloId, Jegyzet ="Szorgalmi törlés ID: " + szorgalmi.Id, PontSzam=szorgalmi.Pont*(-1), PontTipus=PontTipus.Javítás});
+                    var tanulo = _db.Tanulok.FirstOrDefault(t => t.Id == szorgalmi.TanuloId);
+                    if (tanulo != null) tanulo.Pont -= szorgalmi.Pont;
+                    _db.SaveChanges();
                     response.IsSuccess = true;
                     return response;
                 }

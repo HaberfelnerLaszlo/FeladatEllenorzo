@@ -18,22 +18,9 @@ namespace Data_Api.Services
         {
             return await _db.FeladatHianyok.ToListAsync();
         }
-        public async Task<MainResponse> GetFeladatHianyByTanulo(Guid id)
+        public List<FeladatHiany> GetFeladatHianyByFeladat(Guid feladatId)
         {
-            response.Clear();
-            var hianyok = await _db.Tanulok.Where(t=>t.Id==id).Include(h=>h.Hianyok).ToListAsync();
-            if (hianyok == null)
-            {
-                response.ErrorMessage = "Nincs hibás feladat.";
-                response.IsSuccess = false;
-                return response;
-            }
-            else
-            {
-                response.IsSuccess = true;
-                response.Content = hianyok;
-            }
-            return response;
+            return [.. _db.FeladatHianyok.Where(h => h.FeladatId == feladatId)];
         }
         public async Task<MainResponse> GetFeladatHianyByOsztaly_Ma(string osztaly)
         {
@@ -113,6 +100,9 @@ namespace Data_Api.Services
             try
             {
                 _db.FeladatHianyok.Add(hiany);
+                _db.Pontok.Add(new Pont() { TanuloId = hiany.TanuloId, Jegyzet = hiany.FeladatId.ToString(), PontSzam = -2,PontTipus=PontTipus.Lecke });
+                var tanulo = _db.Tanulok.FirstOrDefault(t => t.Id == hiany.TanuloId);
+                if (tanulo != null) tanulo.Pont -= 2;
                 await _db.SaveChangesAsync();
                 response.IsSuccess = true;
                 response.Content = hiany;
@@ -161,6 +151,9 @@ namespace Data_Api.Services
                     return response;
                 }
                 _db.FeladatHianyok.Remove(feladatHiany);
+                _db.Pontok.Add(new Pont() { TanuloId = feladatHiany.TanuloId, Jegyzet = "Lecke hiány törlés ID: "+ feladatHiany.FeladatId.ToString(), PontSzam = 2, PontTipus = PontTipus.Lecke });
+                var tanulo= _db.Tanulok.FirstOrDefault(t => t.Id == feladatHiany.TanuloId);
+                if (tanulo != null) tanulo.Pont += 2;
                 await _db.SaveChangesAsync();
                 response.IsSuccess = true;
                 return response;

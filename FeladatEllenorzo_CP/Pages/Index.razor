@@ -34,7 +34,7 @@ else
 {
 	<h4 class="my-3">Tanított osztályok:</h4>
 	<ul class="list-unstyled list-group m-3">
-	@foreach (var item in classes.Value.Where(c => !c.DisplayName.Contains("Exp")))
+	@foreach (var item in _classes)
 	{
 		@if (item.Id==SelectedClassId)
 		{
@@ -49,11 +49,12 @@ else
 	<button class="btn btn-outline-primary" @onclick=Feladat_btn disabled="@(String.IsNullOrEmpty(SelectedClassId))">Feladatok</button>
 	<button class="btn btn-outline-secondary" @onclick=Hiany_btn>Hiányzó feladat</button>
 	<button class="btn btn-outline-info" @onclick=Hiba_btn>Feladat hibák</button>
-
+	<FluentButton OnClick="Pont_btn">Pontok</FluentButton>
 }
 
 @code{
 	private EducationClassCollectionResponse classes;
+	private List<EducationClass> _classes;
 	private User Me=null;
 	private string SelectedClassId = string.Empty;
 	string path = Path.Combine(FileSystem.Current.AppDataDirectory,"szoveg.json");
@@ -94,8 +95,6 @@ else
 		}
 		GetUserDetailsAsync();
 		auth.PropertyChanged += OnPropertyChanged;
-		InitializeTanuloData tanuloData= new(data);
-		await tanuloData.SetupTanuloData();
 	}
 	private async Task<string> InitSzoveg()
 	{
@@ -169,11 +168,20 @@ else
 	}
 	private void Hiany_btn()
 	{
-		navi.NavigateTo($"hiany");
+		navi.NavigateTo("hiany");
 	}
 	private void Hiba_btn()
 	{
-		navi.NavigateTo($"hiba");
+		navi.NavigateTo("hiba");
+	}
+	private void Pont_btn()
+	{
+		if (string.IsNullOrEmpty(SelectedClassId))
+		{
+			toastService.ShowError("Kérem válasszon ki egy osztályt a pontok megtekintéséhez.");
+			return;
+		}
+		navi.NavigateTo($"pontok/{SelectedClassId}");
 	}
 	/// <summary>
 	/// Event handler for property change event on authentication service's IsSignedIn property
@@ -261,7 +269,11 @@ else
 		}
 		// Get user
 		Me = await _graphService.GetUserInfoAsync();
+		data.UserId = Me.Id;
 		classes = await _graphService.GetTaughtClasses(Me.Id);
+		_classes = classes.Value.Where(c => !c.DisplayName.Contains("Exp")).ToList();
+		InitializeTanuloData tanuloData = new(data, _graphService);
+		await tanuloData.SetupTanuloData(_classes);
 
 		// UserName = user.DisplayName;
 		// UserEmail = user.Mail ?? user.UserPrincipalName;

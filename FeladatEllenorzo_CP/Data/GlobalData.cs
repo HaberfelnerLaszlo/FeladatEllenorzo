@@ -14,6 +14,7 @@ namespace FeladatEllenorzo_CP.Data
         public string UserId { get; set; } = string.Empty;
 		public string Name { get; set; } = string.Empty;
         public string Osztalynev { get; set; }=string.Empty;
+		public int IsHiany { get; set; } = 0;
         public List<MemberData> Members { get; set; } = [];
 		public List<DataSzoveg> Szovegek { get; set; } = [];
 		public List<DataFeladat> Feladatok = [];

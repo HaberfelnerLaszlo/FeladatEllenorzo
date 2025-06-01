@@ -168,6 +168,7 @@ namespace FeladatEllenorzo_CP.Services
             var pca = await _pca.Value;
 
             var result = await pca.AcquireTokenInteractive(_settingsService.GraphScopes)
+                .WithUseEmbeddedWebView(false)
                 .ExecuteAsync();
 
             // Store the user ID to make account retrieval easier

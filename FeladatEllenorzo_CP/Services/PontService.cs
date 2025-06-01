@@ -8,11 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using static Microsoft.Maui.Controls.Internals.Profile;
-
 namespace FeladatEllenorzo_CP.Services
 {
-    public class SzorgalmiService : ISzorgalmiService
+    public class PontService : IPontService
     {
 //#if ANDROID
 //        		private string _baseUrl = "http://10.0.2.2:7130";
@@ -20,20 +18,20 @@ namespace FeladatEllenorzo_CP.Services
 //        private string _baseUrl = "http://localhost:7130";
 //#endif
         private string _baseUrl = "https://fapi.haberfelner.eu";
-
-        public async Task<MainResponse> Add(Szorgalmi szorgalmi)
+        public string ErrorMessage { get; set; } = string.Empty;
+        public async Task<MainResponse> Add(Pont pont)
         {
             var returnResponse = new MainResponse();
             try
             {
                 using var client = new HttpClient();
-                string url = $"{_baseUrl}/szorgalmi";
+                string url = $"{_baseUrl}/pont";
 
-                var serializeContent = JsonConvert.SerializeObject(szorgalmi);
+                var serializeContent = JsonConvert.SerializeObject(pont);
 
                 var apiResponse = await client.PostAsync(url, new StringContent(serializeContent, Encoding.UTF8, "application/json"));
 
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK ||apiResponse.StatusCode==System.Net.HttpStatusCode.Created)
                 {
                     var response = await apiResponse.Content.ReadAsStringAsync();
                     returnResponse = JsonConvert.DeserializeObject<MainResponse>(response);
@@ -43,18 +41,18 @@ namespace FeladatEllenorzo_CP.Services
             {
                 returnResponse.IsSuccess = false;
                 returnResponse.ErrorMessage = ex.Message;
+                ErrorMessage = ex.Message;
             }
             return returnResponse;
-
         }
 
-        public async Task<List<Tanulo>> GetSzorgalmiByNev(string nev)
+        public async Task<List<Pont>> GetPontById(int id)
         {
-            var returnResponse = new List<Tanulo>();
+            var returnResponse = new List<Pont>();
             try
             {
                 using var client = new HttpClient();
-                string url = $"{_baseUrl}/szorgalmi_nev/{nev}";
+                string url = $"{_baseUrl}/pont/{id}";
                 var apiResponse = await client.GetAsync(url);
 
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
@@ -64,31 +62,53 @@ namespace FeladatEllenorzo_CP.Services
 
                     if (deserilizeResponse.IsSuccess)
                     {
-                        returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
+                        returnResponse = JsonConvert.DeserializeObject<List<Pont>>(deserilizeResponse.Content.ToString());
                     }
                 }
             }
             catch (Exception ex)
             {
-                string msg = ex.Message;
+                ErrorMessage = ex.Message;
             }
             return returnResponse;
         }
 
-        public async Task<List<Tanulo>> GetSzorgalmiByOsztaly(string osztaly)
+        public async Task<List<Pont>> GetPontByTanulo(Guid tId)//tanuloId
+        {
+            var returnResponse = new List<Pont>();
+            try
+            {
+                using var client = new HttpClient();
+                string url = $"{_baseUrl}/pont/tanulo/{tId}";
+                var apiResponse = await client.GetAsync(url);
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var response = await apiResponse.Content.ReadAsStringAsync();
+                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(response);
+                    if (deserilizeResponse.IsSuccess)
+                    {
+                        returnResponse = JsonConvert.DeserializeObject<List<Pont>>(deserilizeResponse.Content.ToString());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            return returnResponse;
+        }
+        public async Task<List<Tanulo>> GetPontByOsztaly(string osztaly)
         {
             var returnResponse = new List<Tanulo>();
             try
             {
                 using var client = new HttpClient();
-                string url = $"{_baseUrl}/szorgalmik/{osztaly}";
+                string url = $"{_baseUrl}/pont/osztaly/{osztaly}";
                 var apiResponse = await client.GetAsync(url);
-
                 if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     var response = await apiResponse.Content.ReadAsStringAsync();
                     var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(response);
-
                     if (deserilizeResponse.IsSuccess)
                     {
                         returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content.ToString());
@@ -97,70 +117,18 @@ namespace FeladatEllenorzo_CP.Services
             }
             catch (Exception ex)
             {
-                string msg = ex.Message;
+                ErrorMessage = ex.Message;
             }
             return returnResponse;
         }
-
-        public async Task<MainResponse> Remove(Szorgalmi szorgalmi)
-        {
-            var returnResponse = new MainResponse();
-            try
-            {
-                using var client = new HttpClient();
-                string url = $"{_baseUrl}/szorgalmi/{szorgalmi.Id}";
-
-                var serializeContent = JsonConvert.SerializeObject(szorgalmi);
-
-                var request = new HttpRequestMessage();
-                request.Method = HttpMethod.Delete;
-                request.RequestUri = new Uri(url);
-                request.Content = new StringContent(serializeContent, Encoding.UTF8, "application/json");
-                var apiResponse = await client.SendAsync(request);
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    var response = await apiResponse.Content.ReadAsStringAsync();
-                    returnResponse = JsonConvert.DeserializeObject<MainResponse>(response);
-                }
-            }
-            catch (Exception ex)
-            {
-                returnResponse.IsSuccess = false;
-                returnResponse.ErrorMessage = ex.Message;
-            }
-            return returnResponse;
-        }
-
-        //Task<MainResponse> ISzorgalmiService.RemoveAll()
+        //public Task<MainResponse> Remove(Pont pont)
         //{
         //    throw new NotImplementedException();
         //}
 
-        public async Task<MainResponse> Update(Szorgalmi szorgalmi)
-        {
-            var returnResponse = new MainResponse();
-            try
-            {
-                using var client = new HttpClient();
-                string url = $"{_baseUrl}/szorgalmi/{szorgalmi.Id}";
-
-                var serializeContent = JsonConvert.SerializeObject(szorgalmi);
-
-                var apiResponse = await client.PutAsync(url, new StringContent(serializeContent, Encoding.UTF8, "application/json"));
-
-                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    var response = await apiResponse.Content.ReadAsStringAsync();
-                    returnResponse = JsonConvert.DeserializeObject<MainResponse>(response);
-                }
-            }
-            catch (Exception ex)
-            {
-                returnResponse.IsSuccess = false;
-                returnResponse.ErrorMessage = ex.Message;
-            }
-            return returnResponse;
-        }
+        //public Task<MainResponse> Update(Pont pont)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

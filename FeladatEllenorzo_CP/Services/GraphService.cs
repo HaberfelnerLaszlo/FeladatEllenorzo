@@ -177,7 +177,7 @@ namespace FeladatEllenorzo_CP.Services
         {
             return graphClient.Education.Classes[id].Assignments.GetAsync((config) =>
             {
-                config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "dueDateTime","instructions" };
+                config.QueryParameters.Select = new[] { "displayName", "id", "resources", "submissions", "assignTo", "assignedDateTime", "dueDateTime","instructions" };
                 config.QueryParameters.Expand = new[] { "*" };
                 config.Headers.Add("Prefer", "include-unknown-enum-members");
             });

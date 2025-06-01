@@ -66,6 +66,27 @@ namespace Data_Api.Services
                 return response;
             }
         }
+        public async Task<MainResponse> GetPontsByOsztaly(string osztaly)
+        {
+            response.Clear();
+            var pontok = await _context.Tanulok
+                .Where(t => t.Osztaly == osztaly)
+                .Include(t => t.Pontok.Take(25)) // Correctly specify the navigation property to include
+                .ToListAsync();
+
+            if (pontok == null || !pontok.Any())
+            {
+                response.ErrorMessage = "Nincs pont tárolva.";
+                response.IsSuccess = false;
+                return response;
+            }
+            else
+            {
+                response.IsSuccess = true;
+                response.Content = pontok;
+                return response;
+            }
+        }
         //public async Task<bool> DeletePont(int id)
         //{
         //    var pont = await GetPontById(id);

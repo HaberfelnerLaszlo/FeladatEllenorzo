@@ -21,6 +21,12 @@ namespace Data_Api.Endpoints
                 }
                 return Results.Created($"/pont/{newPont.Id}", createdPont);
             });
+            //Az id az osztályneve és nem az osztály id-je
+            app.MapGet("/pont/osztaly/{id}", async (string id,PontService pontService) =>
+            {
+                var pontok = await pontService.GetPontsByOsztaly(id);
+                return Results.Ok(pontok);
+            });
             app.MapGet("/pont/{id}", async (int id, PontService pontService) =>
             {
                 var pont = await pontService.GetPontById(id);
