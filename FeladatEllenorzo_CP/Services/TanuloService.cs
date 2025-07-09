@@ -9,14 +9,16 @@ using static Microsoft.Maui.Controls.Internals.Profile;
 
 namespace FeladatEllenorzo_CP.Services
 {
-    public class TanuloService : ITanuloService
+    public class TanuloService(GlobalData data) : ITanuloService
     {
-//#if ANDROID
-//        		private string _baseUrl = "http://10.0.2.2:7130";
-//#else
-//        private string _baseUrl = "http://localhost:7130";
-//#endif
-        private string _baseUrl = "https://fapi.haberfelner.eu";
+        //#if ANDROID
+        //        		private string _baseUrl = "http://10.0.2.2:7130";
+        //#else
+        //        private string _baseUrl = "http://localhost:7130";
+        //#endif
+        //        private string _baseUrl = "https://fapi.haberfelner.eu";
+        private string _baseUrl = data.ApiUrl;
+
         public string msg = "";
 
         public async Task<MainResponse> CreateTanulo(Tanulo tanulo)

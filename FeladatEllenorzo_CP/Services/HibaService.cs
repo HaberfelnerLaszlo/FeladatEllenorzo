@@ -1,4 +1,5 @@
-﻿using FeladatEllenorzo_CP.Models;
+﻿using FeladatEllenorzo_CP.Data;
+using FeladatEllenorzo_CP.Models;
 using FeladatEllenorzo_CP.Pages;
 
 using Newtonsoft.Json;
@@ -11,14 +12,9 @@ using System.Threading.Tasks;
 
 namespace FeladatEllenorzo_CP.Services
 {
-	public class HibaService : IHibaService
+	public class HibaService(GlobalData data) : IHibaService
 	{
-//#if ANDROID
-//		private string _baseUrl = "http://10.0.2.2:7130";
-//#else
-//		private string _baseUrl = "http://localhost:7130";
-//#endif
-		private string _baseUrl = "https://fapi.haberfelner.eu";
+		private string _baseUrl = data.ApiUrl;
 
 		public async Task<MainResponse> Add(HibasFeladat hiba)
 		{

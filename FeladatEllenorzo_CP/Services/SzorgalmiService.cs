@@ -1,4 +1,5 @@
-﻿using FeladatEllenorzo_CP.Models;
+﻿using FeladatEllenorzo_CP.Data;
+using FeladatEllenorzo_CP.Models;
 
 using Newtonsoft.Json;
 
@@ -12,14 +13,15 @@ using static Microsoft.Maui.Controls.Internals.Profile;
 
 namespace FeladatEllenorzo_CP.Services
 {
-    public class SzorgalmiService : ISzorgalmiService
+    public class SzorgalmiService(GlobalData data) : ISzorgalmiService
     {
 //#if ANDROID
 //        		private string _baseUrl = "http://10.0.2.2:7130";
 //#else
 //        private string _baseUrl = "http://localhost:7130";
 //#endif
-        private string _baseUrl = "https://fapi.haberfelner.eu";
+        //private string _baseUrl = "https://fapi.haberfelner.eu";
+        private string _baseUrl = data.ApiUrl;
 
         public async Task<MainResponse> Add(Szorgalmi szorgalmi)
         {

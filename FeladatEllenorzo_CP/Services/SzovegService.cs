@@ -1,4 +1,5 @@
-﻿using FeladatEllenorzo_CP.Models;
+﻿using FeladatEllenorzo_CP.Data;
+using FeladatEllenorzo_CP.Models;
 
 using Newtonsoft.Json;
 
@@ -10,15 +11,17 @@ using System.Threading.Tasks;
 
 namespace FeladatEllenorzo_CP.Services
 {
-	public class SzovegService : ISzovegService
+	public class SzovegService(GlobalData data) : ISzovegService
 	{
-		private string _baseUrl = "https://fapi.haberfelner.eu";
-//#if ANDROID
-//		private string _baseUrl = "http://10.0.2.2:7130";
-//#else
-//		private string _baseUrl = "http://localhost:7130";
-//#endif
-		public async Task<MainResponse> Add(DataSzoveg szoveg)
+        private string _baseUrl = data.ApiUrl;
+
+        //private string _baseUrl = "https://fapi.haberfelner.eu";
+        //#if ANDROID
+        //		private string _baseUrl = "http://10.0.2.2:7130";
+        //#else
+        //		private string _baseUrl = "http://localhost:7130";
+        //#endif
+        public async Task<MainResponse> Add(DataSzoveg szoveg)
 		{
 			var returnResponse = new MainResponse();
 			try

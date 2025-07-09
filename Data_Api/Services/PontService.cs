@@ -4,25 +4,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data_Api.Services
 {
-    public class PontService
+    public class PontService(FeladatDb context, Settings settings)
     {
-        private readonly FeladatDb _context;
         MainResponse response = new MainResponse();
-        public PontService(FeladatDb context)
-        {
-            _context = context;
-        }
+
         public async Task<MainResponse> CreatePont(Pont pont)
         {
             response.Clear();
-            var tanulo = _context.Find<Tanulo>(pont.TanuloId);
+            var tanulo = context.Find<Tanulo>(pont.TanuloId);
             if (tanulo != null)
             {
-               _context.Pontok.Add(pont);
+               context.Pontok.Add(pont);
                 tanulo.Pont += pont.PontSzam; // Adjust logic as needed, e.g., += pont.PontSzam
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 response.IsSuccess = true;
                 response.Content = pont;
+                settings.LastModify = DateTime.Now;
                 return response;
             }
             else
@@ -35,7 +32,7 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetAllPontsByTanuloId(Guid id)
         {
             response.Clear();
-            var pontok = await _context.Pontok.Where(p => p.TanuloId == id).ToListAsync();
+            var pontok = await context.Pontok.Where(p => p.TanuloId == id).ToListAsync();
             if (pontok == null)
             {
                 response.ErrorMessage = "Nincs pont tárolva.";
@@ -52,7 +49,7 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetPontById(int id)
         {
             response.Clear();
-            var pont = await _context.Pontok.FindAsync(id);
+            var pont = await context.Pontok.FindAsync(id);
             if (pont == null)
             {
                 response.ErrorMessage = "Nincs pont tárolva.";
@@ -69,7 +66,7 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetPontsByOsztaly(string osztaly)
         {
             response.Clear();
-            var pontok = await _context.Tanulok
+            var pontok = await context.Tanulok
                 .Where(t => t.Osztaly == osztaly)
                 .Include(t => t.Pontok.Take(25)) // Correctly specify the navigation property to include
                 .ToListAsync();

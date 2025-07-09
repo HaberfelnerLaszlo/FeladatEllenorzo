@@ -44,7 +44,7 @@ namespace FeladatEllenorzo_CP
         }
         private async Task CreateTanulok()
         {
-            TanuloService tanuloService = new();
+            TanuloService tanuloService = new(_data);
             foreach (var item in tanulok)
             {
                 var response = await tanuloService.CreateTanulo(item);
@@ -56,7 +56,7 @@ namespace FeladatEllenorzo_CP
         }
         public async Task SetupTanuloData(List<EducationClass> classes)
         {
-            TanuloService tanuloService = new TanuloService();
+            TanuloService tanuloService = new TanuloService(_data);
             string path = Path.Combine(FileSystem.AppDataDirectory, "tanulok.json");
             string json = "";
             if (File.Exists(path))

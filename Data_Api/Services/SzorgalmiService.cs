@@ -4,18 +4,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data_Api.Services
 {
-	public class SzorgalmiService
-	{
+	public class SzorgalmiService(FeladatDb db, Settings settings)
+    {
 		//private readonly FeladatSQL _db;
-		private readonly FeladatDb _db;
-		MainResponse response = new MainResponse();
+		private readonly FeladatDb _db = db;
+        private readonly Settings _settings = settings;
+        MainResponse response = new MainResponse();
 
-		//public SzorgalmiService(FeladatSQL db)
-		public SzorgalmiService(FeladatDb db)
-		{
-			_db = db;
-		}
-		public async Task<MainResponse> GetSzorgalmik(string osztaly)
+        public async Task<MainResponse> GetSzorgalmik(string osztaly)
 		{
 			response.Clear();
 			var list = await _db.Tanulok.Where(h => h.Osztaly == osztaly)
@@ -69,7 +65,9 @@ namespace Data_Api.Services
                     db=_db.SaveChanges();
                     if (db <= 0) { response.ErrorMessage = "Nem sikerült a pont hozzáadása."; response.IsSuccess = false; return response; }
                     response.IsSuccess = true;
-					return response;
+                    response.Content = szorgalmi;
+                    _settings.LastModify = DateTime.Now;
+                    return response;
                 }
                 else
                 {
@@ -114,6 +112,8 @@ namespace Data_Api.Services
                 if (_db.SaveChanges() > 0)
                 {
                     response.IsSuccess = true;
+                    response.Content = szorgalmi;
+                    _settings.LastModify = DateTime.Now;
                     return response;
                 }
                 else
@@ -150,6 +150,7 @@ namespace Data_Api.Services
                     if (tanulo != null) tanulo.Pont -= szorgalmi.Pont;
                     _db.SaveChanges();
                     response.IsSuccess = true;
+                    _settings.LastModify = DateTime.Now;
                     return response;
                 }
                 else

@@ -24,6 +24,10 @@ namespace Data_Api.Endpoints
             {
                 return await tanuloService.GetTanulokToIds(osztaly);
             });
+            app.MapGet("/tanulo_data/{id}", async (TanuloService tanuloService, string id) =>
+            {
+                return await tanuloService.GetTanuloData(Guid.Parse(id));
+            });
             app.MapPost("/tanulo", async (TanuloService tanuloService, Tanulo tanulo) =>
             {
                 return await tanuloService.CreateTanulo(tanulo);

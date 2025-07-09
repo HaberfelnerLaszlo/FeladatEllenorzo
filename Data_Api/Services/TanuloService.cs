@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Data_Api.Services
 {
     //public class TanuloService(FeladatSQL feladatSQL)
-     public class TanuloService(FeladatDb db)
+     public class TanuloService(FeladatDb db,Settings settings)
    {
         //readonly FeladatSQL _db = db;
         readonly FeladatDb _db = db;
+        readonly Settings _settings = settings;
         readonly MainResponse response = new();
         public async Task<MainResponse> GetTanulok()
         {
@@ -114,6 +115,42 @@ namespace Data_Api.Services
                 return response;
             }
         }
+       public async Task<MainResponse> GetTanuloData(Guid id)
+        {
+            response.Clear();
+            try
+            {
+                var tanulo = await _db.Tanulok.FirstOrDefaultAsync(t => t.Id== id);
+                if (tanulo == null)
+                {
+                    response.ErrorMessage = "Nem található a tanuló.";
+                    response.IsSuccess = false;
+                    return response;
+                }
+                var osztaly = tanulo.Osztaly;
+                var minimumPont = await _db.Tanulok.Where(t => t.Osztaly == osztaly).MinAsync(t => t.Pont);
+                var maximumPont = await _db.Tanulok.Where(t => t.Osztaly == osztaly).MaxAsync(t => t.Pont);
+                var averagePont = await _db.Tanulok.Where(t => t.Osztaly == osztaly).AverageAsync(t => t.Pont);
+                TanuloData tanuloData = new()
+                {
+                    Id = tanulo.Id,
+                    Atlag = averagePont,
+                    PontSzam = tanulo.Pont,
+                    Min = minimumPont,
+                    Max = maximumPont,
+                    Pontok = [.. _db.Pontok.Where(p => p.TanuloId == tanulo.Id).Take(10)]
+                };
+                response.IsSuccess = true;
+                response.Content = tanuloData;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.ErrorMessage = ex.Message;
+                response.IsSuccess = false;
+                return response;
+            }
+        }
         public async Task<MainResponse> CreateTanulo(Tanulo tanulo)
         {
             response.Clear();
@@ -121,6 +158,7 @@ namespace Data_Api.Services
             {
                 _db.Tanulok.Add(tanulo);
                 await _db.SaveChangesAsync();
+                _settings.LastModify = DateTime.Now;
                 response.Content = "Sikeres mentés.";
                 response.IsSuccess = true;
                 return response;
@@ -147,6 +185,7 @@ namespace Data_Api.Services
                 await _db.SaveChangesAsync();
                 response.Content = "Sikeres módosítás.";
                 response.IsSuccess = true;
+                _settings.LastModify = DateTime.Now;
                 return response;
             }
             catch (Exception ex)
@@ -172,6 +211,7 @@ namespace Data_Api.Services
                 await _db.SaveChangesAsync();
                 response.Content = "Sikeres törlés.";
                 response.IsSuccess = true;
+                _settings.LastModify = DateTime.Now;
                 return response;
             }
             catch (Exception ex)

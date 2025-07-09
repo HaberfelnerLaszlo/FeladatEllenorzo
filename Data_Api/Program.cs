@@ -1,3 +1,4 @@
+using Data_Api;
 using Data_Api.Data;
 using Data_Api.Endpoints;
 using Data_Api.Services;
@@ -18,6 +19,8 @@ builder.Services.AddScoped<HianyService>();
 builder.Services.AddScoped<TanuloService>();
 builder.Services.AddScoped<PontService>();
 builder.Services.AddScoped<HibaService>();
+builder.Services.AddScoped<DataSaving>();
+builder.Services.AddSingleton<Settings>();
 
 //builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 var app = builder.Build();
@@ -32,5 +35,6 @@ app.AddSzorgalmiEndPoints();
 app.AddSzovegEndPoints();
 app.AddTanuloEndpoints();
 app.AddPontEndPoints();
+app.AddManageEndpoints();
 
 app.Run();

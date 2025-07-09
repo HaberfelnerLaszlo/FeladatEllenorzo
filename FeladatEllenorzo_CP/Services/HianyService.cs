@@ -1,4 +1,5 @@
-﻿using FeladatEllenorzo_CP.Models;
+﻿using FeladatEllenorzo_CP.Data;
+using FeladatEllenorzo_CP.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,16 +9,18 @@ using System.Threading.Tasks;
 
 namespace FeladatEllenorzo_CP.Services
 {
-	public class HianyService : IHianyService
+	public class HianyService(GlobalData data) : IHianyService
 	{
 		public string ErrorMsg = string.Empty;
-        private string _baseUrl = "https://fapi.haberfelner.eu";
-//#if ANDROID
-//		private string _baseUrl = "http://10.0.2.2:7130";
-//#else
-//		private string _baseUrl = "http://localhost:7130";
-//#endif
-		public async Task<MainResponse> Add(FeladatHiany hiany)
+//        private string _baseUrl = "https://fapi.haberfelner.eu";
+        private string _baseUrl = data.ApiUrl;
+
+        //#if ANDROID
+        //		private string _baseUrl = "http://10.0.2.2:7130";
+        //#else
+        //		private string _baseUrl = "http://localhost:7130";
+        //#endif
+        public async Task<MainResponse> Add(FeladatHiany hiany)
 		{
 			var returnResponse = new MainResponse();
 			try

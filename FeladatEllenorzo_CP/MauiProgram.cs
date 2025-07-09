@@ -55,6 +55,7 @@ public static class MauiProgram
 	}
 	private static MauiAppBuilder RegisterAppServices(this MauiAppBuilder builder)
 	{
+        builder.Services.AddSingleton<GlobalData>();
 		builder.Services.AddSingleton<ISettingsService, SettingsService>();
 		builder.Services.AddSingleton<IAlertService, AlertService>();
 		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
@@ -66,7 +67,6 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISzorgalmiService, SzorgalmiService>();
         builder.Services.AddSingleton<IPontService, PontService>();
         builder.Services.AddSingleton<ITanuloService, TanuloService>();
-        builder.Services.AddSingleton<GlobalData>();
 		return builder;
 	}
 }

@@ -6,8 +6,15 @@ namespace FeladatEllenorzo_CP.Data
 {
 	public class GlobalData
 	{
-		public static string AccessToken = null;
-		public string ClassId { get; set; }= string.Empty;
+		public string AccessToken = null;
+        public string ApiUrl { get; set; } = "https://fapi.haberfelner.eu";
+
+        //#if ANDROID
+        //    public string ApiUrl { get; set; } = "http://10.0.2.2:7130";
+        //#else
+        //public string ApiUrl { get; set; } = "http://localhost:7130";
+
+        public string ClassId { get; set; }= string.Empty;
 		public string AssignmentId { get; set; }= string.Empty;
 		public string SubmissionId { get; set; }= string.Empty;
 		public Guid StudentId { get; set; }= Guid.Empty;

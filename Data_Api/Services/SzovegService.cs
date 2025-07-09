@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Data_Api.Services
 {
    // public class SzovegService(FeladatSQL db)
-    public class SzovegService(FeladatDb db)
+    public class SzovegService(FeladatDb db, Settings settings)
     {
         //readonly FeladatSQL _db = db;
         readonly FeladatDb _db = db;
+        readonly Settings _settings = settings;
         readonly MainResponse response = new MainResponse();
         public async Task<MainResponse> GetSzovegek()
         {
@@ -45,6 +46,7 @@ namespace Data_Api.Services
                 await _db.SaveChangesAsync();
                 response.Content = "Sikeres mentés.";
                 response.IsSuccess = true;
+                _settings.LastModify = DateTime.Now;
                 return response;
             }
             catch (Exception ex)
@@ -79,6 +81,7 @@ namespace Data_Api.Services
                     await _db.SaveChangesAsync();
                     response.Content = "Sikeres módosítás.";
                     response.IsSuccess = true;
+                    _settings.LastModify = DateTime.Now;
                     return response;
                 }
             }
@@ -105,6 +108,7 @@ namespace Data_Api.Services
                 await _db.SaveChangesAsync();
                 response.Content = "Sikeres törlés.";
                 response.IsSuccess = true;
+                _settings.LastModify = DateTime.Now;
                 return response;
             }
         }
