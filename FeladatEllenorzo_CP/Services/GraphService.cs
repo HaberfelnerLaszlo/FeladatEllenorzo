@@ -72,7 +72,7 @@ namespace FeladatEllenorzo_CP.Services
         {
             var graphClient = _authenticationService.GraphClient;
 
-            var timeZoneString = DeviceInfo.Current.Platform == DevicePlatform.WinUI ?
+            var timeZoneString = Microsoft.Maui.Devices.DeviceInfo.Current.Platform == DevicePlatform.WinUI ?
                 timeZone.StandardName : timeZone.Id;
             
             return graphClient.Me

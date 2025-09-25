@@ -84,6 +84,23 @@ namespace Data_Api.Services
                 return response;
             }
         }
+        public async Task<MainResponse> GetAllPonts()
+        {
+            response.Clear();
+            var pontok = await context.Pontok.ToListAsync();
+            if (pontok == null || !pontok.Any())
+            {
+                response.ErrorMessage = "Nincs pont tárolva.";
+                response.IsSuccess = false;
+                return response;
+            }
+            else
+            {
+                response.IsSuccess = true;
+                response.Content = pontok;
+                return response;
+            }
+        }
         //public async Task<bool> DeletePont(int id)
         //{
         //    var pont = await GetPontById(id);

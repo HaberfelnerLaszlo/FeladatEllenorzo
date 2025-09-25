@@ -1,6 +1,7 @@
 ﻿@page "/ell"
 @using FeladatEllenorzo_CP.Services;
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
@@ -73,8 +74,8 @@
                 }
             </select>
             <button @onclick="Next">Next</button>
-                        }
-        <FluentButton OnClick="ViewAssigment">Feladat megtekintése</FluentButton>
+        }
+        <FluentButton OnClick="ViewAssigment">@AssignmentName feladat megtekintése</FluentButton>
         <FluentLabel>
             @DisplayMessage
         </FluentLabel>
@@ -186,7 +187,9 @@
             <FluentSwitch Label="Hibaként menteni:" Value="isHiba" @onclick="(() => ChangeHiba())" />
             <FluentSwitch Label="Hiányként menteni:" Value="isHiany" @onclick="(() => ChangeHiany())" />
             <FluentSwitch Label="Szorgalmi? " Value="isSzorg" @onclick="(() => ChangeSzorgalmi())" />
+            <FluentSwitch Label="Szorgalmi és lecke? " Value="isSzorgLecke" @onclick="(() => ChangeSzorgalmiLecke())" />
             <FluentSwitch Label="Pótlás? " Value="isPotlas" @onclick="(() => isPotlas = isPotlas ? false : true)" />
+            <FluentSwitch Label="Pótlás? " Value="noSave" @onclick="(() => noSave = noSave ? false : true)" />
             <hr />
             <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e) => Valtozas(true, e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
             <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
@@ -204,8 +207,8 @@
     private EducationFeedbackOutcome valasz;
     private EducationPointsOutcome pont;
     private Szorgalmi szorgalmi;
-    private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage = string.Empty;
-    private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false;
+    private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage = string.Empty, AssignmentName = string.Empty;
+    private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave=false;
     private int index = 0, i = 0;
     private float Pont = 0;
     private IDialogReference? _dialog;
@@ -215,6 +218,7 @@
         {
             nev = data.Name.Split(" ")[1];
             isHiany = data.IsHiany > 0;
+            AssignmentName = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId).Feladat.DisplayName;
             DataInit();
         }
         return base.OnAfterRenderAsync(firstRender);
@@ -285,29 +289,29 @@
             foreach (var item in feladatValaszok.Value)
             {
                 valasz = (EducationFeedbackOutcome)item;
-            @if (valasz is not null && valasz.Feedback is not null)
-            {
-                Valasz = valasz.Feedback.Text.Content;
-            }
-            else
-            {
-                Valasz = "Kedves " + nev;
-            }
-        }
-        var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
-        foreach (var item in feladatPontok.Value)
-        {
-            pont = (EducationPointsOutcome)item;
-            @if (pont is not null && pont.Points is not null)
-            {
-                Pont = pont.Points.Points.Value;
-                if (!String.IsNullOrEmpty(url) && Pont == 0)
+                @if (valasz is not null && valasz.Feedback is not null)
                 {
-                    Pont = 2;
-                    changedPont = true;
+                    Valasz = valasz.Feedback.Text.Content;
                 }
-                IsNotSaved = false;
+                else
+                {
+                    Valasz = "Kedves " + nev;
+                }
             }
+            var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
+            foreach (var item in feladatPontok.Value)
+            {
+                pont = (EducationPointsOutcome)item;
+                @if (pont is not null && pont.Points is not null)
+                {
+                    Pont = pont.Points.Points.Value;
+                    if (!String.IsNullOrEmpty(url) && Pont == 0)
+                    {
+                        Pont = 2;
+                        changedPont = true;
+                    }
+                    IsNotSaved = false;
+                }
             }
         }
         catch (Exception e)
@@ -449,9 +453,9 @@
                     await alert.ShowAlertAsync("A válasz hiba üzenete null érték lett!", "Hiba üzenet", "Rendben");
                 }
             }
-            else
+            else if (!isSzorg)
             {
-                var res = await pontService.Add(new() { Datum = DateTime.Today, PontSzam = (int)Pont, TanuloId = data.StudentId, Jegyzet = data.AssignmentId, PontTipus = PontTipus.Lecke });
+                var res = await pontService.Add(new() { Datum = DateTime.Today, PontSzam = (int)Pont, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}", PontTipus = PontTipus.Lecke });
                 if (res.IsSuccess)
                 {
                     toastService.ShowInfo("A pont mentve az adatbázisba.");
@@ -504,24 +508,26 @@
                 }
             }
         }
-        if (isSzorg && szorgalmi is not null)
+        if ((isSzorg || isSzorgLecke) && szorgalmi is not null)
         {
             var res = await szorgalmiService.Add(szorgalmi);
             if (res.IsSuccess)
             {
                 toastService.ShowInfo("A szorgalmi mentve az adatbázisba.");
                 isSzorg = false;
+                isSzorgLecke = false;
             }
             else
             {
-                Console.Write("Hiba a szorgalmi mentésekor: "+res.ErrorMessage);
+                Console.Write("Hiba a szorgalmi mentésekor: " + res.ErrorMessage);
                 isSzorg = false;
-                await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
+                isSzorgLecke = false;
+                toastService.ShowError($"Hiba a szorgalmi mentésekor! Üzenet: {res.ErrorMessage}");
             }
         }
         if (!response)
         {
-            await alert.ShowAlertAsync("Hiba!", "A mentés nem sikerült!", "Rendben");
+            toastService.ShowError("A mentés nem sikerült!");
         }
         else
         {
@@ -562,15 +568,15 @@
     async Task ChangeSzorgalmi()
     {
         isSzorg = isSzorg ? false : true;
-        szorgalmi = new() { Feladatok_szama = 1, Pont = 2 ,Osztaly=data.ClassId, TanuloId=data.StudentId};
+        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId };
         var par = new DialogParameters<Szorgalmi>()
         {
             Content = szorgalmi,
             Alignment = HorizontalAlignment.Right,
             Title = "Szorgalmi felvétele",
-            ShowDismiss=false,
-            PrimaryActionEnabled=true,
-            SecondaryActionEnabled=true,
+            ShowDismiss = false,
+            PrimaryActionEnabled = true,
+            SecondaryActionEnabled = true,
             PrimaryAction = "Mentés",
             SecondaryAction = "Mégsem",
         };
@@ -580,11 +586,37 @@
         if (!result.Cancelled)
         {
             szorgalmi = result.Data as Szorgalmi;
-            //ujSzorgalmi = 
+            //ujSzorgalmi =
         }
         else { isSzorg = false; }
 
     }
+    async Task ChangeSzorgalmiLecke()
+    {
+        isSzorgLecke = isSzorgLecke ? false : true;
+        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}" };
+        var par = new DialogParameters<Szorgalmi>()
+        {
+            Content = szorgalmi,
+            Alignment = HorizontalAlignment.Right,
+            Title = "Szorgalmi felvétele",
+            ShowDismiss = false,
+            PrimaryActionEnabled = true,
+            SecondaryActionEnabled = true,
+            PrimaryAction = "Mentés",
+            SecondaryAction = "Mégsem",
+        };
+
+        _dialog = await dialogService.ShowPanelAsync<DialogAddSzorgalmi>(szorgalmi, par);
+        DialogResult result = await _dialog.Result;
+        if (!result.Cancelled)
+        {
+            szorgalmi = result.Data as Szorgalmi;
+        }
+        else { isSzorgLecke = false; }
+
+    }
+
     async void ViewAssigment()
     {
         var message = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId).Feladat.Instructions.Content;
@@ -603,4 +635,4 @@
             Width = "300px",
         });
     }
-        }
+}

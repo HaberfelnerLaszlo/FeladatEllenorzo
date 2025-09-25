@@ -8,6 +8,7 @@
 @inject IAlertService alert
 @inject IHianyService hiany
 @inject ITanuloService tanuloService
+@inject IToastService toastSercive
 
 <FluentGrid Justify="JustifyContent.FlexStart"
             Style="background-color: var(--neutral-layer-3);">
@@ -134,9 +135,9 @@
                             <FluentLabel Weight="FontWeight.Bolder">Kijelölve @i tanuló</FluentLabel>
                             <FluentSwitch Value="isHiany" Label=" Hiányként menteni" @onclick="(()=>ChangeHiany())" />
                             @*<div class="form-check form-switch">
-                <label for="hianyLehet">Hiányként menteni </label>
-                <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
-            </div>*@
+                                    <label for="hianyLehet">Hiányként menteni </label>
+                                    <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
+                                </div>*@
                             @*<FluentDatePicker @bind-Value="@(datumHiany)" Label="Könyvelés dátuma" />*@
                             <FluentLabel>Könyvelés dátuma:</FluentLabel>
                             <input type="datetime" @bind-value="@(datumHiany)" />
@@ -201,13 +202,13 @@
                             </FluentStack>
                         }
                     </FluentStack>
-                        </FluentStack>
+                </FluentStack>
             }
         </FluentStack>
     </FluentGridItem>
 </FluentGrid>
 @*<FluentStack Orientation="Orientation.Horizontal">
-</FluentStack>*@
+    </FluentStack>*@
 @code {
     [Parameter] public string Id { get; set; } //ClassId
     private EducationAssignmentCollectionResponse feladatok;
@@ -235,8 +236,9 @@
         {
             feladatok = await graph.GetFeladatok(Id);
             var feladat = feladatok.Value.FirstOrDefault(f => f.AssignedDateTime < DateTime.UtcNow);
+            if (feladat is null) { toastSercive.ShowInfo("Nincs feladat kiadva.");return; }
             data.AssignmentId = feladat.Id; //feladatok.Value[0].Id;
-            var utasitas = feladat.Instructions?.Content?? string.Empty;
+            var utasitas = feladat.Instructions?.Content ?? string.Empty;
             await GetCount();
         }
         else UpdateCount(data.AssignmentId);
@@ -310,7 +312,7 @@
                     var member = data.Members.Find(m => m.Id == Guid.Parse(item.SubmittedBy.User.Id));
                     if (member is null)
                     {
-                        member = data.Members.Find(m => m.Id == data.StudentId)?? new();
+                        member = data.Members.Find(m => m.Id == data.StudentId) ?? new();
                     }
                     switch (item.Status)
                     {
@@ -481,7 +483,7 @@
                     isError = true;
                     break;
                 }
-                var mainResponse = await hiany.Add(new() { TanuloId= item.Id, FeladatId= Guid.Parse(data.AssignmentId), Datum = DateOnly.FromDateTime(datumHiany), Osztaly = data.Osztalynev });
+                var mainResponse = await hiany.Add(new() { TanuloId = item.Id, FeladatId = Guid.Parse(data.AssignmentId), Datum = DateOnly.FromDateTime(datumHiany), Osztaly = data.Osztalynev });
                 if (!mainResponse.IsSuccess)
                 {
                     await alert.ShowAlertAsync($"A hiba mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
@@ -541,7 +543,7 @@
         saveError.Clear();
         foreach (var item in SelectedMembers)
         {
-            var resp=await graph.Excused(data.ClassId, data.AssignmentId, item.SubmissionId);
+            var resp = await graph.Excused(data.ClassId, data.AssignmentId, item.SubmissionId);
             if (!resp)
             {
                 await alert.ShowAlertAsync("Nem sikerült a mentés! Próbálja újra!", "Mentési hiba", "Rendben");

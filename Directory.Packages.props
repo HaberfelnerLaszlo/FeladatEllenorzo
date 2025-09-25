@@ -5,26 +5,26 @@
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.13.1" />
+    <PackageVersion Include="Azure.Identity" Version="1.16.0" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="9.1.1" />
     <PackageVersion Include="EfCore.SchemaCompare" Version="8.2.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components" Version="8.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Forms" Version="8.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components" Version="8.0.20" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Forms" Version="8.0.20" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.100" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="9.0.1" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.10.4" />
-    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.10.0" />
-    <PackageVersion Include="Microsoft.Graph" Version="5.64.0" />
-    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.1" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.12.1" />
+    <PackageVersion Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.12.1" />
+    <PackageVersion Include="Microsoft.Graph" Version="5.93.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="8.0.100" />
     <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
-    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
-    <PackageVersion Include="TimeZoneConverter" Version="6.1.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.13" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.13" />
-    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+    <PackageVersion Include="TimeZoneConverter" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.20" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.20" />
+    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
   </ItemGroup>
 </Project>

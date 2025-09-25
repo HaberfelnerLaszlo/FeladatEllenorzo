@@ -9,7 +9,7 @@ namespace Data_Api.Data
         public Guid Id { get; set; }
         public required string Name { get; set; }
         public required string Osztaly { get; set; }
-        public int Pont { get; set; } =40; //INFO: Kezdő pontszám, ami a tanulóhoz tartozik
+        public int Pont { get; set; } =20; //INFO: Kezdő pontszám, ami a tanulóhoz tartozik
         public DateTime LastModify { get; set; } = DateTime.Now;
         public List<Szorgalmi> Szorgalmik { get; set; } = [];
         public List<FeladatHiany> Hianyok { get; set; } = [];

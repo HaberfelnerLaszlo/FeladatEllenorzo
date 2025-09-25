@@ -59,6 +59,79 @@ namespace Data_Api.Endpoints
                 }
             });
             #endregion
+            app.MapGet("/status", (Settings settings) =>
+            {
+                return Results.Ok(new { settings.LastModify, settings.LastSaved });
+            });
+            app.MapGet("/files", () =>
+            {
+                var files = Directory.GetFiles(FilePath).Select(f => new
+                {
+                    FileName = Path.GetFileName(f),
+                    CreationTime = File.GetCreationTime(f)
+                }).OrderByDescending(f => f.CreationTime).ToList();
+                return Results.Ok(files);
+            });
+            app.MapGet("/load/{fileName}", async (string fileName, DataSaving saving, Settings settings) =>
+            {
+                try
+                {
+                    var filePath = Path.Combine(FilePath, fileName);
+                    if (!File.Exists(filePath))
+                        return Results.NotFound("A megadott fájl nem található.");
+                    await saving.LoadFromJsonAsync(filePath);
+                    settings.LastModify = DateTime.Now;
+                    return Results.Ok("Adatok sikeresen visszatöltve.");
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
+            app.MapGet("/delete/{fileName}", (string fileName) =>
+            {
+                try
+                {
+                    var filePath = Path.Combine(FilePath, fileName);
+                    if (!File.Exists(filePath))
+                        return Results.NotFound("A megadott fájl nem található.");
+                    File.Delete(filePath);
+                    return Results.Ok("Fájl sikeresen törölve.");
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
+            app.MapGet(FilePath + "/{fileName}", (string fileName) =>
+            {
+                var filePath = Path.Combine(FilePath, fileName);
+                if (!File.Exists(filePath))
+                    return Results.NotFound("A megadott fájl nem található.");
+                var mimeType = "application/json";
+                return Results.File(filePath, mimeType, fileName);
+            });
+            app.MapGet(FilePath + "/latest", () =>
+            {
+                var files = Directory.GetFiles(FilePath);
+                if (files.Length == 0)
+                    return Results.NotFound("Nincs mentett adatfájl.");
+                var latestFile = files.OrderByDescending(f => File.GetCreationTime(f)).First();
+                var mimeType = "application/json";
+                return Results.File(latestFile, mimeType, Path.GetFileName(latestFile));
+            });
+            app.MapGet("/clear", async (DataSaving saving) =>
+            {
+                try
+                {
+                    await saving.ClearDatabaseAsync();
+                    return Results.Ok("Adatok sikeresen törölve.");
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
         }
     }
 }

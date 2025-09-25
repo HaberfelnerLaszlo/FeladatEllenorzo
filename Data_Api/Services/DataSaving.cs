@@ -32,12 +32,12 @@ namespace Data_Api.Services
             {
                 settings.LastModify = data.LastSaved;
                 settings.LastSaved = data.LastSaved;
+                db.Szovegek.AddRange(data.Szovegek);
                 db.Tanulok.AddRange(data.Tanulok);
-                db.Pontok.AddRange(data.Pontok);
                 db.HibasFeladatok.AddRange(data.HibasFeladatok);
                 db.FeladatHianyok.AddRange(data.FeladatHianyok);
                 db.Szorgalmik.AddRange(data.Szorgalmik);
-                db.Szovegek.AddRange(data.Szovegek);
+                db.Pontok.AddRange(data.Pontok);
                 await db.SaveChangesAsync();
             }
         }

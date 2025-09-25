@@ -10,7 +10,9 @@ using System.Text.Json;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<FeladatDb>(opt => opt.UseInMemoryDatabase("Feladat"));
+builder.Services.AddDbContext<FeladatDb>(opt => { opt.UseInMemoryDatabase("Feladat"); 
+    opt.EnableSensitiveDataLogging(); 
+    opt.EnableDetailedErrors(); });
 //builder.Services.AddDbContext<FeladatSQL> (options => options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), ServerVersion.Parse("8.2.1-mysql")));
 
 builder.Services.AddScoped<SzorgalmiService>();

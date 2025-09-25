@@ -37,6 +37,11 @@ namespace Data_Api.Endpoints
                 var pontok = await pontService.GetAllPontsByTanuloId(id);
                 return Results.Ok(pontok);
             });
+            app.MapGet("/pont", async (PontService pontService) =>
+            {
+                var pontok = await pontService.GetAllPonts();
+                return Results.Ok(pontok);
+            });
             //app.MapDelete("/pont/{id}", async (int id, PontService pontService) =>
             //{
             //    var deleted = await pontService.DeletePont(id);

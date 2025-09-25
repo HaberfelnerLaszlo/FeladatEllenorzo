@@ -131,8 +131,7 @@
         if (response)
         {
             toastService.ShowSuccess("Az üzenet mentése sikerült.");
-            //alert.ShowAlertAsync( "Sikeres küldés.", "Rendszer üzenet", "Rendben");
         }
-        else alert.ShowAlertAsync( "Sikertelen küldés.", "Rendszer üzenet", "Rendben");
+        else toastService.ShowError("Az üzenet mentése sikertelen.");
     }
 }
