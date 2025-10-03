@@ -189,7 +189,7 @@
             <FluentSwitch Label="Szorgalmi? " Value="isSzorg" @onclick="(() => ChangeSzorgalmi())" />
             <FluentSwitch Label="Szorgalmi és lecke? " Value="isSzorgLecke" @onclick="(() => ChangeSzorgalmiLecke())" />
             <FluentSwitch Label="Pótlás? " Value="isPotlas" @onclick="(() => isPotlas = isPotlas ? false : true)" />
-            <FluentSwitch Label="Pótlás? " Value="noSave" @onclick="(() => noSave = noSave ? false : true)" />
+            <FluentSwitch Label="Nincs mentés? " Value="noSave" @onclick="(() => noSave = noSave ? false : true)" />
             <hr />
             <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e) => Valtozas(true, e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
             <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
@@ -211,7 +211,7 @@
     private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave=false;
     private int index = 0, i = 0;
     private float Pont = 0;
-    private IDialogReference? _dialog;
+    private IDialogReference _dialog;
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -453,7 +453,7 @@
                     await alert.ShowAlertAsync("A válasz hiba üzenete null érték lett!", "Hiba üzenet", "Rendben");
                 }
             }
-            else if (!isSzorg)
+            else if (!isSzorg && !noSave)
             {
                 var res = await pontService.Add(new() { Datum = DateTime.Today, PontSzam = (int)Pont, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}", PontTipus = PontTipus.Lecke });
                 if (res.IsSuccess)
@@ -486,7 +486,7 @@
             isHiany = false;
             if (res.IsSuccess)
             {
-                toastService.ShowInfo("Az tanuló mentve a lecke hiányhoz.");
+                toastService.ShowInfo("A tanuló feladata mentve a lecke hiányhoz.");
             }
             else
             {

@@ -53,7 +53,10 @@ else
         <FluentButton Appearance="Appearance.Lightweight" OnClick="Pont_btn">Pontok</FluentButton>
     </FluentStack>
     <FluentStack VerticalAlignment="VerticalAlignment.Bottom">
-        <FluentLabel>1.0.4</FluentLabel>
+        <FluentLabel Id="version">1.0.5</FluentLabel>
+        <FluentTooltip Anchor="version">
+            2025.09.28
+        </FluentTooltip>
     </FluentStack>
 }
 
@@ -193,7 +196,7 @@ else
     /// </summary>
     private void OnPropertyChanged(object sender, PropertyChangedEventArgs args)
     {
-        var v = nameof(auth.IsSignedIn);
+        //var v = nameof(auth.IsSignedIn);
         if (args.PropertyName == nameof(auth.IsSignedIn))
         {
             // Bubble up the change to any views bound to this view model

@@ -1,7 +1,7 @@
 ﻿@page "/pontok/{id}"
 @inject IPontService pontService
 @inject GlobalData data
-@inject NavigationManager nav 
+@inject NavigationManager nav
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch">
     <h3>@osztaly csoport pontjai</h3>
     <FluentButton OnClick="@(()=> { data.Osztalynev = string.Empty; nav.NavigateTo("/"); })">Vissza</FluentButton>
@@ -13,67 +13,89 @@
 else
 {
     if (pontok.Count > 0) { magas = "50%"; }
-<FluentGrid>
-    <FluentGridItem xs="12" sm="6">
-        <table class="table" style="overflow:auto; max-height:@magas">
-            <thead>
-                <tr>
-                    <th scope="col">Név</th>
-                    <th scope="col">Pontszám</th>
-                    <th scope="col">Megjegyzés</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var tanulo in tanulok.OrderBy(t=>t.Name))
-                {
-                    <tr>
-                        <td>@tanulo.Name</td>
-                        <td>@tanulo.Pont</td>
-                        <td>
-                            <FluentButton OnClick="()=>pontok=tanulo.Pontok??new()">Megtekint</FluentButton>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </FluentGridItem>
-    <FluentGridItem xs="12" sm="6">
-        @if (pontok.Count > 0)
-        {
-            <table class="table">
+    <FluentGrid>
+        <FluentGridItem xs="12" sm="6">
+            <table class="table" style="overflow:auto; max-height:@magas">
                 <thead>
                     <tr>
-                        <th scope="col">Dátum</th>
-                        <th scope="col">Pont típusa</th>
+                        <th scope="col">Név</th>
                         <th scope="col">Pontszám</th>
                         <th scope="col">Megjegyzés</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var pont in pontok)
+                    @foreach (var tanulo in tanulok.OrderBy(t => t.Name))
                     {
                         <tr>
-                            <td>@pont.Datum</td>
-                            <td>@pont.PontTipus</td>
-                            <td>@pont.PontSzam</td>
-                            <td>@pont.Jegyzet</td>
+                            <td>@tanulo.Name</td>
+                            <td>@tanulo.Pont</td>
+                            <td>
+                                <FluentButton OnClick="()=>pontok=tanulo.Pontok??new()" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
+                                <FluentButton OnClick="()=>Pont_100(tanulo)" Disabled="tanulo.Pont <= 100">100</FluentButton>
+                                <FluentButton OnClick="()=>Pont_50(tanulo)" Disabled="tanulo.Pont <= 50">50</FluentButton>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
-        }
-    </FluentGridItem>
-</FluentGrid>
+        </FluentGridItem>
+        <FluentGridItem xs="12" sm="6">
+            @if (pontok.Count > 0)
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Dátum</th>
+                            <th scope="col">Pont típusa</th>
+                            <th scope="col">Pontszám</th>
+                            <th scope="col">Megjegyzés</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pont in pontok)
+                        {
+                            <tr>
+                                <td>@pont.Datum</td>
+                                <td>@pont.PontTipus</td>
+                                <td>@pont.PontSzam</td>
+                                <td>@pont.Jegyzet</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </FluentGridItem>
+    </FluentGrid>
 }
 
 @code {
     [Parameter] public string Id { get; set; }
     private List<Tanulo> tanulok = new();
     private List<Pont> pontok = new();
-    string osztaly = string.Empty, magas="100%";
+    string osztaly = string.Empty, magas = "100%";
     protected override async Task OnInitializedAsync()
     {
         osztaly = data.Osztalynev;
         tanulok = await pontService.GetPontByOsztaly(Id);
+    }
+    private void Pont_50(Tanulo tanulo)
+    {
+        pontService.Add(new Pont
+        {
+            Datum = DateTime.Now,
+            PontTipus = PontTipus._50,
+            PontSzam = -50,
+            Jegyzet = "50% 5-ös",
+        });
+    }
+    private void Pont_100(Tanulo tanulo)
+    {
+        pontService.Add(new Pont
+        {
+            Datum = DateTime.Now,
+            PontTipus = PontTipus._100,
+            PontSzam = -100,
+            Jegyzet = "100% 5-ös",
+        });
     }
 }

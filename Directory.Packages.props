@@ -26,5 +26,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.20" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.20" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+	  <PackageVersion Include="Microsoft.TeamsFx" Version="2.5.4" />
+	  <PackageVersion Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 </Project>
