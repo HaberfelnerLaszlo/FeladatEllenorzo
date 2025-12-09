@@ -23,8 +23,13 @@ namespace FeladatEllenorzo_CP.Services
         /// <remarks>
         /// Using the MSAL public app redirect format
         /// </remarks>
-    //    public string RedirectUri { get => $"msal{_settings.ClientId}://auth"; }
+#if ANDROID
+        public string RedirectUri { get => $"msal{_settings.ClientId}://auth"; }
+#else    
         public string RedirectUri { get => $"http://localhost"; }
+#endif
+        //public string RedirectUri { get => $"msal{_settings.ClientId}://auth"; }
+       //public string RedirectUri { get => $"http://localhost"; }
 
         /// <inheritdoc/>
         /// <remarks>

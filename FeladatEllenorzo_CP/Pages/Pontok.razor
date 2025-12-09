@@ -15,34 +15,26 @@ else
     if (pontok.Count > 0) { magas = "50%"; }
     <FluentGrid>
         <FluentGridItem xs="12" sm="6">
-            <table class="table" style="overflow:auto; max-height:@magas">
-                <thead>
-                    <tr>
-                        <th scope="col">Név</th>
-                        <th scope="col">Pontszám</th>
-                        <th scope="col">Megjegyzés</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var tanulo in tanulok.OrderBy(t => t.Name))
-                    {
-                        <tr>
-                            <td>@tanulo.Name</td>
-                            <td>@tanulo.Pont</td>
-                            <td>
-                                <FluentButton OnClick="()=>pontok=tanulo.Pontok??new()" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
-                                <FluentButton OnClick="()=>Pont_100(tanulo)" Disabled="tanulo.Pont <= 100">100</FluentButton>
-                                <FluentButton OnClick="()=>Pont_50(tanulo)" Disabled="tanulo.Pont <= 50">50</FluentButton>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <FluentDataGrid TGridItem="Tanulo" Items="@tanulok.OrderBy(t => t.Name).AsQueryable()" Style="width: 100%;" AutoFit="true">
+                <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
+                <PropertyColumn Property="@(p => p.Pont)" Sortable="true" />
+                <TemplateColumn>
+                                <FluentButton OnClick="@(()=>pontok=context.Pontok??new())" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
+                                <FluentButton OnClick="@(()=>Pont_100(context))" Disabled="@(context.Pont <= 100)">100</FluentButton>
+                                <FluentButton OnClick="@(()=>Pont_50(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
+                </TemplateColumn>
+            </FluentDataGrid>
         </FluentGridItem>
         <FluentGridItem xs="12" sm="6">
             @if (pontok.Count > 0)
             {
-                <table class="table">
+                <FluentDataGrid TGridItem="Pont" Items="@pontok.AsQueryable()" Style="width: 100%;" AutoFit="true">
+                    <PropertyColumn Property="@(p => p.Datum)" Format="yyyy-MM-dd" Sortable="true" />
+                    <PropertyColumn Property="@(p => p.PontTipus)" Sortable="true" />
+                    <PropertyColumn Property="@(p => p.PontSzam)"  Sortable="true" />
+                    <PropertyColumn Property="@(p => p.Jegyzet)" />
+                </FluentDataGrid>
+@*                 <table class="table">
                     <thead>
                         <tr>
                             <th scope="col">Dátum</th>
@@ -62,7 +54,7 @@ else
                             </tr>
                         }
                     </tbody>
-                </table>
+                </table> *@
             }
         </FluentGridItem>
     </FluentGrid>

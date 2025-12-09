@@ -3,6 +3,8 @@
 
 using Azure.Identity;
 
+using FeladatEllenorzo_CP.Services;
+
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Microsoft.Identity.Client;

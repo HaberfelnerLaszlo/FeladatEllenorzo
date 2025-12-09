@@ -1,0 +1,113 @@
+﻿@using FeladatLibrary.Data
+@using Microsoft.Graph.Models
+@using ApexCharts
+@inject IPontService pService
+@inject IToastService ToastService
+@inject ILogger<TanuloPontok> logger
+@if (tanuloData is not null)
+{
+    <FluentCard MinimalStyle="false">
+        <FluentLabel Typo="Typography.H1" MarginBlock="10px">Aktuális pontszámod: @tanuloData.PontSzam</FluentLabel>
+        <FluentLabel Typo="Typography.H2" MarginBlock="10px">Az osztályod átlaga: @tanuloData.Atlag.ToString("F2")</FluentLabel>
+        <FluentLabel Typo="Typography.H3" MarginBlock="10px">Az osztályban @tanuloData.Min és @tanuloData.Max pontok között vannak a társaid.</FluentLabel>
+        @if (tanuloData.Max == tanuloData.PontSzam)
+        {
+            <FluentLabel Typo="Typography.H3">Gratulálok! Te vagy a legjobb! </FluentLabel>
+        }
+        else if (tanuloData.PontSzam >= 0.9 * tanuloData.Max)
+        { <FluentLabel Typo="Typography.H3">Gratulálok! A legjobbak között vagy! </FluentLabel>
+        }
+    </FluentCard>
+    @if (datas is not null || datas.Count > 0)
+    {
+        <ApexChart TItem="PontData" Title="Az utolsó 20 pont" Height="300" Width="600" XAxisType="XAxisType.Datetime">
+            <ApexPointSeries TItem="PontData"
+                             Items="datas"
+                             Name="Pontszámok"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(e => e.Datum)"
+                             YAggregate="@(e => e.Sum(e=>e.Pontszam))" />
+        </ApexChart>
+    }
+    <FluentLabel Typo="Typography.H4" Style="margin: 10px">Az utolsó pontjaid (maximum 20 darab): </FluentLabel>
+    <FluentCard MinimalStyle="true">
+        <FluentDataGrid Items="@pontok" AutoItemsPerPage="true">
+            <PropertyColumn Property="@(p=>p.Datum)" Title="Dátum" />
+            <PropertyColumn Property="@(p=>p.PontTipus)" Title="Pont fajtája" Tooltip="true" HeaderTooltip="Lecke,Pótlás,Szorgalmi,Szaktanári,Gyakorló,-50,-100,Kvíz,Javítás,Mértékváltás, " />
+            <PropertyColumn Property="@(p=>p.PontSzam)" Title="Pontszám" />
+        </FluentDataGrid>
+    </FluentCard>
+}
+else
+{
+    <FluentLabel Typo="Typography.H4" Style="margin: 10px">Nem elérhetők a pontjaid. </FluentLabel>
+}
+@code {
+    [Parameter]
+    public EducationUser user { get; set; }
+    TanuloData tanuloData = new();
+    List<PontData> datas = new();
+    IQueryable<Pont> pontok;
+    string qHref = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (user is not null)
+            {
+                if (user.PrimaryRole != EducationUserRole.Teacher)
+                {
+                    tanuloData = await pService.GetTanuloData(user.Id);
+                    if (tanuloData is not null)
+                    {
+                        //Teszthez
+                        //if (tanuloData.Pontok.Count == 0)
+                        //{
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.20 15:29"), PontSzam = 2, Id = 1, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.21 14:00"), PontSzam = 2, Id = 2, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.22 5:55"), PontSzam = -2, Id = 3, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.23 6:20"), PontSzam = 2, Id = 4, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.23 6:23"), PontSzam = 1, Id = 5, PontTipus = PontTipus.Pótlás });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.24 6:44"), PontSzam = 2, Id = 6, PontTipus = PontTipus.Lecke });
+                        //    tanuloData.Pontok.Add(new() { Datum = DateTime.Parse("2025.09.24 12:24"), PontSzam = 3, Id = 7, PontTipus = PontTipus.Szorgalmi });
+                        //}
+                        pontok = tanuloData.Pontok.AsQueryable();
+                        MakeData();
+                    }
+                }
+                else if (!string.IsNullOrEmpty(user.Id))
+                {
+                    tanuloData = await pService.GetTanuloData(user.Id);
+                    if (tanuloData is not null)
+                    {
+                        pontok = tanuloData.Pontok.AsQueryable();
+                        MakeData();
+                    }
+                    else
+                    {
+                        ToastService.ShowWarning("Nincsenek pontjaid rögzítve.");
+                        ToastService.ShowInfo($"Szerepköröd {user.PrimaryRole}");
+                        return;
+                    }
+                }
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Kivétel történt.");
+        }
+    }
+    private void MakeData()
+    {
+        datas.Clear();
+        int aktualpont = tanuloData.PontSzam;
+        tanuloData.Pontok.Reverse();
+        tanuloData.Pontok.ForEach(p => { datas.Add(new PontData() { Datum = p.Datum, Pontszam = aktualpont }); aktualpont -= p.PontSzam; }); ;
+    }
+    public class PontData()
+    {
+        public DateTime Datum { get; set; }
+        public int Pontszam { get; set; }
+    }
+}

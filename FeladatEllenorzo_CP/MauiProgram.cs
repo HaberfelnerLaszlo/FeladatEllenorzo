@@ -1,10 +1,11 @@
-﻿using FeladatEllenorzo_CP.Data;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using System.Reflection;
-using FeladatEllenorzo_CP.Services;
+using FeladatLibrary.Services;
 using CommunityToolkit.Maui;
 using Microsoft.FluentUI.AspNetCore.Components;
+using FeladatLibrary.Data;
+using FeladatEllenorzo_CP.Services;
 namespace FeladatEllenorzo_CP;
 
 public static class MauiProgram

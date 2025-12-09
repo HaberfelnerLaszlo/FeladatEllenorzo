@@ -1,0 +1,133 @@
+﻿@page "/student/Math"
+@inject MathService mService
+@inject IToastService toastService
+@inject ILogger<MathCourse> _logger
+
+<h3>Kitűzött matematika feladat</h3>
+@if (currentOperation is not null && currentOperation.OperationId != 0)
+{
+    @*<p>Azonosító = @currentOperation.OperationId Feladat ID: @taskView.TaskId</p>*@
+    <MathLesson Assignment="currentOperation" Send="@Next" IsChecked="IsChecked" IsCorrect="taskRecive.IsTipp" IsFraction="taskView.IsFraction" />
+
+}
+else
+{<h4>@message</h4>}
+
+@code {
+    [Parameter]
+    public Guid StudentId { get; set; }
+    public TaskView taskView = new();
+    private OperationView currentOperation = new() { OperationId = 0 };
+    private bool IsChecked = false;//, IsError = false, ShowModal = false;
+    private TaskRecive taskRecive = new();
+    System.Timers.Timer timer = new System.Timers.Timer();
+    private int time = 0, allTime = 0;
+    private string message = "Betöltés...";
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            taskView = await mService.Start(StudentId);
+            if (taskView is not null)
+            {
+                currentOperation = taskView.Operations[0];
+                StateHasChanged();
+                time = 0;
+                timer.Start();
+            }
+            else
+            {
+                message = "Nincs kiadva újabb feladat számodra.";
+            }
+            timer.Interval = 1000;
+            timer.Elapsed += (s, e) => { time += 1; allTime += 1; };
+        }
+    }
+    private async Task Next(OperationView operation)
+    {
+        timer.Stop();
+        TaskRecive recive = new() { OperationId = operation.OperationId, IsTipp = false, Result = operation.Result, Step = 0, StudentId = StudentId, Time = time, TaskId = taskView.TaskId };
+        taskRecive = await mService.Result(recive);
+        if (taskRecive is not null)
+        {
+            IsChecked = true;
+            StateHasChanged();
+            await Task.Delay(3000);
+            taskView.Operations.Remove(operation);
+            if (taskRecive.Step > 0)
+            {
+                taskView = await mService.Start(StudentId);
+                if (taskView is null)
+                {
+                    currentOperation.OperationId = 0;
+                    message = "Nagyon ügyes voltál végeztél!";
+                    return; //TODO: végzett az összes teszttel ezt ki kell írni.
+                }
+            }
+            currentOperation = taskView.Operations[0];
+            time = 0;
+            timer.Start();
+            IsChecked = false;
+        }
+    }
+    //private async Task NewUserId(ChangeEventArgs e)
+    //{
+    //    if (e.Value.Equals("57da251f-9472-46f2-b8ac-3b6aaeaece1c"))
+    //    {
+    //        ClassId = Guid.Parse(e.Value.ToString());
+    //        taskView = await mService.ClassLesson(ClassId);
+    //        recives.Clear();
+    //        IsChecked = false;
+    //        foreach (var item in taskView.Operations)
+    //        {
+    //            recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+    //        }
+    //        time = 0;
+    //        timer.Start();
+    //        IsClass = true;
+    //    }
+    //    else
+    //    {
+    //        UserId = Guid.Parse(e.Value.ToString());
+    //        taskView = await mService.Start(UserId);
+
+    //        if (taskView is not null)
+    //        {
+    //            currentOperation = taskView.Operations[0];
+    //            StateHasChanged();
+    //            time = 0;
+    //            timer.Start();
+    //            //timer.Elapsed += (s, e) =>	{time += 1;};
+    //        }
+    //        else
+    //        {
+    //            currentOperation = null;
+    //        }
+    //    }
+    //}
+    //private async Task CheckClass(List<ClassRecive> _recives)
+    //{
+    //    timer.Stop();
+    //    var avgTime = time / _recives.Count;
+    //    foreach (var item in _recives)
+    //    {
+    //        item.Time = avgTime;
+    //    }
+    //    recives = await mService.ClassResult(_recives);
+    //    IsChecked = true;
+    //    StateHasChanged();
+    //}
+    //private async Task NextClass()
+    //{
+    //    taskView = await mService.ClassLesson(ClassId);
+    //    recives.Clear();
+    //    IsChecked = false;
+    //    foreach (var item in taskView.Operations)
+    //    {
+    //        recives.Add(new ClassRecive { OperationId = item.OperationId, ClassId = ClassId, StudentId = UserId });
+    //    }
+    //    time = 0;
+    //    timer.Start();
+    //}
+}

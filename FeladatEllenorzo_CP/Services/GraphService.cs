@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Azure.Identity;
-
 using Microsoft.Graph;
 using Microsoft.Graph.Drives.Item.Items.Item.Preview;
 using Microsoft.Graph.Models;
@@ -21,7 +20,7 @@ namespace FeladatEllenorzo_CP.Services
         // App-ony auth token credential
         private static ClientSecretCredential _clientSecretCredential;
         // Client configured with app-only authentication
-        private static GraphServiceClient? _appClient;
+        private static GraphServiceClient _appClient;
         static GraphServiceClient graphClient;
 
         public GraphService(IAuthenticationService authenticationService)

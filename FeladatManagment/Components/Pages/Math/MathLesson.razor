@@ -1,0 +1,93 @@
+﻿@using Microsoft.AspNetCore.Components.Web;
+
+<div class="feladat">
+    @if (errorMessage.Length > 0)
+    {
+        <h3 id="error">@errorMessage</h3><hr />
+    }
+    <form>
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+            @foreach (var item in s)
+            {
+                if (item.Contains(" = "))
+                {
+                    <span style="font-size:2rem">@((MarkupString)item) </span>
+                    @if (IsFraction)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                            @*<div class="fraction">*@
+                            <input class="valasz" type="number" @bind-value="@szamlalo" autofocus @onkeydown="(e)=>Leutes(e)" />
+                            <svg height="5" width="100">
+                                <line x1="0" y1="0" x2="100" y2="0" style="stroke:rgb(0,0,0);stroke-width:3" />
+                            </svg>
+                            <input class="valasz" type="number" @bind-value="@nevezo" @onkeydown="(e)=>Leutes(e)" />
+                            @*</div>*@
+                        </FluentStack>
+                    }
+                    else
+                    {
+                        <input class="valasz" type="text" @bind-value="@Assignment.Result" autofocus @onkeydown="(e)=>Leutes(e)" />
+                    }
+                }
+                else
+                {
+                    @((MarkupString)item)
+                }
+            }
+            @if (IsChecked)
+            {
+                if (IsCorrect)
+                {
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Checkmark())" Color="@Color.Success" />
+                }
+                else
+                {
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.DismissCircle())" Color="@Color.Error" />
+                }
+            }
+        </FluentStack>
+    </form>
+</div>
+<FluentButton Appearance="Appearance.Accent" Class="btn btn-success send me-2" @onclick="@(()=>Sending())">Küldés</FluentButton>
+
+@code
+{
+    [Parameter] public OperationView Assignment { get; set; } = new();
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public bool IsCorrect { get; set; }
+    [Parameter] public bool IsFraction { get; set; }
+    [Parameter] public EventCallback<OperationView> Send { get; set; }
+    string[] s = [];
+    string errorMessage = string.Empty;
+    int szamlalo, nevezo;
+    protected override void OnParametersSet()
+    {
+        s = Assignment.Sequence.Split('Ł');
+    }
+    private async Task Leutes(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await Sending();
+        }
+    }
+    private async Task Sending()
+    {
+        if (IsFraction)
+        {
+            if (nevezo != 0)
+            {
+                var result = $"{szamlalo}/{nevezo}";
+                Assignment.Result = result;
+            }
+            else errorMessage = "Nevező nem lehet nulla!";
+            szamlalo = 1;
+            nevezo = 1;
+        }
+        if (Assignment.Result.Length > 0)
+        {
+            await Send.InvokeAsync(Assignment);
+        }
+        else errorMessage = "Ne hagyd üresen a válasz mezőt!";
+    }
+}

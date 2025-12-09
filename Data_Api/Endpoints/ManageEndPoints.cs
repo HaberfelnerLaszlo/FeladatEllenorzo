@@ -1,5 +1,7 @@
 ﻿using Data_Api.Services;
 
+using Microsoft.AspNetCore.Http;
+
 namespace Data_Api.Endpoints
 {
     public static class ManageEndPoints
@@ -131,6 +133,22 @@ namespace Data_Api.Endpoints
                 {
                     return Results.Problem(ex.Message);
                 }
+            });
+            app.MapPost("/upload", async (HttpRequest request) =>
+            {
+                if (request.Form.Files.Count > 0)
+                {
+                    var file = request.Form.Files[0];
+                    var filePath = Path.Combine(FilePath, file.FileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    return Results.Ok(new { FilePath = filePath });
+                }
+                return Results.BadRequest("Invalid file.");
             });
         }
     }

@@ -31,6 +31,7 @@ var app = builder.Build();
 app.UseHttpsRedirection();
 
 app.AddEndpoints();
+//app.UseAntiforgery();
 app.AddHianyEndPoints();
 app.AddHibaEndPoints();
 app.AddSzorgalmiEndPoints();

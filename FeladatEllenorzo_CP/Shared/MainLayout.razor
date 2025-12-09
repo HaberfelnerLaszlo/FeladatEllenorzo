@@ -1,7 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using FeladatLibrary.Data
+@inherits LayoutComponentBase
 @inject GlobalData data
 
 <div class="page">
+    <FluentDesignTheme StorageName="theme" />
     <main>
         <article class="content px-4">
             @Body

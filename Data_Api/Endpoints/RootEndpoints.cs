@@ -7,7 +7,7 @@ namespace Data_Api.Endpoints
     {
         public static void AddEndpoints(this WebApplication app)
         {
-            app.MapGet("/", () => { return "version:6.5.1 2025.09.23"; });
+            app.MapGet("/", () => { return "version:6.5.2 2025.11.03"; });
         }
     }
 }

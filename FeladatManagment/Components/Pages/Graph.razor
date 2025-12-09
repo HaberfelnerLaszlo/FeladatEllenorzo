@@ -4,16 +4,15 @@
 @using Microsoft.Graph
 @using Microsoft.Graph.Models;
 @using Microsoft.Extensions.Configuration
-@inject TeamsFx teamsfx
+@*@inject TeamsFx teamsfx*@
 @inject TeamsUserCredential teamsUserCredential
 @inject IConfiguration Configuration
 
 <div>
-    <h2>Get the user's profile photo</h2>
     @if (NeedConsent)
     {
-        <p>Click below to authorize this app to read your profile photo using Microsoft Graph.</p>
-        <FluentButton Appearance="Appearance.Accent" Disabled="@IsLoading" @onclick="ConsentAndShow">Authorize</FluentButton>
+        <p>Kérlek jelentkez be az applikációba,hogy lekérhesem a pontjaidat.</p>
+        <FluentButton Appearance="Appearance.Accent" Disabled="@IsLoading" @onclick="ConsentAndShow">Bejelentkezés</FluentButton>
     }
     @if (IsLoading)
     {
@@ -25,20 +24,40 @@
     }
     else if (Profile != null)
     {
-        <ProfileCard IsLoading="false" Profile="@Profile" UserPhotoUri="@UserPhotoUri" />
+        if (!string.IsNullOrEmpty(UserRole))
+        {
+            if (UserRole == "Student")
+            {
+                <TanuloPontok user="@Profile" />
+            }
+            else if (UserRole == "Teacher")
+            {
+                <p>You are a <b>teacher</b> in your organization.</p>
+                <ProfileCard IsLoading="false" Profile="@Profile" UserPhotoUri="@UserPhotoUri" />
+            }
+            else if (UserRole == "Administrator")
+            {
+                <p>You are an <b>administrator</b> in your organization.</p>
+                <ProfileCard IsLoading="false" Profile="@Profile" UserPhotoUri="@UserPhotoUri" />
+            }
+            else
+            {
+                <p>Your primary role in your organization is <b>@UserRole</b>.</p>
+            }
+        }
     }
 </div>
 
 @code {
     [Parameter]
     public string ErrorMessage { get; set; }
-
+    public string UserRole { get; set; }
     public bool IsLoading { get; set; }
     public bool NeedConsent { get; set; }
-    public User Profile { get; set; }
+    public EducationUser Profile { get; set; }
     public string UserPhotoUri { get; set; }
 
-    private readonly string _scope = "User.Read";
+    private readonly string _scope = "User.Read EduRoster.Read";
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,7 +74,8 @@
         var tokenCredential = await GetOnBehalfOfCredential();
         var graph = GetGraphServiceClient(tokenCredential);
 
-        Profile = await graph.Me.GetAsync();
+        Profile = await graph.Education.Me.GetAsync();
+        UserRole = Profile?.PrimaryRole.Value.ToString();
         UserPhotoUri = await GetPhotoAsync(graph);
 
         IsLoading = false;
@@ -88,7 +108,7 @@
         }
         catch (Exception e)
         {
-            if (e.Message.Contains("AADSTS65001"))
+            if (e.InnerException.Message.Contains("AADSTS65001"))
             {
                 NeedConsent = true;
             }

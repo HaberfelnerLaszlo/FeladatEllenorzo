@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.TeamsFx.Configuration;
 
+using AuthenticationOptions = Microsoft.TeamsFx.Configuration.AuthenticationOptions;
+
 namespace FeladatManagment
 {
     public class ConfigOptions

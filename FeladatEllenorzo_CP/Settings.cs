@@ -1,4 +1,4 @@
-﻿using FeladatEllenorzo_CP.Data;
+﻿using FeladatLibrary.Data;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Graph.Models;

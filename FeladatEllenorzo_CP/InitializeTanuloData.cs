@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Maui;
 
-using FeladatEllenorzo_CP.Data;
-using FeladatEllenorzo_CP.Models;
 using FeladatEllenorzo_CP.Services;
+
+using FeladatLibrary.Data;
+using FeladatLibrary.Models;
+using FeladatLibrary.Services;
 
 using Microsoft.Graph.Models;
 
@@ -34,7 +36,7 @@ namespace FeladatEllenorzo_CP
                             Id = Guid.Parse(tag.Id),
                             Name = tag.DisplayName,
                             Osztaly = item.Id,
-                            Pont = 50,
+                            Pont = 20,
                             LastModify = DateTime.Now
                         });
                     }

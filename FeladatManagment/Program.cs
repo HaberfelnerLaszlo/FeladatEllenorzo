@@ -1,6 +1,11 @@
+using FeladatLibrary.Data;
+using FeladatLibrary.Services;
+
 using FeladatManagment;
 using FeladatManagment.Components;
 using FeladatManagment.Interop.TeamsSDK;
+using FeladatManagment.Services;
+
 using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +23,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAntiforgery(o => o.SuppressXFrameOptionsHeader = true);
 
 builder.Services.AddSingleton<LibraryConfiguration>();
-
+builder.Services.AddFluentUIComponents();
+builder.Services.AddSingleton<IPontService, PontService>();
+builder.Services.AddScoped<TeszterApiService>();
+builder.Services.AddScoped<MathService>();
+builder.Services.AddSingleton<GlobalData>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

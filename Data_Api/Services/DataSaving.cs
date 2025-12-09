@@ -10,8 +10,10 @@ namespace Data_Api.Services
     {
         public async Task SaveToJsonAsync(string filePath)
         {
-            SaveData data = new SaveData();
-            data.Tanulok = await db.Tanulok.ToListAsync();
+            SaveData data = new();
+            var tanulok = await db.Tanulok.IgnoreAutoIncludes().ToListAsync();
+            tanulok.ForEach(t => {t.Pontok=[]; t.Hibak = []; t.Hianyok = []; t.Szorgalmik = []; });
+            data.Tanulok = tanulok;
             data.Pontok = await db.Pontok.ToListAsync();
             data.HibasFeladatok = await db.HibasFeladatok.ToListAsync();
             data.FeladatHianyok = await db.FeladatHianyok.ToListAsync();

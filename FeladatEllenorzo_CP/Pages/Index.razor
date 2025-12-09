@@ -1,6 +1,5 @@
 ﻿@page "/"
-@using FeladatEllenorzo_CP.Data
-@using FeladatEllenorzo_CP.Services;
+@using Microsoft.FluentUI.AspNetCore.Components.Extensions
 @using Microsoft.Graph.Models
 @using System.Text;
 @using System.Text.Json;
@@ -23,42 +22,67 @@
 }
 else
 {
-    <h2>Hello, @Me.DisplayName!</h2>
+    <FluentLabel Typo="Typography.H4">Hello, @Me.DisplayName!</FluentLabel>
 }
 @if (data.Szovegek.Count > 0)
 {
-    <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
+    <FluentButton Appearance="Appearance.Accent" OnClick=ManageSzovegOpen>Szövegek</FluentButton>
 }
 
 @if (classes is not null)
 {
-    <h4 class="my-3">Tanított osztályok:</h4>
-    <ul class="list-unstyled list-group m-3">
-        @foreach (var item in _classes)
-        {
-            @if (item.Id == SelectedClassId)
-            {
-                <li class="list-group-item-action bg-info" @onclick="(()=>SelectedClass(item.Id))">@item.DisplayName</li>
-            }
-            else
-            {
-                <li class="list-group-item-action" @onclick="(()=>SelectedClass(item.Id))">@item.DisplayName</li>
-            }
-        }
-    </ul>
-    <FluentStack HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="10">
+    <FluentSelect Label="Szűrés tantárgyra" TOption="string"
+                  Width="300px" Placeholder="Válasz tantárgyat"
+                  @onchange="e => SelectedSubject(e.Value)">
+        <FluentOption Value="">Összes tantárgy</FluentOption>
+        <FluentOption Value="matematika" Selected="true">Matematika</FluentOption>
+        <FluentOption Value="fizika">Fizika</FluentOption>
+         <FluentOption Value="digit">Digitális kultúra</FluentOption>
+    </FluentSelect>
+    <h3>Válassza ki a tanított osztályt:</h3>
+    <FluentListbox TOption="EducationClass" Items="_classes" OptionValue="c => c.Id" OptionText="c => c.DisplayName" @bind-Value="SelectedClassId" />
+    <hr/>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="10">
         <FluentButton Onclick=Feladat_btn disabled="@(String.IsNullOrEmpty(SelectedClassId))">Feladatok</FluentButton>
         <FluentButton Appearance="Appearance.Lightweight" Onclick=Hiany_btn>Hiányzó feladat</FluentButton>
         <FluentButton Appearance="Appearance.Outline" Onclick=Hiba_btn>Feladat hibák</FluentButton>
         <FluentButton Appearance="Appearance.Lightweight" OnClick="Pont_btn">Pontok</FluentButton>
     </FluentStack>
-    <FluentStack VerticalAlignment="VerticalAlignment.Bottom">
-        <FluentLabel Id="version">1.0.5</FluentLabel>
-        <FluentTooltip Anchor="version">
-            2025.09.28
-        </FluentTooltip>
-    </FluentStack>
 }
+<FluentFooter>
+    <FluentDesignTheme @bind-Mode="@Mode"
+                       @bind-OfficeColor="@OfficeColor"
+                       StorageName="theme" />
+        <FluentGrid>
+            <FluentGridItem>
+                <FluentSelect Label="Theme"
+                              Width="250px"
+                              Items="@(Enum.GetValues<DesignThemeModes>())"
+                              @bind-SelectedOption="@Mode" />
+            </FluentGridItem>
+            <FluentGridItem>
+                <FluentSelect Label="Color"
+                              Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
+                              Height="200px"
+                              Width="250px"
+                              @bind-SelectedOption="@OfficeColor">
+                    <OptionTemplate>
+                        <FluentStack>
+                            <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
+                                        Color="Color.Custom"
+                                        CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4")" />
+                            <FluentLabel>@context</FluentLabel>
+                        </FluentStack>
+                    </OptionTemplate>
+                </FluentSelect>
+            </FluentGridItem>
+        </FluentGrid>
+    <FluentSpacer />
+        <FluentLabel Id="version">1.1.0</FluentLabel>
+        <FluentTooltip Anchor="version">
+            2025.11.28
+        </FluentTooltip>
+</FluentFooter>
 
 @code{
     private EducationClassCollectionResponse classes;
@@ -67,6 +91,9 @@ else
     private string SelectedClassId = string.Empty;
     string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
     public ICommand SignInOrOutCommand { get; private set; }
+    public DesignThemeModes Mode { get; set; }
+    public OfficeColor? OfficeColor { get; set; }
+
     public bool IsSignedIn
     {
         get => auth?.IsSignedIn ?? false;
@@ -168,6 +195,18 @@ else
         {
             SelectedClassId = value.ToString();
             data.Osztalynev = classes.Value.Find(c => c.Id == SelectedClassId).DisplayName;
+        }
+    }
+    private void SelectedSubject(object value)
+    {
+        if (value is not null && value.ToString() != "")
+        {
+            var subject = value.ToString().ToLower();
+            _classes = classes.Value.Where(c => c.DisplayName.ToLower().Contains(subject) && !c.DisplayName.Contains("Exp")).ToList();
+        }
+        else
+        {
+            _classes = classes.Value.Where(c => !c.DisplayName.Contains("Exp")).ToList();
         }
     }
     private void Feladat_btn()
@@ -279,8 +318,8 @@ else
         Me = await _graphService.GetUserInfoAsync();
         data.UserId = Me.Id;
         classes = await _graphService.GetTaughtClasses(Me.Id);
-        _classes = classes.Value.Where(c => !c.DisplayName.Contains("Exp")).ToList();
-        InitializeTanuloData tanuloData = new(data, _graphService);
+        _classes = classes.Value.Where(c =>  c.DisplayName.ToLower().Contains("matematika") && !c.DisplayName.Contains("Exp")).ToList();
+    InitializeTanuloData tanuloData = new(data, _graphService);
         await tanuloData.SetupTanuloData(_classes);
 
         // UserName = user.DisplayName;
