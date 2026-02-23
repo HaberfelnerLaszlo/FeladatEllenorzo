@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,6 +39,12 @@ namespace FeladatLibrary.Services
                     var response = await apiResponse.Content.ReadAsStringAsync();
                     returnResponse = JsonConvert.DeserializeObject<MainResponse>(response) ?? throw new NullReferenceException();
                 }
+                else
+                {
+                    returnResponse.IsSuccess = false;
+                    returnResponse.ErrorMessage = $"Hiba a pont hozzáadásakor: {apiResponse.StatusCode}";
+                    ErrorMessage = returnResponse.ErrorMessage;
+                }
             }
             catch (Exception ex)
             {
@@ -67,6 +74,10 @@ namespace FeladatLibrary.Services
                         returnResponse = JsonConvert.DeserializeObject<List<Pont>>(deserilizeResponse.Content?.ToString() ?? string.Empty);
                         if (returnResponse is null) throw new NullReferenceException();
                     }
+                    else
+                    {
+                        ErrorMessage = deserilizeResponse.ErrorMessage;
+                    }
                 }
             }
             catch (Exception ex)
@@ -93,6 +104,10 @@ namespace FeladatLibrary.Services
                         returnResponse = JsonConvert.DeserializeObject<List<Pont>>(deserilizeResponse.Content?.ToString() ?? string.Empty);
                         if (returnResponse is null) throw new NullReferenceException();
                     }
+                    else
+                    {
+                        ErrorMessage = deserilizeResponse.ErrorMessage;
+                    }
                 }
             }
             catch (Exception ex)
@@ -116,6 +131,10 @@ namespace FeladatLibrary.Services
                     if (deserilizeResponse.IsSuccess)
                     {
                         returnResponse = JsonConvert.DeserializeObject<List<Tanulo>>(deserilizeResponse.Content?.ToString() ?? string.Empty);
+                    }
+                    else
+                    {
+                        ErrorMessage = deserilizeResponse.ErrorMessage;
                     }
                 }
                 if (returnResponse is null) throw new NullReferenceException();
@@ -142,6 +161,10 @@ namespace FeladatLibrary.Services
                     {
                         returnResponse = JsonConvert.DeserializeObject<TanuloData>(deserilizeResponse.Content?.ToString() ?? string.Empty);
                     }
+                    else
+                    {
+                        ErrorMessage = deserilizeResponse.ErrorMessage;
+                    }
                 }
                 if (returnResponse is null) throw new NullReferenceException();
             }
@@ -151,14 +174,54 @@ namespace FeladatLibrary.Services
             }
             return returnResponse ?? new TanuloData();
         }
-        //public Task<MainResponse> Remove(Pont pont)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task<bool> Remove(int pontId)
+        {
+            bool returnResponse = false;
+            try
+            {
+                using var client = new HttpClient();
+                string url = $"{_baseUrl}/pont/{pontId}";
+                var apiResponse = await client.DeleteAsync(url);
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
+                {
+                    returnResponse =true;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            return returnResponse;
+        }
 
-        //public Task<MainResponse> Update(Pont pont)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task<Pont?> Update(Pont pont)
+        {
+            Pont? returnResponse = null;
+            try
+            {
+                using var client = new HttpClient();
+                string url = $"{_baseUrl}/pont";
+                var apiResponse = await client.PutAsync(url, new StringContent(JsonConvert.SerializeObject(pont), Encoding.UTF8, "application/json"));
+                if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    var response = await apiResponse.Content.ReadAsStringAsync();
+                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(response) ?? throw new NullReferenceException();
+                    if (deserilizeResponse.IsSuccess)
+                    {
+                        returnResponse = JsonConvert.DeserializeObject<Pont>(deserilizeResponse.Content?.ToString() ?? string.Empty);
+                        if (returnResponse is null) throw new NullReferenceException(nameof(returnResponse));
+                    }
+                    else
+                    {
+                        ErrorMessage = deserilizeResponse.ErrorMessage;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            return returnResponse;
+        }
     }
 }

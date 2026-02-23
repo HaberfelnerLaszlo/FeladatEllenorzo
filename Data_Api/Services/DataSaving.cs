@@ -34,12 +34,14 @@ namespace Data_Api.Services
             {
                 settings.LastModify = data.LastSaved;
                 settings.LastSaved = data.LastSaved;
+                await ClearDatabaseAsync();
                 db.Szovegek.AddRange(data.Szovegek);
-                db.Tanulok.AddRange(data.Tanulok);
-                db.HibasFeladatok.AddRange(data.HibasFeladatok);
                 db.FeladatHianyok.AddRange(data.FeladatHianyok);
+                db.HibasFeladatok.AddRange(data.HibasFeladatok);
                 db.Szorgalmik.AddRange(data.Szorgalmik);
                 db.Pontok.AddRange(data.Pontok);
+                data.Tanulok.ForEach(t => { t.Pontok = []; t.Hibak = []; t.Hianyok = []; t.Szorgalmik = []; });
+                db.Tanulok.AddRange(data.Tanulok);
                 await db.SaveChangesAsync();
             }
         }

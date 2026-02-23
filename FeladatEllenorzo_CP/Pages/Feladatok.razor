@@ -302,7 +302,10 @@
                 submissions = await graph.GetFeladat(Id, data.AssignmentId);
                 SelectedMembers.Clear();
                 var feladatHianyok = await hiany.GetHianyokByFeladat(value.ToString());
-                feladatHianyok.ForEach(i => data.Members.FirstOrDefault(t => t.Id == i.TanuloId).IsHiany = i.Id);
+                if(feladatHianyok is not null)
+                {
+                    feladatHianyok.ForEach(i => data.Members.FirstOrDefault(t => t.Id == i.TanuloId).IsHiany = i.Id);
+                }
                 foreach (var item in submissions.Value)
                 {
                     var count = await graph.GetResourcesCount(Id, data.AssignmentId, item.Id);

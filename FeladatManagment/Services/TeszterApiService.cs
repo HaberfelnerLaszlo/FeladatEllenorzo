@@ -12,7 +12,7 @@ namespace FeladatManagment.Services
         private static readonly HttpClient client = new();
         private static readonly string[] scopes = ["api://6091ad40-f274-4e3a-813b-a9498817fd69/access_as_user"];
 
-        protected static string URI = "https://teszter-api.haberfelner.eu/";
+        protected static string URI = "https://teszter-api.haberfelner.hu/";
         //protected static string URI = "http://localhost:7025/";
         //protected static string URI = "https://localhost:44308/"; //ISS
 

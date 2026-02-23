@@ -16,7 +16,7 @@ namespace Data_Api.Services
             response.Clear();
             try
             {
-                var tanulok = await _db.Tanulok.ToListAsync();
+                var tanulok = await _db.Tanulok.Include(t => t.Pontok).Include(t => t.Hibak).Include(t => t.Hianyok).Include(t => t.Szorgalmik).ToListAsync();
                 if (tanulok == null)
                 {
                     response.ErrorMessage = "Nincs tanuló tárolva.";

@@ -8,6 +8,11 @@
         public int PontSzam { get; set; }
         public string Jegyzet { get; set; } = string.Empty;
         public PontTipus PontTipus { get; set; }
+        public bool IsDeleted { get; set; } = false;
+        public override string ToString()
+        {
+            return $"TanuloId: {TanuloId}, Típus: {PontTipus}, Pontszám: {PontSzam}, Dátum: {Datum.ToShortDateString()}, Jegyzet: {Jegyzet}, Törölt: {(IsDeleted? "igen" : "nem")}";
+        }
     }
     public enum PontTipus
     {

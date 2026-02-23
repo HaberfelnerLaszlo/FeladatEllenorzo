@@ -10,14 +10,14 @@ namespace Data_Api.Endpoints
             app.MapPost("/pont", async (Pont pont, PontService pontService) =>
             {
                 var createdPont = await pontService.CreatePont(pont);
+                if (createdPont is null || createdPont.Content is null)
+                {
+                    return Results.BadRequest("Hiba történt a pont létrehozásakor.");
+                }
                 var newPont = (Pont)createdPont.Content;
                 if (createdPont.IsSuccess == false)
                 {
                     return Results.BadRequest(createdPont.ErrorMessage);
-                }
-                if (newPont is null)
-                {
-                    return Results.BadRequest("Hiba történt a pont létrehozásakor.");
                 }
                 return Results.Created($"/pont/{newPont.Id}", createdPont);
             });
@@ -42,11 +42,16 @@ namespace Data_Api.Endpoints
                 var pontok = await pontService.GetAllPonts();
                 return Results.Ok(pontok);
             });
-            //app.MapDelete("/pont/{id}", async (int id, PontService pontService) =>
-            //{
-            //    var deleted = await pontService.DeletePont(id);
-            //    return deleted ? Results.NoContent() : Results.NotFound();
-            //});
+            app.MapPut("/pont", async (Pont pont, PontService pontService) =>
+            {
+                var updatedPont = await pontService.UpdatePont(pont);
+                return updatedPont.IsSuccess ? Results.Ok(updatedPont) : Results.BadRequest(updatedPont.ErrorMessage);
+            });
+            app.MapDelete("/pont/{id}", async (int id, PontService pontService) =>
+            {
+                var deleted = await pontService.DeletePont(id);
+                return deleted ? Results.NoContent() : Results.NotFound();
+            });
         }
     }
 }

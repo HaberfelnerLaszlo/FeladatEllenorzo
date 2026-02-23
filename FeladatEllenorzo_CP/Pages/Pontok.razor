@@ -2,6 +2,8 @@
 @inject IPontService pontService
 @inject GlobalData data
 @inject NavigationManager nav
+@inject IDialogService DialogService
+@inject IToastService toastService
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch">
     <h3>@osztaly csoport pontjai</h3>
     <FluentButton OnClick="@(()=> { data.Osztalynev = string.Empty; nav.NavigateTo("/"); })">Vissza</FluentButton>
@@ -13,13 +15,13 @@
 else
 {
     if (pontok.Count > 0) { magas = "50%"; }
-    <FluentGrid>
+     <FluentGrid>
         <FluentGridItem xs="12" sm="6">
             <FluentDataGrid TGridItem="Tanulo" Items="@tanulok.OrderBy(t => t.Name).AsQueryable()" Style="width: 100%;" AutoFit="true">
                 <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
                 <PropertyColumn Property="@(p => p.Pont)" Sortable="true" />
                 <TemplateColumn>
-                                <FluentButton OnClick="@(()=>pontok=context.Pontok??new())" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
+                                <FluentButton OnClick="@(()=>{pontok=context.Pontok??new();selectedTanulo=context.Id;})" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
                                 <FluentButton OnClick="@(()=>Pont_100(context))" Disabled="@(context.Pont <= 100)">100</FluentButton>
                                 <FluentButton OnClick="@(()=>Pont_50(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
                 </TemplateColumn>
@@ -31,33 +33,16 @@ else
                 <FluentDataGrid TGridItem="Pont" Items="@pontok.AsQueryable()" Style="width: 100%;" AutoFit="true">
                     <PropertyColumn Property="@(p => p.Datum)" Format="yyyy-MM-dd" Sortable="true" />
                     <PropertyColumn Property="@(p => p.PontTipus)" Sortable="true" />
-                    <PropertyColumn Property="@(p => p.PontSzam)"  Sortable="true" />
+                    <PropertyColumn Property="@(p => p.PontSzam)" Sortable="true" />
                     <PropertyColumn Property="@(p => p.Jegyzet)" />
+                    <TemplateColumn>
+                        <FluentButton OnClick="@(() => Update(context))" IconStart="@(new Icons.Regular.Size20.ClipboardEdit())" />
+                        <FluentButton OnClick="@(() => Delete(context.Id))" IconStart="@(new Icons.Regular.Size20.Delete())")" />
+                    </TemplateColumn>
                 </FluentDataGrid>
-@*                 <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Dátum</th>
-                            <th scope="col">Pont típusa</th>
-                            <th scope="col">Pontszám</th>
-                            <th scope="col">Megjegyzés</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var pont in pontok)
-                        {
-                            <tr>
-                                <td>@pont.Datum</td>
-                                <td>@pont.PontTipus</td>
-                                <td>@pont.PontSzam</td>
-                                <td>@pont.Jegyzet</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table> *@
-            }
+             }
         </FluentGridItem>
-    </FluentGrid>
+    </FluentGrid> 
 }
 
 @code {
@@ -65,29 +50,76 @@ else
     private List<Tanulo> tanulok = new();
     private List<Pont> pontok = new();
     string osztaly = string.Empty, magas = "100%";
+    Guid selectedTanulo = Guid.Empty;
     protected override async Task OnInitializedAsync()
     {
         osztaly = data.Osztalynev;
         tanulok = await pontService.GetPontByOsztaly(Id);
     }
-    private void Pont_50(Tanulo tanulo)
+    private async Task Pont_50(Tanulo tanulo)
     {
-        pontService.Add(new Pont
+        await pontService.Add(new Pont
         {
             Datum = DateTime.Now,
             PontTipus = PontTipus._50,
             PontSzam = -50,
             Jegyzet = "50% 5-ös",
+            TanuloId = tanulo.Id,
         });
+        tanulok = await pontService.GetPontByOsztaly(Id);
+        StateHasChanged();
     }
-    private void Pont_100(Tanulo tanulo)
+    private async Task Pont_100(Tanulo tanulo)
     {
-        pontService.Add(new Pont
+        await pontService.Add(new Pont
         {
             Datum = DateTime.Now,
             PontTipus = PontTipus._100,
             PontSzam = -100,
             Jegyzet = "100% 5-ös",
+            TanuloId = tanulo.Id,
         });
+        tanulok = await pontService.GetPontByOsztaly(Id);
+        StateHasChanged();
+    }
+    private async Task Update(Pont pont)
+    {
+        var dialog = await DialogService.ShowDialogAsync<EditPontDialog>(pont, new DialogParameters()
+            {
+                Title = $"{pont.PontTipus} típusú pont szerkesztése",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var updatedPont = (Pont)result.Data;
+            var response = await pontService.Update(updatedPont);
+            if (response != null)
+            {
+                pont = response;
+                toastService.ShowInfo("Pont frissítve.");
+                tanulok = await pontService.GetPontByOsztaly(Id);
+            }
+            else
+            {
+                toastService.ShowError($"Hiba a pont frissítése során: {pontService.ErrorMessage}");
+            }
+        }
+   }
+    private async Task Delete(int id)
+    {
+        if (await pontService.Remove(id))
+        {
+            toastService.ShowInfo("Pont törölve.");
+            tanulok = await pontService.GetPontByOsztaly(Id);
+            pontok = pontok.Where(p => p.TanuloId == selectedTanulo).ToList();
+            StateHasChanged();
+        }
+        else
+        {
+            toastService.ShowError($"Hiba a pont törlése során: {pontService.ErrorMessage}");
+        }
     }
 }

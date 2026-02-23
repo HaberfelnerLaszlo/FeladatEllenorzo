@@ -25,10 +25,9 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-    <PackageCertificateThumbprint>69DE151FDF6BA5B94684670B6ACAC181CB734E68</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
-    <AppxSymbolPackageEnabled>True</AppxSymbolPackageEnabled>
+    <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>1680</HoursBetweenUpdateChecks>
     <AppInstallerUri>C:\Users\haber\OneDrive - Péterfy Sándor Evangélikus Gimnázium, Általános Iskola, Óvoda, Alapfokú Művészeti Iskola és Kollégium\Programok</AppInstallerUri>
@@ -76,6 +75,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks)</TargetFrameworks>
+    <PackageCertificateKeyFile>FeladatEllenorzo_CP_TemporaryKey.pfx</PackageCertificateKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>

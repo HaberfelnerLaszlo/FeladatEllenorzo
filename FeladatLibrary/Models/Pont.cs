@@ -8,6 +8,7 @@
         public int PontSzam { get; set; }
         public string Jegyzet { get; set; } = string.Empty;
         public PontTipus PontTipus { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
     public enum PontTipus
     {
