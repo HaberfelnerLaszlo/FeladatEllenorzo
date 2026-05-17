@@ -10,8 +10,8 @@
    - ✅ 04.01-update-maui-tfm: Update MAUI target frameworks to net10.0 for all platforms ([Content](tasks/04.01-update-maui-tfm/task.md), [Progress](tasks/04.01-update-maui-tfm/progress-details.md))
    - ✅ 04.02-update-maui-packages: Update NuGet packages to .NET 10.0 compatible versions ([Content](tasks/04.02-update-maui-packages/task.md), [Progress](tasks/04.02-update-maui-packages/progress-details.md))
    - ✅ 04.03-fix-api-incompatibilities: Fix source and binary API incompatibilities for .NET 10.0 ([Content](tasks/04.03-fix-api-incompatibilities/task.md), [Progress](tasks/04.03-fix-api-incompatibilities/progress-details.md))
-   - 🔄 04.03-fix-api-incompatibilities: Fix source and binary API incompatibilities for .NET 10.0 ([Content](tasks/04.03-fix-api-incompatibilities/task.md))
-   - 🔲 04.03-fix-api-incompatibilities: Fix source and binary API incompatibilities for .NET 10.0
+- ✅ 05-upgrade-feladatmanagment: Upgrade ASP.NET Core service (FeladatManagment) ([Content](tasks/05-upgrade-feladatmanagment/task.md), [Progress](tasks/05-upgrade-feladatmanagment/progress-details.md))
+- 🔄 05-upgrade-feladatmanagment: Upgrade ASP.NET Core service (FeladatManagment) ([Content](tasks/05-upgrade-feladatmanagment/task.md))
 - 🔲 05-upgrade-feladatmanagment: Upgrade ASP.NET Core service (FeladatManagment) ([Content](tasks/05-upgrade-feladatmanagment/task.md))
 - 🔲 06-full-solution-validation: Complete solution validation and testing ([Content](tasks/06-full-solution-validation/task.md))
 

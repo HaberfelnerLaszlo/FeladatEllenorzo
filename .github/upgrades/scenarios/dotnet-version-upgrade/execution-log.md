@@ -28,3 +28,8 @@
 
 **Task 04.03**: Built FeladatEllenorzo_CP successfully with ZERO errors! 561 reported potential API issues did not manifest as actual breaking changes. Build succeeded for all 3 platforms (Android, macCatalyst, Windows). 123 warnings are all non-blocking advisories (deprecations, unused fields, package advisories).
 
+
+## [2026-05-17 22:17] 05-upgrade-feladatmanagment
+
+**Task 05**: Upgraded FeladatManagment to .NET 10.0. Changed TFM from net9.0 to net10.0. All 9 NuGet packages already compatible. Project builds successfully with zero errors.
+
