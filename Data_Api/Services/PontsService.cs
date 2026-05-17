@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data_Api.Services
 {
-    public class PontService(FeladatDb context, Settings settings)
+    public class PontsService(FeladatDb context, Settings settings)
     {
         MainResponse response = new MainResponse();
 

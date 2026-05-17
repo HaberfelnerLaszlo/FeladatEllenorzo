@@ -1,5 +1,5 @@
 ﻿@page "/pontok/{id}"
-@inject IPontService pontService
+@inject IPontService pService
 @inject GlobalData data
 @inject NavigationManager nav
 @inject IDialogService DialogService
@@ -54,11 +54,11 @@ else
     protected override async Task OnInitializedAsync()
     {
         osztaly = data.Osztalynev;
-        tanulok = await pontService.GetPontByOsztaly(Id);
+        tanulok = await pService.GetPontByOsztaly(Id);
     }
     private async Task Pont_50(Tanulo tanulo)
     {
-        await pontService.Add(new Pont
+        await pService.Add(new Pont
         {
             Datum = DateTime.Now,
             PontTipus = PontTipus._50,
@@ -66,12 +66,12 @@ else
             Jegyzet = "50% 5-ös",
             TanuloId = tanulo.Id,
         });
-        tanulok = await pontService.GetPontByOsztaly(Id);
+        tanulok = await pService.GetPontByOsztaly(Id);
         StateHasChanged();
     }
     private async Task Pont_100(Tanulo tanulo)
     {
-        await pontService.Add(new Pont
+        await pService.Add(new Pont
         {
             Datum = DateTime.Now,
             PontTipus = PontTipus._100,
@@ -79,7 +79,7 @@ else
             Jegyzet = "100% 5-ös",
             TanuloId = tanulo.Id,
         });
-        tanulok = await pontService.GetPontByOsztaly(Id);
+        tanulok = await pService.GetPontByOsztaly(Id);
         StateHasChanged();
     }
     private async Task Update(Pont pont)
@@ -95,31 +95,31 @@ else
         if (!result.Cancelled && result.Data != null)
         {
             var updatedPont = (Pont)result.Data;
-            var response = await pontService.Update(updatedPont);
+            var response = await pService.Update(updatedPont);
             if (response != null)
             {
                 pont = response;
                 toastService.ShowInfo("Pont frissítve.");
-                tanulok = await pontService.GetPontByOsztaly(Id);
+                tanulok = await pService.GetPontByOsztaly(Id);
             }
             else
             {
-                toastService.ShowError($"Hiba a pont frissítése során: {pontService.ErrorMessage}");
+                toastService.ShowError($"Hiba a pont frissítése során: {pService.ErrorMessage}");
             }
         }
    }
     private async Task Delete(int id)
     {
-        if (await pontService.Remove(id))
+        if (await pService.Remove(id))
         {
             toastService.ShowInfo("Pont törölve.");
-            tanulok = await pontService.GetPontByOsztaly(Id);
+            tanulok = await pService.GetPontByOsztaly(Id);
             pontok = pontok.Where(p => p.TanuloId == selectedTanulo).ToList();
             StateHasChanged();
         }
         else
         {
-            toastService.ShowError($"Hiba a pont törlése során: {pontService.ErrorMessage}");
+            toastService.ShowError($"Hiba a pont törlése során: {pService.ErrorMessage}");
         }
     }
 }

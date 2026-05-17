@@ -19,7 +19,7 @@ builder.Services.AddScoped<SzorgalmiService>();
 builder.Services.AddScoped<SzovegService>();
 builder.Services.AddScoped<HianyService>();
 builder.Services.AddScoped<TanuloService>();
-builder.Services.AddScoped<PontService>();
+builder.Services.AddScoped<PontsService>();
 builder.Services.AddScoped<HibaService>();
 builder.Services.AddScoped<DataSaving>();
 builder.Services.AddSingleton<Settings>();
