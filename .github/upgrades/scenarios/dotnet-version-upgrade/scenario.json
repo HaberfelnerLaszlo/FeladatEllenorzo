@@ -3,11 +3,12 @@
   "operationId": "3548bd58-5982-4fc7-b1e3-62e4be3d2465",
   "description": "Upgrade .NET projects to newer .NET versions",
   "startTime": "2026-05-17T15:13:59.7597757Z",
-  "lastUpdateTime": "2026-05-17T15:22:16.0174057Z",
+  "lastUpdateTime": "2026-05-17T15:23:28.5301286Z",
   "properties": {
     "UpgradeTargetFramework": "net10.0",
     "taskStates": {
-      "01-upgrade-feladatlibrary": "Completed"
+      "01-upgrade-feladatlibrary": "Completed",
+      "02-upgrade-data-api": "Completed"
     }
   },
   "folderPath": ""
