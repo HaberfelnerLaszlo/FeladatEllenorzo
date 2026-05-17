@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFrameworks>net9.0-android;net9.0-maccatalyst</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.26100.0</TargetFrameworks>
+    <TargetFrameworks>net10.0-android;net10.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.26100.0</TargetFrameworks>
     <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
     <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
     <OutputType>Exe</OutputType>
@@ -79,22 +79,22 @@
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks)</TargetFrameworks>
     <PackageCertificateKeyFile>FeladatEllenorzo_CP_TemporaryKey.pfx</PackageCertificateKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-maccatalyst|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-maccatalyst|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows10.0.26100.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-windows10.0.26100.0|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-maccatalyst|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-maccatalyst|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows10.0.26100.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-windows10.0.26100.0|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -132,6 +132,7 @@
     <PackageReference Include="CommunityToolkit.Maui" />
     <PackageReference Include="Microsoft.AspNetCore.Components" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Forms" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" />
@@ -139,6 +140,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="System.Private.Uri" />
+    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="TimeZoneConverter" />
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" />
