@@ -3,7 +3,7 @@
   "operationId": "3548bd58-5982-4fc7-b1e3-62e4be3d2465",
   "description": "Upgrade .NET projects to newer .NET versions",
   "startTime": "2026-05-17T15:13:59.7597757Z",
-  "lastUpdateTime": "2026-05-17T20:17:40.7345602Z",
+  "lastUpdateTime": "2026-05-18T01:17:53.5627887Z",
   "properties": {
     "UpgradeTargetFramework": "net10.0",
     "taskStates": {
@@ -14,7 +14,8 @@
       "04.01-update-maui-tfm": "Completed",
       "04.02-update-maui-packages": "Completed",
       "04.03-fix-api-incompatibilities": "Completed",
-      "05-upgrade-feladatmanagment": "Completed"
+      "05-upgrade-feladatmanagment": "Completed",
+      "06-full-solution-validation": "Completed"
     }
   },
   "folderPath": ""
