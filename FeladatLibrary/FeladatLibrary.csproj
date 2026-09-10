@@ -21,7 +21,6 @@
     <PackageReference Include="Microsoft.Graph" />
     <PackageReference Include="Microsoft.Kiota.Abstractions" />
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>

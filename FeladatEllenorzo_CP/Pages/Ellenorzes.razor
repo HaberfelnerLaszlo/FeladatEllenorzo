@@ -28,7 +28,7 @@
 
                             if (item.SubmissionId == data.SubmissionId)
                             {
-                                submitted = true;
+                                //submitted = true;
                                 index = i;
                                 <option value="@item.SubmissionId" selected>@item.Name</option>
                             }
@@ -46,7 +46,7 @@
 
                         if (item.SubmissionId == data.SubmissionId)
                         {
-                            submitted = false;
+                            //submitted = false;
                             index = i;
                             <option value="@item.SubmissionId" selected>@item.Name</option>
                         }
@@ -210,7 +210,7 @@
     private EducationPointsOutcome pont;
     private Szorgalmi szorgalmi;
     private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage = string.Empty, AssignmentName = string.Empty;
-    private bool submitted = true, changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave = false;
+    private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave = false;
     private int index = 0, i = 0;
     private float Pont = 0;
     private IDialogReference _dialog;
@@ -570,7 +570,7 @@
     async Task ChangeSzorgalmi()
     {
         isSzorg = isSzorg ? false : true;
-        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId };
+        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId ,Jegyzet = string.Empty};
         var par = new DialogParameters<Szorgalmi>()
         {
             Content = szorgalmi,

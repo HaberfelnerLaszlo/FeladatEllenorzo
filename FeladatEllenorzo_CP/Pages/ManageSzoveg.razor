@@ -42,7 +42,7 @@
     [Parameter] public string Url { get; set; } = "/";
     string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
     bool EditHiden = true;
-    DataSzoveg editedSzoveg = new();
+    DataSzoveg editedSzoveg = new(){ Text = string.Empty, Type = "poz" };
     void Edit(DataSzoveg szoveg)
     {
         EditHiden = false;

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data_Api.Services
 {
-    public class HibaService(FeladatDb db, Settings settings)
+    public class HibaService(FeladatSQL db, Settings settings)
     {
         MainResponse response = new MainResponse();
 

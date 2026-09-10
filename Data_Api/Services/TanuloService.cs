@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Data_Api.Services
 {
     //public class TanuloService(FeladatSQL feladatSQL)
-     public class TanuloService(FeladatDb db,Settings settings)
+     public class TanuloService(FeladatSQL db,Settings settings)
    {
         //readonly FeladatSQL _db = db;
-        readonly FeladatDb _db = db;
+        readonly FeladatSQL _db = db;
         readonly Settings _settings = settings;
         readonly MainResponse response = new();
         public async Task<MainResponse> GetTanulok()

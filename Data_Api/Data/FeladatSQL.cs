@@ -14,6 +14,8 @@ namespace Data_Api.Data
         public DbSet<Szorgalmi> Szorgalmik => Set<Szorgalmi>();
         public DbSet<Tanulo> Tanulok => Set<Tanulo>();
         public DbSet<Pont> Pontok => Set<Pont>();
+        public DbSet<PontLog> PontLogok => Set<PontLog>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Tanulo>()

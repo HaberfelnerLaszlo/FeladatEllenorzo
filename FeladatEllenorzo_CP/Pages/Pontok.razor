@@ -14,7 +14,7 @@
 }
 else
 {
-    if (pontok.Count > 0) { magas = "50%"; }
+    //if (pontok.Count > 0) { magas = "50%"; }
      <FluentGrid>
         <FluentGridItem xs="12" sm="6">
             <FluentDataGrid TGridItem="Tanulo" Items="@tanulok.OrderBy(t => t.Name).AsQueryable()" Style="width: 100%;" AutoFit="true">
@@ -49,7 +49,7 @@ else
     [Parameter] public string Id { get; set; }
     private List<Tanulo> tanulok = new();
     private List<Pont> pontok = new();
-    string osztaly = string.Empty, magas = "100%";
+    string osztaly = string.Empty;
     Guid selectedTanulo = Guid.Empty;
     protected override async Task OnInitializedAsync()
     {
