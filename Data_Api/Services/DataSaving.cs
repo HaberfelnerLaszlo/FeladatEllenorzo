@@ -55,6 +55,16 @@ namespace Data_Api.Services
             db.Szorgalmik.RemoveRange(db.Szorgalmik);
             await db.SaveChangesAsync();
         }
+
+        public async Task ClearDatabaseNewYearAsync()
+        {
+            settings.LastModify = DateTime.Now;
+            db.Pontok.RemoveRange(db.Pontok);
+            db.HibasFeladatok.RemoveRange(db.HibasFeladatok);
+            db.FeladatHianyok.RemoveRange(db.FeladatHianyok);
+            db.Szorgalmik.RemoveRange(db.Szorgalmik);
+            await db.SaveChangesAsync();
+        }
     }
     public class SaveData
     {

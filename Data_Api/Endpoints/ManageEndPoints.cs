@@ -134,6 +134,18 @@ namespace Data_Api.Endpoints
                     return Results.Problem(ex.Message);
                 }
             });
+            app.MapGet("/clearnewyear", async (DataSaving saving) =>
+            {
+                try
+                {
+                    await saving.ClearDatabaseNewYearAsync();
+                    return Results.Ok("Adatok sikeresen törölve.");
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message);
+                }
+            });
             app.MapPost("/upload", async (HttpRequest request) =>
             {
                 if (request.Form.Files.Count > 0)

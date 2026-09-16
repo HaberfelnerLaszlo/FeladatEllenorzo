@@ -25,6 +25,7 @@ builder.Services.AddAntiforgery(o => o.SuppressXFrameOptionsHeader = true);
 builder.Services.AddSingleton<LibraryConfiguration>();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddSingleton<IPontService, PontService>();
+builder.Services.AddSingleton<ICsoportService, CsoportService>();
 builder.Services.AddScoped<TeszterApiService>();
 builder.Services.AddScoped<MathService>();
 builder.Services.AddSingleton<GlobalData>();
