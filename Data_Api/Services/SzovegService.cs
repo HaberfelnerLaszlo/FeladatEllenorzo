@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Data_Api.Services
 {
    // public class SzovegService(FeladatSQL db)
-    public class SzovegService(FeladatDb db, Settings settings)
+    public class SzovegService(FeladatSQL db, Settings settings)
     {
         //readonly FeladatSQL _db = db;
-        readonly FeladatDb _db = db;
+        readonly FeladatSQL _db = db;
         readonly Settings _settings = settings;
         readonly MainResponse response = new MainResponse();
         public async Task<MainResponse> GetSzovegek()

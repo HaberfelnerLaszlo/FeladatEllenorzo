@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data_Api.Services
 {
-	public class SzorgalmiService(FeladatDb db, Settings settings)
+	public class SzorgalmiService(FeladatSQL db, Settings settings)
     {
 		//private readonly FeladatSQL _db;
-		private readonly FeladatDb _db = db;
+		private readonly FeladatSQL _db = db;
         private readonly Settings _settings = settings;
         MainResponse response = new MainResponse();
 

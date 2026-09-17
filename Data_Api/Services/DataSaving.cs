@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Data_Api.Services
 {
-    public class DataSaving(FeladatDb db, Settings settings)
+    public class DataSaving(FeladatSQL db, Settings settings)
     {
         public async Task SaveToJsonAsync(string filePath)
         {

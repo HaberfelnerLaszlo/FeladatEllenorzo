@@ -23,7 +23,7 @@ namespace FeladatEllenorzo_CP.Services
         private string _userIdentifier = string.Empty;
         private ISettingsService _settingsService;
         // App-ony auth token credential
-        private static ClientSecretCredential? _clientSecretCredential;
+       // private static ClientSecretCredential? _clientSecretCredential;
         // Client configured with app-only authentication
         public GraphServiceClient GraphClient => new(this);
 

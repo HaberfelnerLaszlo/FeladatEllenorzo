@@ -7,7 +7,7 @@ namespace FeladatLibrary.Models
         [Key]
         public int Id { get; set; }
         public Guid TanuloId { get; set; }
-        public string Osztaly { get; set; }
+        public required string Osztaly { get; set; }
         public Guid FeladatId { get; set; }
 
         public DateOnly Datum { get; set; }

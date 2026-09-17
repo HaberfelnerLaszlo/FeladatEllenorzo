@@ -216,7 +216,7 @@
     private EducationPointsOutcome pont;
     private List<MemberData> SelectedMembers = new(), saveError = new();
     private int i = 0; //kijelölt tanulók száma
-    private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, disableWorking = false, disableSubmitted = false, disableNone = false, isError = false, isHiany = false, visibleNewText = true;
+    private bool changed = false,  IsNotSaved = true, disableWorking = false, disableSubmitted = false, disableNone = false, isError = false, isHiany = false, visibleNewText = true;
     private float Pont = 0;
     private string Valasz = string.Empty, hatter = "$gray-100";
     DateTime datumHiany = DateTime.Today;
@@ -434,12 +434,12 @@
         IsNotSaved = true;
         if (changePont)
         {
-            changedPont = true;
+            //changedPont = true;
             Pont = float.Parse(args.Value.ToString());
         }
         else
         {
-            changedValasz = true;
+            //changedValasz = true;
             Valasz = args.Value.ToString();
         }
     }
@@ -449,12 +449,12 @@
         IsNotSaved = true;
         if (changePont)
         {
-            changedPont = true;
+            //changedPont = true;
             Pont = float.Parse(args);
         }
         else
         {
-            changedValasz = true;
+            //changedValasz = true;
             Valasz = args;
         }
     }
@@ -569,9 +569,9 @@
                         i++;
                     });
                     Valasz = "nem töltötted fel a házi feladatról a képet !?";
-                    changedValasz = true;
+                    //changedValasz = true;
                     Pont = 0;
-                    changedPont = true;
+                    //changedPont = true;
                     changed = true;
                     disableWorking = true;
                     ChangeHiany();
@@ -586,9 +586,9 @@
                         i++;
                     });
                     Valasz = "rendben ✔️";
-                    changedValasz = true;
+                    //changedValasz = true;
                     Pont = 2;
-                    changedPont = true;
+                    //changedPont = true;
                     changed = true;
                     disableSubmitted = true;
                 }
@@ -603,7 +603,7 @@
     {
         Valasz = Valasz + $" {text}";
         changed = true;
-        changedValasz = true;
+        //changedValasz = true;
     }
     void ManageSzovegOpen()
     {
