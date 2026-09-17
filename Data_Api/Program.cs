@@ -22,6 +22,7 @@ builder.Services.AddScoped<HianyService>();
 builder.Services.AddScoped<TanuloService>();
 builder.Services.AddScoped<PontsService>();
 builder.Services.AddScoped<HibaService>();
+builder.Services.AddScoped<CsoportService>();
 builder.Services.AddScoped<DataSaving>();
 builder.Services.AddSingleton<Settings>();
 

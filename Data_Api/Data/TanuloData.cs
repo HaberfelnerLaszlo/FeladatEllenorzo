@@ -3,6 +3,7 @@
     public class TanuloData
     {
         public Guid Id { get; set; }
+        public string CsoportName { get; set; } = string.Empty;
         public int PontSzam { get; set; }
         public int Min { get; set; }
         public int Max { get; set; }

@@ -18,7 +18,12 @@ namespace Data_Api.Endpoints
             });
             app.MapGet("/tanulokids", async (TanuloService tanuloService) =>
             {
+
                 return await tanuloService.GetTanulokToIds();
+            });
+            app.MapGet("/tanulo_newyear", async (TanuloService tanuloService) =>
+            {
+                return await tanuloService.GetTanulokNewYear();
             });
             app.MapGet("/tanulokids/{osztaly}", async (TanuloService tanuloService, string osztaly) =>
             {

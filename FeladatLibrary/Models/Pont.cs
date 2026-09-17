@@ -4,6 +4,7 @@
     {
         public int Id { get; set; }
         public Guid TanuloId { get; set; }
+        public Guid CsoportId { get; set; } = Guid.Empty;
         public DateTime Datum { get; set; } = DateTime.Now;
         public int PontSzam { get; set; }
         public string Jegyzet { get; set; } = string.Empty;

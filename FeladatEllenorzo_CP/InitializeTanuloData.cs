@@ -37,6 +37,7 @@ namespace FeladatEllenorzo_CP
                             Name = tag.DisplayName,
                             Osztaly = item.Id,
                             Pont = 20,
+                            Csoportok  = [new Csoport{ Id = Guid.Parse(item.Id), Name = item.DisplayName }],
                             LastModify = DateTime.Now
                         });
                     }

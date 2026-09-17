@@ -14,6 +14,7 @@
 @inject IAlertService alert
 @inject Microsoft.FluentUI.AspNetCore.Components.IToastService toastService
 @inject ISzovegService szoveg
+@inject ICsoportService csoportService
 
 @if (Me is null)
 {
@@ -318,6 +319,20 @@ else
         Me = await _graphService.GetUserInfoAsync();
         data.UserId = Me.Id;
         classes = await _graphService.GetTaughtClasses(Me.Id);
+        var csoportok = await csoportService.GetCsoportok();
+        foreach (var item in classes.Value)
+        {
+            var csoport = csoportok.FirstOrDefault(c => c.Id == Guid.Parse(item.Id));
+            if (csoport is null)
+            {
+                await csoportService.CreateCsoport(new Csoport { Id = Guid.Parse(item.Id), Name = item.DisplayName });
+            }
+            else if (csoport.Name != item.DisplayName)
+            {
+                csoport.Name = item.DisplayName;
+                await csoportService.UpdateCsoport(csoport.Id, csoport);
+            }
+        }
         _classes = classes.Value.Where(c =>  c.DisplayName.ToLower().Contains("matematika") && !c.DisplayName.Contains("Exp")).ToList();
     InitializeTanuloData tanuloData = new(data, _graphService);
         await tanuloData.SetupTanuloData(_classes);
