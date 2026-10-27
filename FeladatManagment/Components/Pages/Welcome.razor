@@ -67,15 +67,34 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            await LoadUserDataAsync();
+        }
+    }
+
+    private async Task LoadUserDataAsync()
+    {
         try
         {
-            if (firstRender)
+            // Timeout beállítása 30 másodpercre az Azure autentikációhoz
+            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
             {
                 var user = await teamsUserCredential.GetUserInfoAsync();
                 userName = user.DisplayName;
                 userId = Guid.Parse(user.ObjectId);
-                lessons = await mService.GetLessons(Guid.Parse(user.ObjectId));
+                lessons = await mService.GetLessons(Guid.Parse(user.ObjectId), cts.Token);
+                errorMessage = string.Empty;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            errorMessage = "A bejelentkezés időtúllépés miatt meg lett szakítva. Kérjük próbálja újra!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Hiba a bejelentkezéskor: {ex.Message}";
         }
         finally
         {

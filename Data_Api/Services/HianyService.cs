@@ -20,7 +20,7 @@ namespace Data_Api.Services
         {
             response.Clear();
             var hianyok = await db.Tanulok.Where(t=>t.Osztaly==osztaly)
-                                                            .Include(h=>h.Hianyok.Where(h=>h.Datum==DateOnly.Parse(DateTime.Today.ToShortDateString())))
+                                                            .Include(h=>h.Hianyok.Where(h=>h.Datum==DateTime.Today))
                                                             .ToListAsync();
             if (hianyok == null)
             {
@@ -38,17 +38,27 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetFeladatHianyByMa()
         {
             response.Clear();
-            var hianyok = await db.Tanulok.Include(h=>h.Hianyok.Where(h=>h.Datum==DateOnly.Parse(DateTime.Today.ToShortDateString()))).ToListAsync();
-            if (hianyok == null)
+            var hianyok = await db.FeladatHianyok.Where(h => h.Datum == DateTime.Today).ToListAsync();
+            List<Tanulo> tanulok = new List<Tanulo>();
+            foreach (var hiany in hianyok)
             {
-                response.ErrorMessage = "Nincs hibás feladat.";
+                var tanulo = await db.Tanulok.FirstOrDefaultAsync(t => t.Id == hiany.TanuloId);
+                if (tanulo != null)
+                {
+                    tanulo.Hianyok = new List<FeladatHiany> { hiany };
+                    tanulok.Add(tanulo);
+                }
+            }
+            if (tanulok == null||tanulok.Count == 0)
+            {
+                response.ErrorMessage = "Mai napra nincs hiány.";
                 response.IsSuccess = false;
                 return response;
             }
             else
             {
                 response.IsSuccess = true;
-                response.Content = hianyok;
+                response.Content = tanulok;
             }
             return response;
         }
@@ -56,7 +66,7 @@ namespace Data_Api.Services
         {
             response.Clear();
             var hianyok = await db.Tanulok.Where(t=>t.Osztaly==osztaly)
-                                                            .Include(h=>h.Hianyok.Where(h=>h.Datum==DateOnly.Parse(date)))
+                                                            .Include(h=>h.Hianyok.Where(h=>h.Datum==DateTime.Parse(date)))
                                                             .ToListAsync();
             if (hianyok == null)
             {
@@ -74,7 +84,7 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetFeladatHianytByDatum(string date)
         {
             response.Clear();
-            var hianyok = await db.Tanulok.Include(h=>h.Hianyok.Where(h=>h.Datum==DateOnly.Parse(date))).ToListAsync();
+            var hianyok = await db.Tanulok.Include(h=>h.Hianyok.Where(h=>h.Datum==DateTime.Parse(date))).ToListAsync();
             if (hianyok == null)
             {
                 response.ErrorMessage = "Nincs hibás feladat.";
@@ -218,7 +228,7 @@ namespace Data_Api.Services
             response.Clear();
             try
             {
-                var hianyok = await db.FeladatHianyok.Where(h => h.Datum == DateOnly.Parse(date)).ToListAsync();
+                var hianyok = await db.FeladatHianyok.Where(h => h.Datum == DateTime.Parse(date)).ToListAsync();
                 if (hianyok == null)
                 {
                     response.ErrorMessage = "Nincs ilyen hibás feladat.";
@@ -243,7 +253,7 @@ namespace Data_Api.Services
             response.Clear();
             try
             {
-                var hianyok = await db.FeladatHianyok.Where(h => h.Osztaly == osztaly && h.Datum == DateOnly.Parse(date)).ToListAsync();
+                var hianyok = await db.FeladatHianyok.Where(h => h.Osztaly == osztaly && h.Datum == DateTime.Parse(date)).ToListAsync();
                 if (hianyok == null)
                 {
                     response.ErrorMessage = "Nincs ilyen hibás feladat.";
@@ -293,7 +303,7 @@ namespace Data_Api.Services
             response.Clear();
             try
             {
-                var hianyok = await db.FeladatHianyok.Where(h => h.Osztaly == osztaly && h.Datum == DateOnly.Parse(date)).ToListAsync();
+                var hianyok = await db.FeladatHianyok.Where(h => h.Osztaly == osztaly && h.Datum == DateTime.Parse(date)).ToListAsync();
                 if (hianyok == null)
                 {
                     response.ErrorMessage = $"Nincsenek a {osztaly} hibás feladatai.";

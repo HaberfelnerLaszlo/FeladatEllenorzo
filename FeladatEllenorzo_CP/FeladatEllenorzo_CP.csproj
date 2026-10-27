@@ -40,21 +40,21 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
     <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-    <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
+    <ApplicationId>hu.haberfelner.feladatellenorzo</ApplicationId>
     <RunAOTCompilation>False</RunAOTCompilation>
     <AndroidKeyStore>False</AndroidKeyStore>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
     <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-    <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
+    <ApplicationId>hu.haberfelner.feladatellenorzo</ApplicationId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-maccatalyst|AnyCPU'">
     <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-    <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
+    <ApplicationId>hu.haberfelner.feladatellenorzo</ApplicationId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-windows10.0.26100.0|AnyCPU'">
     <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
-    <ApplicationId>eu.haberfelner.feladatellenorzo</ApplicationId>
+    <ApplicationId>hu.haberfelner.feladatellenorzo</ApplicationId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
     <ApplicationTitle>FeladatEllenorzo</ApplicationTitle>
@@ -80,7 +80,11 @@
   <PropertyGroup>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks)</TargetFrameworks>
     <PackageCertificateKeyFile>FeladatEllenorzo_CP_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <NeutralLanguage>hu-HU</NeutralLanguage>
   </PropertyGroup>
+	<PropertyGroup>
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
     <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
   </PropertyGroup>

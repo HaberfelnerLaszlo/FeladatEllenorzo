@@ -19,6 +19,53 @@ namespace Data_Api.Migrations
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("CsoportTanulo", b =>
+                {
+                    b.Property<Guid>("CsoportokId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TanulokId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("CsoportokId", "TanulokId");
+
+                    b.HasIndex("TanulokId");
+
+                    b.ToTable("CsoportTanulo");
+                });
+
+            modelBuilder.Entity("Data_Api.Data.Beiratkozas", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CsoportId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TanuloId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Beiratkozasok");
+                });
+
+            modelBuilder.Entity("Data_Api.Data.Csoport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Csoportok");
+                });
+
             modelBuilder.Entity("Data_Api.Data.FeladatHiany", b =>
                 {
                     b.Property<int>("Id")
@@ -80,6 +127,9 @@ namespace Data_Api.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<Guid>("CsoportId")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("Datum")
                         .HasColumnType("datetime(6)");
@@ -206,6 +256,21 @@ namespace Data_Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tanulok");
+                });
+
+            modelBuilder.Entity("CsoportTanulo", b =>
+                {
+                    b.HasOne("Data_Api.Data.Csoport", null)
+                        .WithMany()
+                        .HasForeignKey("CsoportokId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data_Api.Data.Tanulo", null)
+                        .WithMany()
+                        .HasForeignKey("TanulokId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Data_Api.Data.FeladatHiany", b =>

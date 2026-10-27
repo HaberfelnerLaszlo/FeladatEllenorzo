@@ -1,4 +1,5 @@
-@Data_Api_HostAddress = http://localhost:5157
+#@Data_Api_HostAddress = http://localhost:5157
+@Data_Api_HostAddress = https://fapi.haberfelner.hu
 GET {{Data_Api_HostAddress}}/
 
 ###
@@ -16,8 +17,9 @@ Content-Type: application/json
 }
 ###
 
-GET {{Data_Api_HostAddress}}/hianyok/2023-12-16
-
+GET {{Data_Api_HostAddress}}/hianyok/2026-10-07
+###
+GET {{Data_Api_HostAddress}}/hiany/ac2301ed-2cf8-4598-9624-5a80cf799466
 ###
 
 PUT {{Data_Api_HostAddress}}/hiany/5
@@ -57,4 +59,17 @@ Content-Type: application/json
   "pont":2,
   "feladatok_szama":1,
   "osztaly":"8048b263-4106-4925-a316-ffdee54a91a2"
+}
+###
+GET {{Data_Api_HostAddress}}/tanulo
+
+###
+POST {{Data_Api_HostAddress}}/tanulo
+Content-Type: application/json
+{
+      "id": "de4f4772-898d-4aa9-a89f-19b4e11f5fe8",
+      "name": "Kovács Dániel Zoltán",
+      "osztaly": "b71c2fa0-c551-4c44-913f-fbd9629a9028",
+      "pont": 20,
+      "lastModify": "2026-09-17T13:01:41.262589"
 }

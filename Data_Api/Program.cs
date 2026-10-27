@@ -60,6 +60,7 @@ app.AddSzovegEndPoints();
 app.AddTanuloEndpoints();
 app.AddPontEndPoints();
 app.AddManageEndpoints();
+app.AddCsoportEndpoints();
 
 app.Run();
 

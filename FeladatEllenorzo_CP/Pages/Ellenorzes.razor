@@ -484,7 +484,7 @@
         }
         if (isHiany)
         {
-            var res = await hianyService.Add(new() { Datum = DateOnly.FromDateTime(DateTime.Today), Hianyzik = false, TanuloId = data.StudentId, FeladatId = Guid.Parse(data.AssignmentId), Osztaly = data.Osztalynev });
+            var res = await hianyService.Add(new() { Datum = DateTime.Today, Hianyzik = false, TanuloId = data.StudentId, FeladatId = Guid.Parse(data.AssignmentId), Osztaly = data.Osztalynev });
             isHiany = false;
             if (res.IsSuccess)
             {

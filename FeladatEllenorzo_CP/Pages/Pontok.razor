@@ -4,6 +4,7 @@
 @inject NavigationManager nav
 @inject IDialogService DialogService
 @inject IToastService toastService
+@inject IGraphService graphService
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch">
     <h3>@osztaly csoport pontjai</h3>
     <FluentButton OnClick="@(()=> { data.Osztalynev = string.Empty; nav.NavigateTo("/"); })">Vissza</FluentButton>
@@ -24,6 +25,7 @@ else
                                 <FluentButton OnClick="@(()=>{pontok=context.Pontok??new();selectedTanulo=context.Id;})" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
                                 <FluentButton OnClick="@(()=>Pont_100(context))" Disabled="@(context.Pont <= 100)">100</FluentButton>
                                 <FluentButton OnClick="@(()=>Pont_50(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
+                     <FluentButton OnClick="@(() => Pont_Change(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
                 </TemplateColumn>
             </FluentDataGrid>
         </FluentGridItem>
@@ -55,6 +57,11 @@ else
     {
         osztaly = data.Osztalynev;
         tanulok = await pService.GetPontByOsztaly(Id);
+        if (tanulok.Count == 0)
+        {
+            InitializeTanuloData tanuloData = new(data,graphService);
+            await tanuloData.InitTanuloData(new List<EducationClass>(){data.Class});
+        }
     }
     private async Task Pont_50(Tanulo tanulo)
     {
@@ -81,6 +88,38 @@ else
         });
         tanulok = await pService.GetPontByOsztaly(Id);
         StateHasChanged();
+    }
+    private async Task Pont_Change(Tanulo tanulo)
+    {
+        var newPont = new Pont
+        {
+            Datum = DateTime.Now,
+            PontTipus = PontTipus.Javítás,
+            PontSzam = 0,
+            Jegyzet = string.Empty,
+            TanuloId = tanulo.Id,
+        };
+        var dialog = await DialogService.ShowDialogAsync<EditPontDialog>(newPont, new DialogParameters()
+        {
+            Title = $"{tanulo.Name} pontjainak módosítása",
+            PreventDismissOnOverlayClick = true,
+            PreventScroll = true,
+        });
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            newPont = (Pont)result.Data;
+            var response = await pService.Add(newPont);
+            if (response != null)
+            {
+                toastService.ShowInfo("Pont hozzáadva.");
+                tanulok = await pService.GetPontByOsztaly(Id);
+            }
+            else
+            {
+                toastService.ShowError($"Hiba a pont hozzáadása során: {pService.ErrorMessage}");
+            }
+        }
     }
     private async Task Update(Pont pont)
     {

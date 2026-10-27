@@ -15,6 +15,8 @@ namespace Data_Api.Data
         public DbSet<Tanulo> Tanulok => Set<Tanulo>();
         public DbSet<Pont> Pontok => Set<Pont>();
         public DbSet<PontLog> PontLogok => Set<PontLog>();
+        public DbSet<Csoport> Csoportok => Set<Csoport>();
+        public DbSet<Beiratkozas> Beiratkozasok => Set<Beiratkozas>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

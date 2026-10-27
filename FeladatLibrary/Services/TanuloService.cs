@@ -27,6 +27,7 @@ namespace FeladatLibrary.Services
                 using (var client = new HttpClient())
                 {
                     string url = $"{_baseUrl}/tanulo";
+                    tanulo.Csoportok = [];
 
                     var serializeContent = JsonConvert.SerializeObject(tanulo);
 

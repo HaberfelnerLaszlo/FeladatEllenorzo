@@ -483,7 +483,7 @@
                     isError = true;
                     break;
                 }
-                var mainResponse = await hiany.Add(new() { TanuloId = item.Id, FeladatId = Guid.Parse(data.AssignmentId), Datum = DateOnly.FromDateTime(datumHiany), Osztaly = data.Osztalynev });
+                var mainResponse = await hiany.Add(new() { TanuloId = item.Id, FeladatId = Guid.Parse(data.AssignmentId), Datum = datumHiany, Osztaly = data.Osztalynev });
                 if (!mainResponse.IsSuccess)
                 {
                     await alert.ShowAlertAsync($"A hiba mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");

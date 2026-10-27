@@ -68,6 +68,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISzorgalmiService, SzorgalmiService>();
         builder.Services.AddSingleton<IPontService, PontService>();
         builder.Services.AddSingleton<ITanuloService, TanuloService>();
-		return builder;
+        builder.Services.AddSingleton<ICsoportService, CsoportService>();
+        return builder;
 	}
 }

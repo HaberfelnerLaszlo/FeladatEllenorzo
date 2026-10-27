@@ -22,6 +22,7 @@ namespace FeladatLibrary.Data
 		public string Name { get; set; } = string.Empty;
         public string Osztalynev { get; set; }=string.Empty;
 		public int IsHiany { get; set; } = 0;
+		public EducationClass Class { get; set; } = new();
         public List<MemberData> Members { get; set; } = [];
 		public List<DataSzoveg> Szovegek { get; set; } = [];
 		public List<DataFeladat> Feladatok = [];

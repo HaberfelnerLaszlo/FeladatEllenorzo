@@ -10,7 +10,7 @@ namespace FeladatLibrary.Models
         public required string Osztaly { get; set; }
         public Guid FeladatId { get; set; }
 
-        public DateOnly Datum { get; set; }
+        public DateTime Datum { get; set; }
         public bool Hianyzik { get; set; }
     }
 }

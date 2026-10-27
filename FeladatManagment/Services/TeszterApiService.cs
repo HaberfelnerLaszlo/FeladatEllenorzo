@@ -63,6 +63,11 @@ namespace FeladatManagment.Services
                     return default;
                 }
             }
+            catch (OperationCanceledException e)
+            {
+                ErrorMessage = "A kérés időtúllépés miatt meg lett szakítva: " + e.Message;
+                return default;
+            }
             catch (HttpRequestException e)
             {
                 ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
@@ -85,46 +90,65 @@ namespace FeladatManagment.Services
             //{
             //    await CreateAuthorizationHeaderForUserAsync();
             //}
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PostAsJsonAsync(uri, t);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                client.BaseAddress ??= new Uri(URI);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+                //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                HttpResponseMessage response = await client.PostAsJsonAsync(uri, t);
+                if (response.IsSuccessStatusCode)
                 {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
+                    valasz = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                     {
-                        if (deserilizeResponse.IsSuccess)
+                        var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        if (deserilizeResponse != null)
                         {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            if (deserilizeResponse.IsSuccess)
+                            {
+                                return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            }
                         }
                     }
+                    return JsonConvert.DeserializeObject<T?>(valasz);
                 }
-                return JsonConvert.DeserializeObject<T?>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                    valasz = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                    {
+                        var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                    }
+                    else ErrorMessage += "Nem elérhető a szerver!";
+                    return default;
                 }
-                else ErrorMessage += "Nem elérhető a szerver!";
+                else
+                {
+                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+                    var message = await response.Content.ReadAsStringAsync();
+                    ErrorMessage += message;
+                }
                 return default;
             }
-            else
+            catch (OperationCanceledException e)
             {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
+                ErrorMessage = "A kérés időtúllépés miatt meg lett szakítva: " + e.Message;
+                return default;
             }
-            return default;
+            catch (HttpRequestException e)
+            {
+                ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
+                return default;
+            }
+            catch (Exception e)
+            {
+                client.CancelPendingRequests();
+                ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
+                return default;
+            }
         }
 
         public async Task<T?> Put<T>(string uri, T t)
@@ -134,47 +158,66 @@ namespace FeladatManagment.Services
             //{
             //    await CreateAuthorizationHeaderForUserAsync();
             //}
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.PutAsJsonAsync(uri, t);
-            string valasz;
-            if (response.IsSuccessStatusCode)
+            try
             {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                client.BaseAddress ??= new Uri(URI);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+                //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                HttpResponseMessage response = await client.PutAsJsonAsync(uri, t);
+                string valasz;
+                if (response.IsSuccessStatusCode)
                 {
-                    var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    if (deserilizeResponse != null)
+                    valasz = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
                     {
-                        if (deserilizeResponse.IsSuccess)
+                        var deserilizeResponse = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        if (deserilizeResponse != null)
                         {
-                            return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            if (deserilizeResponse.IsSuccess)
+                            {
+                                return JsonConvert.DeserializeObject<T>(deserilizeResponse.Content.ToString());
+                            }
                         }
                     }
+                    return JsonConvert.DeserializeObject<T>(valasz);
                 }
-                return JsonConvert.DeserializeObject<T>(valasz);
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                valasz = await response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
-                    ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                    valasz = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(valasz) && valasz.Contains("errorMessage"))
+                    {
+                        var r = JsonConvert.DeserializeObject<MainResponse>(valasz);
+                        ErrorMessage = r?.ErrorMessage ?? "Null eredmény lett a hiba üzenet";
+                    }
+                    else ErrorMessage += "Nem elérhető a szerver!";
+                    return default;
                 }
-                else ErrorMessage += "Nem elérhető a szerver!";
+                else
+                {
+                    ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+                    var message = await response.Content.ReadAsStringAsync();
+                    ErrorMessage += message;
+                }
                 return default;
             }
-            else
+            catch (OperationCanceledException e)
             {
-                ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-                var message = await response.Content.ReadAsStringAsync();
-                ErrorMessage += message;
+                ErrorMessage = "A kérés időtúllépés miatt meg lett szakítva: " + e.Message;
+                return default;
             }
-            return default;
+            catch (HttpRequestException e)
+            {
+                ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
+                return default;
+            }
+            catch (Exception e)
+            {
+                client.CancelPendingRequests();
+                ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
+                return default;
+            }
         }
 
         public async Task<bool> Delete(string uri)
@@ -185,18 +228,37 @@ namespace FeladatManagment.Services
             //{
             //    await CreateAuthorizationHeaderForUserAsync();
             //}
-            client.BaseAddress ??= new Uri(URI);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.DeleteAsync(uri);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                valasz = true;
+                client.BaseAddress ??= new Uri(URI);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+                //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                HttpResponseMessage response = await client.DeleteAsync(uri);
+                if (response.IsSuccessStatusCode)
+                {
+                    valasz = true;
+                }
+                else ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
+                return valasz;
             }
-            else ErrorMessage = response.StatusCode.ToString() + " : " + response.RequestMessage;
-            return valasz;
+            catch (OperationCanceledException e)
+            {
+                ErrorMessage = "A kérés időtúllépés miatt meg lett szakítva: " + e.Message;
+                return false;
+            }
+            catch (HttpRequestException e)
+            {
+                ErrorMessage = "Nem elérhető a szerver! Hibaüzenet: " + e.Message;
+                return false;
+            }
+            catch (Exception e)
+            {
+                client.CancelPendingRequests();
+                ErrorMessage = "Hiba történt! Az üzenet: " + e.Message;
+                return false;
+            }
         }
     }
     public class TokenResponse

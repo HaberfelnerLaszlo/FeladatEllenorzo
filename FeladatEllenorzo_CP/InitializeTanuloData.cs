@@ -18,7 +18,39 @@ namespace FeladatEllenorzo_CP
         readonly GlobalData _data = globalData;
         readonly IGraphService _graphService = graphService;
         private List<Tanulo> tanulok = [];
-        private async Task InitTanuloData(List<EducationClass> classes) 
+        public async Task NewTanulok(EducationClass @class)
+        {
+            TanuloService tanuloService = new(_data);
+            var localTanulok = await tanuloService.GetTanulok();
+            try
+            {
+                 var tagok = await _graphService.GetMembers(@class.Id);
+                if (tagok != null)
+                {
+                    foreach (var tag in tagok.Value.Where(t => t.PrimaryRole != EducationUserRole.Teacher))
+                    {
+                        if(!localTanulok.Exists(t => t.Id == Guid.Parse(tag.Id)))
+                        {
+                            await tanuloService.CreateTanulo(new Tanulo
+                            {
+                                Id = Guid.Parse(tag.Id),
+                                Name = tag.DisplayName,
+                                Osztaly = @class.Id,
+                                Pont = 20,
+                                Csoportok = [new Csoport { Id = Guid.Parse(@class.Id), Name = @class.DisplayName }],
+                                LastModify = DateTime.Now
+                            });
+                        }
+                    }
+                }
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task InitTanuloData(List<EducationClass> classes) 
         {
             if (classes is null || classes.Count == 0)
             {
@@ -42,6 +74,15 @@ namespace FeladatEllenorzo_CP
                         });
                     }
                 }
+            }
+            if(tanulok.Count == 0)
+            {
+                Console.WriteLine("Hiba: Nincs tanuló az osztályokban!");
+                return;
+            }
+            else
+            {
+                CreateTanulok();
             }
 
         }
