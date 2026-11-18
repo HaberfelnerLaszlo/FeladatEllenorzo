@@ -6,31 +6,24 @@ namespace Data_Api.Endpoints
 {
     public static class ManageEndPoints
     {
+        private const int MegtartottMentesek = 5;
+
         public static void AddManageEndpoints(this WebApplication app)
         {
             IWebHostEnvironment hostingEnv = app.Environment;
-            string FilePath = Path.Combine(hostingEnv.ContentRootPath, "Mentesek");
-            if (!Directory.Exists(FilePath))
-                Directory.CreateDirectory(FilePath);
-            else {
-                var filesCount=Directory.EnumerateFiles(FilePath).Count();
-                if (filesCount > 5)
-                {
-                    var files = Directory.GetFiles(FilePath);
-                    foreach (var file in files.OrderByDescending(f => File.GetCreationTime(f)).Skip(5))
-                    {
-                        File.Delete(file);
-                    }
-                }
-            }
+            string FilePath = Path.GetFullPath(Path.Combine(hostingEnv.ContentRootPath, "Mentesek"));
+            Directory.CreateDirectory(FilePath);
+            RegiMentesekTorlese(FilePath);
+
             #region Manage
             app.MapGet("/save", async (DataSaving saving, Settings settings) =>
             {
                 if(settings.LastModify>settings.LastSaved)
                 {
-                    try 
+                    try
                     {
-                        await saving.SaveToJsonAsync(Path.Combine(FilePath,$"mentes-{DateTime.Today.ToString("s")}.json"));
+                        await saving.SaveToJsonAsync(Path.Combine(FilePath,$"mentes-{DateTime.Today.ToString("s").Replace(':', '_')}.json"));
+                        RegiMentesekTorlese(FilePath);
                     }
                     catch (Exception ex)
                     {
@@ -39,19 +32,19 @@ namespace Data_Api.Endpoints
                     settings.LastSaved = DateTime.Now;
                     return Results.Ok("Adatok mentése megtörtént.");
                 }
-                else 
+                else
                 {
                     return Results.Ok("Nem volt adatváltozás.");
                 }
             });
-            app.MapGet("/load", async (DataSaving saving, Settings settings) =>
+            app.MapPost("/load", async (DataSaving saving, Settings settings) =>
             {
                 try
                 {
-                    var files = Directory.GetFiles(FilePath);
-                    if (files.Length == 0)
+                    var latest = LegujabbMentes(FilePath);
+                    if (latest is null)
                         return Results.Ok("Nincs mentett adatfájl.");
-                    await saving.LoadFromJsonAsync(files.OrderByDescending(f => File.GetCreationTime(f)).First().ToString());
+                    await saving.LoadFromJsonAsync(latest);
                     settings.LastModify = DateTime.Now;
                     return Results.Ok("Adatok sikeresen visszatöltve.");
                 }
@@ -74,11 +67,13 @@ namespace Data_Api.Endpoints
                 }).OrderByDescending(f => f.CreationTime).ToList();
                 return Results.Ok(files);
             });
-            app.MapGet("/load/{fileName}", async (string fileName, DataSaving saving, Settings settings) =>
+            app.MapPost("/load/{fileName}", async (string fileName, DataSaving saving, Settings settings) =>
             {
                 try
                 {
-                    var filePath = Path.Combine(FilePath, fileName);
+                    var filePath = BiztonsagosUtvonal(FilePath, fileName);
+                    if (filePath is null)
+                        return Results.BadRequest("Érvénytelen fájlnév.");
                     if (!File.Exists(filePath))
                         return Results.NotFound("A megadott fájl nem található.");
                     await saving.LoadFromJsonAsync(filePath);
@@ -90,11 +85,13 @@ namespace Data_Api.Endpoints
                     return Results.Problem(ex.Message);
                 }
             });
-            app.MapGet("/delete/{fileName}", (string fileName) =>
+            app.MapDelete("/delete/{fileName}", (string fileName) =>
             {
                 try
                 {
-                    var filePath = Path.Combine(FilePath, fileName);
+                    var filePath = BiztonsagosUtvonal(FilePath, fileName);
+                    if (filePath is null)
+                        return Results.BadRequest("Érvénytelen fájlnév.");
                     if (!File.Exists(filePath))
                         return Results.NotFound("A megadott fájl nem található.");
                     File.Delete(filePath);
@@ -105,24 +102,23 @@ namespace Data_Api.Endpoints
                     return Results.Problem(ex.Message);
                 }
             });
-            app.MapGet(FilePath + "/{fileName}", (string fileName) =>
+            app.MapGet("/mentesek/latest", () =>
             {
-                var filePath = Path.Combine(FilePath, fileName);
+                var latestFile = LegujabbMentes(FilePath);
+                if (latestFile is null)
+                    return Results.NotFound("Nincs mentett adatfájl.");
+                return Results.File(latestFile, "application/json", Path.GetFileName(latestFile));
+            });
+            app.MapGet("/mentesek/{fileName}", (string fileName) =>
+            {
+                var filePath = BiztonsagosUtvonal(FilePath, fileName);
+                if (filePath is null)
+                    return Results.BadRequest("Érvénytelen fájlnév.");
                 if (!File.Exists(filePath))
                     return Results.NotFound("A megadott fájl nem található.");
-                var mimeType = "application/json";
-                return Results.File(filePath, mimeType, fileName);
+                return Results.File(filePath, "application/json", Path.GetFileName(filePath));
             });
-            app.MapGet(FilePath + "/latest", () =>
-            {
-                var files = Directory.GetFiles(FilePath);
-                if (files.Length == 0)
-                    return Results.NotFound("Nincs mentett adatfájl.");
-                var latestFile = files.OrderByDescending(f => File.GetCreationTime(f)).First();
-                var mimeType = "application/json";
-                return Results.File(latestFile, mimeType, Path.GetFileName(latestFile));
-            });
-            app.MapGet("/clear", async (DataSaving saving) =>
+            app.MapPost("/clear", async (DataSaving saving) =>
             {
                 try
                 {
@@ -134,7 +130,7 @@ namespace Data_Api.Endpoints
                     return Results.Problem(ex.Message);
                 }
             });
-            app.MapGet("/clearnewyear", async (DataSaving saving) =>
+            app.MapPost("/clearnewyear", async (DataSaving saving) =>
             {
                 try
                 {
@@ -148,20 +144,53 @@ namespace Data_Api.Endpoints
             });
             app.MapPost("/upload", async (HttpRequest request) =>
             {
-                if (request.Form.Files.Count > 0)
+                if (!request.HasFormContentType)
+                    return Results.BadRequest("Invalid file.");
+                var form = await request.ReadFormAsync();
+                if (form.Files.Count > 0)
                 {
-                    var file = request.Form.Files[0];
-                    var filePath = Path.Combine(FilePath, file.FileName);
+                    var file = form.Files[0];
+                    var filePath = BiztonsagosUtvonal(FilePath, file.FileName);
+                    if (filePath is null)
+                        return Results.BadRequest("Csak .json fájl tölthető fel, érvényes névvel.");
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
                     }
 
-                    return Results.Ok(new { FilePath = filePath });
+                    return Results.Ok(new { FileName = Path.GetFileName(filePath) });
                 }
                 return Results.BadRequest("Invalid file.");
             });
+        }
+
+        /// <summary>
+        /// A fájlnévből a mentési mappán belüli teljes útvonalat adja, vagy null-t, ha a név érvénytelen
+        /// (könyvtárrészt tartalmaz, kilépne a mappából, vagy nem .json).
+        /// </summary>
+        private static string? BiztonsagosUtvonal(string mappa, string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return null;
+            var nev = Path.GetFileName(fileName);
+            if (nev != fileName || nev is "." or "..") return null;
+            if (!string.Equals(Path.GetExtension(nev), ".json", StringComparison.OrdinalIgnoreCase)) return null;
+            var teljes = Path.GetFullPath(Path.Combine(mappa, nev));
+            var gyoker = mappa.EndsWith(Path.DirectorySeparatorChar) ? mappa : mappa + Path.DirectorySeparatorChar;
+            return teljes.StartsWith(gyoker, StringComparison.Ordinal) ? teljes : null;
+        }
+
+        private static string? LegujabbMentes(string mappa)
+        {
+            return Directory.GetFiles(mappa, "*.json").OrderByDescending(File.GetLastWriteTime).FirstOrDefault();
+        }
+
+        private static void RegiMentesekTorlese(string mappa)
+        {
+            foreach (var file in Directory.GetFiles(mappa, "*.json").OrderByDescending(File.GetLastWriteTime).Skip(MegtartottMentesek))
+            {
+                File.Delete(file);
+            }
         }
     }
 }

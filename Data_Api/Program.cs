@@ -32,21 +32,30 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var context = services.GetRequiredService<FeladatSQL>();
+    // Fix 10 mp várakozás helyett: újrapróbálkozás, amíg a MySQL el nem indul (max. ~60 mp).
+    for (var proba = 1; proba <= 12; proba++)
+    {
+        try
+        {
+            if (context.Database.CanConnect()) break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("Az adatbázis még nem érhető el ({Proba}/12): {Uzenet}", proba, ex.Message);
+        }
+        Thread.Sleep(5000);
+    }
     try
     {
-        // add 10 seconds delay to ensure the db server is up to accept connections
-        // this won't be needed in real world application
-        System.Threading.Thread.Sleep(10000);
-        var context = services.GetRequiredService<FeladatSQL>();
+        // Csak Migrate(): az EnsureCreated() nem keverhető a migrációkkal.
         context.Database.Migrate();
-        var created = context.Database.EnsureCreated();
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        if (created) logger.LogInformation("Adatbázis létrejött");
+        logger.LogInformation("Adatbázis migrációk alkalmazva.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Hiba lépett fel az adatbázis létrehozásakor.");
+        logger.LogError(ex, "Hiba lépett fel az adatbázis migrálásakor.");
     }
 }
     // Configure the HTTP request pipeline.

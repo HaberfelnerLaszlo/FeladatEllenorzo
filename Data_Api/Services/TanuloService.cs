@@ -138,7 +138,7 @@ namespace Data_Api.Services
                     PontSzam = tanulo.Pont,
                     Min = minimumPont,
                     Max = maximumPont,
-                    Pontok = [.. _db.Pontok.Where(p => p.TanuloId == tanulo.Id).Take(10)]
+                    Pontok = [.. _db.Pontok.Where(p => p.TanuloId == tanulo.Id && !p.IsDeleted).OrderByDescending(p => p.Datum).Take(20)]
                 };
                 response.IsSuccess = true;
                 response.Content = tanuloData;
@@ -215,7 +215,17 @@ namespace Data_Api.Services
                     response.IsSuccess = false;
                     return response;
                 }
-                _db.Entry(tanulo).State = EntityState.Modified;
+                var existing = await _db.Tanulok.FindAsync(id);
+                if (existing == null)
+                {
+                    response.ErrorMessage = "Nem található a tanuló.";
+                    response.IsSuccess = false;
+                    return response;
+                }
+                // Az összpontszámot (Pont) csak a pontműveletek módosíthatják, a klienstől kapott értéket nem vesszük át.
+                existing.Name = tanulo.Name;
+                existing.Osztaly = tanulo.Osztaly;
+                existing.LastModify = DateTime.Now;
                 await _db.SaveChangesAsync();
                 response.Content = "Sikeres módosítás.";
                 response.IsSuccess = true;
@@ -265,15 +275,13 @@ namespace Data_Api.Services
                 foreach (var tanulo in tanulok)
                 {
                     tanulo.Pont = 20;
+                    tanulo.LastModify = DateTime.Now;
                 }
-                _db.Tanulok.UpdateRange(tanulok);
-                _settings.LastModify = DateTime.Now;
                 _db.Pontok.RemoveRange(_db.Pontok);
                 _db.HibasFeladatok.RemoveRange(_db.HibasFeladatok);
                 _db.FeladatHianyok.RemoveRange(_db.FeladatHianyok);
                 _db.Szorgalmik.RemoveRange(_db.Szorgalmik);
-                await _db.SaveChangesAsync();
-
+                // Egyetlen mentés: a korábbi második SaveChanges mindig 0-t adott, ezért hibát jelzett.
                 var resp = await _db.SaveChangesAsync();
                 if(resp > 0)
                 {

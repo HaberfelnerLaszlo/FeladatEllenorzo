@@ -12,7 +12,7 @@ namespace FeladatEllenorzo_CP
 		public string ClientId { get; set; }
 		public string ClientSecret { get; set; }
 		public string TenantId { get; set; }
-        public string[] GraphScopes { get; set; }
+        public string[] GraphScopes { get; set; } = new string[] { "User.Read" };
 
         //public static Settings LoadSettings()
         //{

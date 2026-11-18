@@ -82,7 +82,8 @@ namespace FeladatEllenorzo_CP
             }
             else
             {
-                CreateTanulok();
+                // await nélkül párhuzamosan futott, a hívók pedig még egyszer meghívták -> dupla létrehozás
+                await CreateTanulok();
             }
 
         }
@@ -119,7 +120,6 @@ namespace FeladatEllenorzo_CP
                         if (tanulok.Count == 0)
                         {
                             await InitTanuloData(classes);
-                            await CreateTanulok();
                         }
                     }
                     else
@@ -162,11 +162,10 @@ namespace FeladatEllenorzo_CP
             else
             {
                 tanulok = await tanuloService.GetTanulok();
-                File.Create(path);
+                // A File.Create nyitva hagyta a fájlt, így a lenti WriteAllText IOException-t dobott; a WriteAllText úgyis létrehozza.
                 if (tanulok.Count == 0)
                 {
                     await InitTanuloData(classes);
-                    await CreateTanulok();
                 }
             }
             json = JsonSerializer.Serialize(tanulok);

@@ -38,17 +38,12 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetFeladatHianyByMa()
         {
             response.Clear();
-            var hianyok = await db.FeladatHianyok.Where(h => h.Datum == DateTime.Today).ToListAsync();
-            List<Tanulo> tanulok = new List<Tanulo>();
-            foreach (var hiany in hianyok)
-            {
-                var tanulo = await db.Tanulok.FirstOrDefaultAsync(t => t.Id == hiany.TanuloId);
-                if (tanulo != null)
-                {
-                    tanulo.Hianyok = new List<FeladatHiany> { hiany };
-                    tanulok.Add(tanulo);
-                }
-            }
+            // Egy lekérdezés (N+1 helyett); egy tanuló minden mai hiánya megjelenik, nem csak az utolsó.
+            var tanulok = await db.Tanulok
+                .Where(t => t.Hianyok.Any(h => h.Datum == DateTime.Today))
+                .Include(t => t.Hianyok.Where(h => h.Datum == DateTime.Today))
+                .AsNoTracking()
+                .ToListAsync();
             if (tanulok == null||tanulok.Count == 0)
             {
                 response.ErrorMessage = "Mai napra nincs hiány.";
@@ -103,6 +98,17 @@ namespace Data_Api.Services
             response.Clear();
             try
             {
+                // Ugyanarra a feladatra ne lehessen kétszer hiányt (és -2 pontot) rögzíteni.
+                if (hiany.FeladatId != Guid.Empty)
+                {
+                    var meglevo = await db.FeladatHianyok.FirstOrDefaultAsync(h => h.TanuloId == hiany.TanuloId && h.FeladatId == hiany.FeladatId);
+                    if (meglevo != null)
+                    {
+                        response.IsSuccess = true;
+                        response.Content = meglevo;
+                        return response;
+                    }
+                }
                 db.FeladatHianyok.Add(hiany);
                 db.Pontok.Add(new Pont() { TanuloId = hiany.TanuloId, Jegyzet = hiany.FeladatId.ToString(), PontSzam = -2,PontTipus=PontTipus.Lecke });
                 var tanulo = db.Tanulok.FirstOrDefault(t => t.Id == hiany.TanuloId);

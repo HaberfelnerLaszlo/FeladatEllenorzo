@@ -1,211 +1,152 @@
 ﻿@page "/feladatok/{id}"
 @inject IGraphService graph
-@inject GlobalData data
 @inject NavigationManager navi
 @inject IAlertService alert
 @inject IHianyService hiany
 @inject ITanuloService tanuloService
-@inject IToastService toastSercive
 
-<FluentGrid Justify="JustifyContent.FlexStart"
-            Style="background-color: var(--neutral-layer-3);">
-    <FluentGridItem xs="12">
-        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start" HorizontalGap="30">
-            <FluentButton OnClick="Back">Vissza</FluentButton>
-            <h4>Feladatok</h4>
-        </FluentStack>
-    </FluentGridItem>
-    <FluentGridItem Style="min-width: 200px;">
-        <FluentStack Orientation="Orientation.Vertical">
-            @if (i <= 0)
+<PageHeader Title="Feladatok" Subtitle="@data.Class?.DisplayName" OnBack="Back">
+    <Actions>
+        @if (submissions is not null)
+        {
+            <span class="fe-muted">Kijelölés:</span>
+            <FluentButton Appearance="ButtonAppearance.Outline" Title="A megtekintett, de be nem adott feladatok kijelölése" OnClick="@(() => Select("Working"))" Disabled="@disableWorking">Megtekintették</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Outline" Title="A beadott feladatok kijelölése" OnClick="@(() => Select("Submitted"))" Disabled="@disableSubmitted">Beadták</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Outline" OnClick="@(() => Select("None"))" Disabled="@disableNone">Nem tekintették meg</FluentButton>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="fe-split fe-split--list @(i > 0 ? "fe-has-fixed-bar" : "")">
+    @* ---------- Bal oszlop: feladatlista, vagy kijelöléskor a tömeges visszajelzés ---------- *@
+    <section>
+        @if (i <= 0)
+        {
+            <h2 class="fe-card__title">Kiadott feladatok</h2>
+            @if (data.Feladatok.Count == 0)
             {
-                @if (data.Feladatok.Count == 0)
-                {
-                    if (feladatok is null)
-                    {
-                        <p>Feladatok betöltése ...</p>
-                    }
-                    else
-                    {
-                        <p>Még nincs feladat...</p>
-                    }
-                }
-                else
-                {
-
-                    <ul class="list-group list-unstyled p-2">
-                        @foreach (var item in data.Feladatok)
-                        {
-                            if (data.AssignmentId == item.Feladat.Id)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue; background-color:#dcdcdc" @onclick="@(()=>SelectedFeladat(item.Feladat.Id))">
-                                    <FluentStack Orientation="Orientation.Horizontal">
-                                        @if (item.Feladat.DisplayName.Length > 10)
-                                        {
-                                            <span title="@item.Feladat.DisplayName">@item.Feladat.DisplayName.Substring(0, 10);</span>
-                                        }
-                                        else
-                                        {
-                                            @item.Feladat.DisplayName
-                                        }
-                                        <FluentStack HorizontalAlignment="HorizontalAlignment.Right">
-                                            <span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
-                                            <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
-                                        </FluentStack>
-                                    </FluentStack>
-                                </li>
-                            }
-                            else
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center p-2" style="border:1px solid blue" @onclick="@(()=>SelectedFeladat(item.Feladat.Id))">
-                                    <FluentStack Orientation="Orientation.Horizontal">
-                                        @if (item.Feladat.DisplayName.Length > 10)
-                                        {
-                                            <span title="@item.Feladat.DisplayName">@item.Feladat.DisplayName.Substring(0, 10);</span>
-                                        }
-                                        else
-                                        {
-                                            @item.Feladat.DisplayName
-                                        }
-                                        <FluentStack HorizontalAlignment="HorizontalAlignment.Right">
-                                            <span class="badge bg-primary rounded-pill">@item.SubmittedCount</span>
-                                            @if (item.WorkingCount > 0)
-                                            {
-                                                <span class="badge bg-danger rounded-pill">@item.WorkingCount</span>
-
-                                            }
-                                        </FluentStack>
-                                    </FluentStack>
-                                </li>
-                            }
-                        }
-                    </ul>
-                }
+                <p class="fe-muted">@(feladatok is null ? "Feladatok betöltése..." : "Még nincs feladat.")</p>
             }
-        </FluentStack>
-    </FluentGridItem>
-    <FluentGridItem Justify="JustifyContent.FlexEnd" Gap="10px">
-        <FluentStack Orientation="Orientation.Vertical">
-            @if (submissions is not null)
+            else
             {
-                <FluentStack Orientation="Orientation.Horizontal">
-                    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Select("Working"))" Disabled="@disableWorking">Megtekintették</FluentButton>
-                    <FluentButton BackgroundColor="gray" OnClick="@(() => Select("Submitted"))" Disabled="@disableSubmitted">Beadottak</FluentButton>
-                    <FluentButton BackgroundColor="lightgreen" OnClick="@(() => Select("None"))" Disabled="@disableNone">Nem tekintették meg</FluentButton>
-                </FluentStack>
-                <FluentStack HorizontalGap="20">
-                    <FluentStack>
-                        <ul class="list-group">
-                            @foreach (var item in data.Members)
-                            {
-                                switch (item.Status)
+                <ul class="fe-list">
+                    @foreach (var item in data.Feladatok)
+                    {
+                        <li class="fe-list__item @(data.AssignmentId == item.Feladat.Id ? "fe-list__item--selected" : "")"
+                            @onclick="@(() => SelectedFeladat(item.Feladat.Id))">
+                            <span class="fe-list__main truncate" title="@item.Feladat.DisplayName">@item.Feladat.DisplayName</span>
+                            <span class="fe-list__meta">
+                                <span class="count-badge count-badge--beadva" title="Beadva: @item.SubmittedCount">@item.SubmittedCount</span>
+                                @if (item.WorkingCount > 0)
                                 {
-                                    case "Beadva":
-                                        hatter = "lightblue";
-                                        break;
-                                    case "Visszaküldve":
-                                        hatter = "lightgreen";
-                                        break;
-                                    case "Megtekintve":
-                                        hatter = "lightcoral";
-                                        break;
-                                    default:
-                                        hatter = "lightgray";
-                                        break;
+                                    <span class="count-badge count-badge--folyamatban" title="Folyamatban (megtekintve, nincs beadva): @item.WorkingCount">@item.WorkingCount</span>
                                 }
-                                <li class="list-group-item" style="background-color:@hatter">
-                                    <FluentStack Orientation="Orientation.Horizontal">
-                                        <input class="form-check-input" type="checkbox" checked="@item.Selected" @onclick="() => ItemSelectChange(item)" />
-                                        <span>@item.Name</span>
-                                        <FluentStack HorizontalAlignment="HorizontalAlignment.End">
-                                            <button type="button" @onclick="() => SelectedFeladatEll(item)">@item.Status</button>
-                                            <span class="badge bg-primary rounded-pill">@item.ResourceCount</span>
-                                        </FluentStack>
-                                    </FluentStack>
-                                </li>
-                            }
-                        </ul>
-                    </FluentStack>
-                    <FluentStack Orientation="Orientation.Vertical">
-                        @if (i > 0)
-                        {
-                            <FluentLabel Weight="FontWeight.Bolder">Kijelölve @i tanuló</FluentLabel>
-                            <FluentSwitch Value="isHiany" Label=" Hiányként menteni" @onclick="(()=>ChangeHiany())" />
-                            @*<div class="form-check form-switch">
-                                    <label for="hianyLehet">Hiányként menteni </label>
-                                    <input id="hianyLehet" class="form-check-input" type="checkbox" role="switch" checked=@isHiany @onclick="(()=>ChangeHiany())" />
-                                </div>*@
-                            @*<FluentDatePicker @bind-Value="@(datumHiany)" Label="Könyvelés dátuma" />*@
-                            <FluentLabel>Könyvelés dátuma:</FluentLabel>
-                            <input type="datetime" @bind-value="@(datumHiany)" />
-                            <FluentStack Orientation="Orientation.Horizontal">
-                                <FluentStack>
-                                    <ul style="list-style-type:none">
-                                        @foreach (var item in data.Szovegek.Where(s => s.Type == "poz"))
-                                        {
-                                            if (item.Text.Length > 15)
-                                            {
-                                                <li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
-                                            }
-                                            else
-                                            {
-                                                <li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
-                                            }
-                                        }
-                                    </ul>
-                                </FluentStack>
-                                <FluentStack>
-                                    <ul style="list-style-type:none">
-                                        @foreach (var item in data.Szovegek.Where(s => s.Type == "neg"))
-                                        {
-                                            if (item.Text.Length > 15)
-                                            {
-                                                <li @onclick=@(()=>AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
-                                            }
-                                            else
-                                            {
-                                                <li @onclick=@(()=>AddText(item.Text))>@item.Text</li>
-                                            }
-                                        }
-                                    </ul>
-                                </FluentStack>
-                            </FluentStack>
-                            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center">
-                                <button class="btn" @onclick=AddNewText>Új</button>
-                                @if (data.Szovegek.Count > 0)
-                                {
-                                    <button class="btn" @onclick=ManageSzovegOpen>Szövegek</button>
-                                }
-                            </FluentStack>
-                            <div hidden="@visibleNewText">
-                                <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
-                            </div>
-                            <textarea rows="3"
-                                      placeholder="Visszajelzés..."
-                                      style="resize:vertical; width:100%; max-height:50%"
-                                      oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-                                      @onchange=@((e) => Valtozas(false, e))
-                                      value="@Valasz"
-                                      lang="hu"
-                                      spellcheck="false">
-                        @Valasz
-            </textarea>
-                            <FluentStack Orientation="Orientation.Horizontal">
-                                <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e)=>Valtozas(true,e)) /> <span>pont</span> <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
-                            </FluentStack>
-                            <FluentStack Orientation="Orientation.Horizontal">
-                                <button class="btn btn-primary" disabled="@(!changed)" @onclick=Save>Mentés</button>
-                                <button class="btn btn-secondary" @onclick="Exused">Felmetve</button>
-                            </FluentStack>
-                        }
-                    </FluentStack>
-                </FluentStack>
+                            </span>
+                        </li>
+                    }
+                </ul>
             }
-        </FluentStack>
-    </FluentGridItem>
-</FluentGrid>
-@*<FluentStack Orientation="Orientation.Horizontal">
-    </FluentStack>*@
+        }
+        else
+        {
+            <div class="fe-card">
+                <h2 class="fe-card__title">Tömeges visszajelzés – @i tanuló kijelölve</h2>
+                <FluentSwitch Value="isHiany" Label="Hiányként menteni" @onclick="(() => ChangeHiany())" />
+                <label class="fe-label" for="datumHiany" style="margin-top:8px">Könyvelés dátuma</label>
+                <input id="datumHiany" type="date" class="fe-input fe-select--auto" @bind="datumHiany" @bind:format="yyyy-MM-dd" />
+
+                <label class="fe-label" for="valaszTomeges" style="margin-top:8px">Visszajelzés</label>
+                <textarea id="valaszTomeges"
+                          class="fe-textarea"
+                          placeholder="Visszajelzés..."
+                          oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                          @onchange=@((e) => Valtozas(false, e))
+                          value="@Valasz"
+                          lang="hu"
+                          spellcheck="false"></textarea>
+                @if (data.Szovegek.Count > 0)
+                {
+                    <div class="chip-list" aria-label="Szövegsablonok">
+                        @foreach (var item in data.Szovegek.Where(s => s.Type == "poz"))
+                        {
+                            <button type="button" class="chip chip--poz" title="@item.Text" @onclick="() => AddText(item.Text)">@item.Text</button>
+                        }
+                        @foreach (var item in data.Szovegek.Where(s => s.Type == "neg"))
+                        {
+                            <button type="button" class="chip chip--neg" title="@item.Text" @onclick="() => AddText(item.Text)">@item.Text</button>
+                        }
+                    </div>
+                }
+                <div class="fe-row">
+                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Add())" OnClick="AddNewText">Új sablon</FluentButton>
+                    @if (data.Szovegek.Count > 0)
+                    {
+                        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.TextBulletListSquareEdit())" OnClick="ManageSzovegOpen">Sablonok</FluentButton>
+                    }
+                </div>
+                <div hidden="@visibleNewText">
+                    <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
+                </div>
+
+                <div class="fe-row" style="margin-top:8px">
+                    <input id="pontTomeges" type="number" class="fe-input fe-input--narrow" value="@Pont" @onchange=@((e) => Valtozas(true, e)) />
+                    <label for="pontTomeges">pont</label>
+                    @if (!IsNotSaved)
+                    {
+                        <span class="fe-saved">✔ Mentve</span>
+                    }
+                </div>
+
+                <div class="fe-action-bar fe-action-bar--fixed-mobile">
+                    <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Send())" Disabled="@(!changed)" OnClick="Save">Mentés és visszaküldés</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Outline" Title="A kijelölt tanulók felmentése a feladat alól" OnClick="Exused">Felmentve</FluentButton>
+                </div>
+            </div>
+        }
+    </section>
+
+    @* ---------- Jobb oszlop: tanulók a kiválasztott feladathoz ---------- *@
+    <section>
+        @if (submissions is not null)
+        {
+            <div class="fe-row fe-row--spread">
+                <h2 class="fe-card__title" style="margin:0">Tanulók (@data.Members.Count)</h2>
+                <div class="fe-legend">
+                    <span class="status status-beadva">Beadva</span>
+                    <span class="status status-visszakuldve">Visszaküldve</span>
+                    <span class="status status-megtekintve">Megtekintve</span>
+                    <span class="status status-egyeb">Nincs</span>
+                </div>
+            </div>
+            <ul class="fe-list">
+                @foreach (var item in data.Members)
+                {
+                    <li class="fe-list__item @(item.Selected ? "fe-list__item--selected" : "")"
+                        title="Megnyitás ellenőrzésre"
+                        @onclick="() => SelectedFeladatEll(item)">
+                        <input type="checkbox"
+                               aria-label="@($"{item.Name} kijelölése")"
+                               checked="@item.Selected"
+                               @onclick="() => ItemSelectChange(item)"
+                               @onclick:stopPropagation="true" />
+                        <span class="fe-list__main truncate">@item.Name</span>
+                        <span class="fe-list__meta">
+                            @if (item.ResourceCount > 0)
+                            {
+                                <span class="count-badge" title="Csatolmányok száma: @item.ResourceCount">📎 @item.ResourceCount</span>
+                            }
+                            <span class="status @StatuszHelper.StatusClass(item.Status)">@item.Status</span>
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="fe-muted">Válasszon feladatot a bal oldali listából.</p>
+        }
+    </section>
+</div>
 @code {
     [Parameter] public string Id { get; set; } //ClassId
     private EducationAssignmentCollectionResponse feladatok;
@@ -218,7 +159,8 @@
     private int i = 0; //kijelölt tanulók száma
     private bool changed = false,  IsNotSaved = true, disableWorking = false, disableSubmitted = false, disableNone = false, isError = false, isHiany = false, visibleNewText = true;
     private float Pont = 0;
-    private string Valasz = string.Empty, hatter = "$gray-100";
+    private string Valasz = string.Empty;
+    // Helyi dátum: a UtcNow éjfél körül az előző napra könyvelt volna.
     DateTime datumHiany = DateTime.Today;
     protected override async Task OnParametersSetAsync()
     {
@@ -233,12 +175,13 @@
         {
             feladatok = await graph.GetFeladatok(Id);
             var feladat = feladatok.Value.FirstOrDefault(f => f.AssignedDateTime < DateTime.UtcNow);
-            if (feladat is null) { toastSercive.ShowInfo("Nincs feladat kiadva.");return; }
+            if (feladat is null) { await notificationService.ShowInfoToastAsync("Nincs feladat kiadva."); return; }
             data.AssignmentId = feladat.Id; //feladatok.Value[0].Id;
             var utasitas = feladat.Instructions?.Content ?? string.Empty;
+            var maxpoints = feladat.Grading;
             await GetCount();
         }
-        else UpdateCount(data.AssignmentId);
+        else _ = UpdateCount(data.AssignmentId);
         if (data.Members.Count == 0)
         {
             tagok = await graph.GetMembers(Id); //Csoport tagok
@@ -278,9 +221,10 @@
             }
         }
     }
-    private async void UpdateCount(string feladatId)
+    private async Task UpdateCount(string feladatId)
     {
         var feladat = data.Feladatok.FirstOrDefault(f => f.Feladat.Id == feladatId);
+        if (feladat is null) return;
         var i = await graph.GetSubmittedFeladat(Id, feladat.Feladat.Id);
         var j = await graph.GetWorkingFeladat(Id, feladat.Feladat.Id);
         feladat.SubmittedCount = (int)i.OdataCount;
@@ -435,12 +379,15 @@
         if (changePont)
         {
             //changedPont = true;
-            Pont = float.Parse(args.Value.ToString());
+            if (float.TryParse(args.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var ujPont))
+            {
+                Pont = ujPont;
+            }
         }
         else
         {
             //changedValasz = true;
-            Valasz = args.Value.ToString();
+            Valasz = args.Value?.ToString() ?? string.Empty;
         }
     }
     private void Valtozas(bool changePont, string args)
@@ -458,7 +405,7 @@
             Valasz = args;
         }
     }
-    private async void Save()
+    private async Task Save()
     {
         NetworkAccess accessType = Connectivity.Current.NetworkAccess;
         if (accessType != NetworkAccess.Internet)
@@ -470,23 +417,25 @@
         saveError.Clear();
         foreach (var item in SelectedMembers)
         {
+            isError = false; // minden tanulónál újra kell kezdeni, különben az első hiba után mindenki hibásnak számít
             feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, item.SubmissionId);
             foreach (var v in feladatValaszok.Value)
             {
                 valasz = (EducationFeedbackOutcome)v;
-                var Valasz_2 = (valasz is not null && valasz.Feedback is not null) ? valasz.Feedback.Text.Content : "Kedves " + item.Name.Split(" ")[1] + " " + Valasz;
+                var Valasz_2 = (valasz is not null && valasz.Feedback is not null) ? valasz.Feedback.Text.Content : "Kedves " + NevHelper.KeresztNev(item.Name) + " " + Valasz;
 
                 response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, item.SubmissionId, valasz.Id, Valasz_2);
                 if (!response)
                 {
-                    await alert.ShowAlertAsync("Hiba!", $"A válasz mentése {item.Name} tanulónál nem sikerült!", "Rendben");
+                    await alert.ShowAlertAsync($"A válasz mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
                     isError = true;
                     break;
                 }
                 var mainResponse = await hiany.Add(new() { TanuloId = item.Id, FeladatId = Guid.Parse(data.AssignmentId), Datum = datumHiany, Osztaly = data.Osztalynev });
                 if (!mainResponse.IsSuccess)
                 {
-                    await alert.ShowAlertAsync($"A hiba mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
+                    await alert.ShowAlertAsync($"A hiány mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
+                    isError = true;
                     break;
                 }
             }
@@ -502,7 +451,7 @@
                 response = await graph.UpdatePont(data.ClassId, data.AssignmentId, item.SubmissionId, pont.Id, Pont);
                 if (!response)
                 {
-                    await alert.ShowAlertAsync("Hiba!", $"A pont mentése {item.Name} tanulónál nem sikerült!", "Rendben");
+                    await alert.ShowAlertAsync($"A pont mentése {item.Name} tanulónál nem sikerült!", "Hiba!", "Rendben");
                     isError = true;
                     break;
                 }
@@ -529,9 +478,9 @@
         }
         changed = false;
         IsNotSaved = true;
-        UpdateCount(data.AssignmentId);
+        await UpdateCount(data.AssignmentId);
     }
-    private async void Exused()
+    private async Task Exused()
     {
         NetworkAccess accessType = Connectivity.Current.NetworkAccess;
         if (accessType != NetworkAccess.Internet)
@@ -587,7 +536,8 @@
                     });
                     Valasz = "rendben ✔️";
                     //changedValasz = true;
-                    Pont = 2;
+                    // A Teams-feladat maximális pontszáma, ennek hiányában 2.
+                    Pont = FeladatHelper.AlapPont(data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId)?.Feladat);
                     //changedPont = true;
                     changed = true;
                     disableSubmitted = true;

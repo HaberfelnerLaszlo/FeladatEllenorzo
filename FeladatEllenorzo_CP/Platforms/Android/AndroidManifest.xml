@@ -1,6 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="hu.haberfelner.feladatellenorzo" android:versionCode="3">
-	<application android:networkSecurityConfig="@xml/network_security_config" android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="Feladatellenorzo"></application>
+	<queries>
+		<package android:name="com.azure.authenticator" />
+		<package android:name="com.microsoft.windowsintune.companyportal" />
+		<package android:name="com.microsoft.identity.client.broker" />
+	</queries>
+	<application android:networkSecurityConfig="@xml/network_security_config" android:allowBackup="true" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="Feladatellenorzo">
+
+		<activity android:name="microsoft.identity.client.BrowserTabActivity" android:exported="true">
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<category android:name="android.intent.category.BROWSABLE" />
+				<data android:scheme="msauth" android:host="hu.haberfelner.feladatellenorzo" android:path="/A2gt1lEwxmDQi0nNlYuzmBInmIc=" />
+			</intent-filter>
+		</activity>
+	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -14,4 +29,6 @@
 	<uses-permission android:name="android.permission.USE_FINGERPRINT" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
+	<uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+	<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 </manifest>

@@ -21,7 +21,7 @@ namespace Data_Api.Endpoints
 
                 return await tanuloService.GetTanulokToIds();
             });
-            app.MapGet("/tanulo_newyear", async (TanuloService tanuloService) =>
+            app.MapPost("/tanulo_newyear", async (TanuloService tanuloService) =>
             {
                 return await tanuloService.GetTanulokNewYear();
             });
@@ -29,9 +29,9 @@ namespace Data_Api.Endpoints
             {
                 return await tanuloService.GetTanulokToIds(osztaly);
             });
-            app.MapGet("/tanulo_data/{id}", async (TanuloService tanuloService, string id) =>
+            app.MapGet("/tanulo_data/{id}", async (TanuloService tanuloService, Guid id) =>
             {
-                return await tanuloService.GetTanuloData(Guid.Parse(id));
+                return await tanuloService.GetTanuloData(id);
             });
             app.MapPost("/tanulo", async (TanuloService tanuloService, Tanulo tanulo) =>
             {

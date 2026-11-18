@@ -25,6 +25,38 @@ namespace Data_Api.Data
                 .WithOne()
                 .HasForeignKey("TanuloId")
                 .IsRequired();
+
+            // A kliens DateTime-ot küld, de az adatbázisban a hiány dátuma csak nap (date oszlop).
+            modelBuilder.Entity<FeladatHiany>()
+                .Property(h => h.Datum)
+                .HasColumnType("date");
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            JeloldModositottTanulok();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            JeloldModositottTanulok();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        /// <summary>
+        /// Ha egy tanuló pontszáma változik, a LastModify is frissül, így a kliens szinkronja (tanulokids) észleli a változást.
+        /// </summary>
+        private void JeloldModositottTanulok()
+        {
+            ChangeTracker.DetectChanges();
+            foreach (var entry in ChangeTracker.Entries<Tanulo>())
+            {
+                if (entry.State == EntityState.Modified && entry.Property(t => t.Pont).IsModified)
+                {
+                    entry.Entity.LastModify = DateTime.Now;
+                }
+            }
         }
     }
 }

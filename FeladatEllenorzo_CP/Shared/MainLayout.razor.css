@@ -1,11 +1,19 @@
+/* A Fluent UI v5 a body-ra height:100dvh + overflow:hidden stílust tesz (default-fuib.css),
+   ezért a layout gyökere a görgethető konténer. */
 .page {
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 main {
     flex: 1;
+    min-width: 0;
 }
 
 .sidebar {
@@ -35,6 +43,14 @@ main {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+@media (max-width: 640.98px) {
+    /* A PageHeader negatív margója ehhez a belső margóhoz igazodik (feladat.css). */
+    article {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+}
 
 @media (max-width: 640.98px) {
     .top-row:not(.auth) {
@@ -69,7 +85,7 @@ main {
     }
 
     .top-row, article {
-        padding-left: 2rem !important;
+        padding-left: 1.5rem !important;
         padding-right: 1.5rem !important;
     }
 }

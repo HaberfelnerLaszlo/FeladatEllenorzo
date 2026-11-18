@@ -5,87 +5,92 @@
 @using System.Text.Json;
 @using System.ComponentModel;
 @using System.Windows.Input;
+@using System.Diagnostics
 @inject IGraphService _graphService
-@inject GlobalData data
 @inject NavigationManager navi
 @inject INavigationService _navigationService
 @inject IAuthenticationService auth
 @inject ISettingsService settingsService
 @inject IAlertService alert
-@inject Microsoft.FluentUI.AspNetCore.Components.IToastService toastService
 @inject ISzovegService szoveg
 @inject ICsoportService csoportService
+@inject IThemeService ThemeService
+
+<PageHeader Title="FeladatEllenőrző" Subtitle="@(Me is null ? null : $"Bejelentkezve: {Me.DisplayName}")" ShowBack="false">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Subtle"
+                      IconOnly="true"
+                      Title="Világos / sötét téma"
+                      OnClick="@(async e => await ThemeService.SwitchThemeAsync())">
+            <FluentIcon Class="hidden-if-light" Value="@(new Icons.Regular.Size20.WeatherSunny())" />
+            <FluentIcon Class="hidden-if-dark" Value="@(new Icons.Regular.Size20.WeatherMoon())" />
+        </FluentButton>
+        @if (Me is not null)
+        {
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.SignOut())" OnClick="OnSignInOrOut">Kijelentkezés</FluentButton>
+        }
+    </Actions>
+</PageHeader>
 
 @if (Me is null)
 {
-    <p>Belépés szükséges...</p>
-    <button @onclick="OnSignInOrOut">@_signInOrOutText</button>
+    <div class="fe-card" style="max-width:420px">
+        <h2 class="fe-card__title">Bejelentkezés</h2>
+        <p>A feladatok ellenőrzéséhez jelentkezzen be a Microsoft 365 fiókjával.</p>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.PersonArrowRight())" OnClick="OnSignInOrOut">Bejelentkezés</FluentButton>
+    </div>
+}
+else if (classes is null)
+{
+    <p class="fe-muted">Osztályok betöltése...</p>
 }
 else
 {
-    <FluentLabel Typo="Typography.H4">Hello, @Me.DisplayName!</FluentLabel>
-}
-@if (data.Szovegek.Count > 0)
-{
-    <FluentButton Appearance="Appearance.Accent" OnClick=ManageSzovegOpen>Szövegek</FluentButton>
+    <div class="fe-split fe-split--half">
+        <div class="fe-card">
+            <h2 class="fe-card__title">1. Osztály kiválasztása</h2>
+            <FluentSelect Label="Tantárgy" TOption="string" TValue="string"
+                          Width="100%" Placeholder="Válasszon tantárgyat"
+                          @onchange="e => SelectedSubject(e.Value)">
+                <FluentOptionString Value="">Összes tantárgy</FluentOptionString>
+                <FluentOptionString Value="matematika" Selected="true">Matematika</FluentOptionString>
+                <FluentOptionString Value="fizika">Fizika</FluentOptionString>
+                <FluentOptionString Value="digit">Digitális kultúra</FluentOptionString>
+            </FluentSelect>
+            <div style="margin-top:12px">
+                <FluentListbox TOption="EducationClass" TValue="string" Items="_classes" OptionValue="c => c.Id" OptionText="c => c.DisplayName" @bind-Value="SelectedClassId" Width="100%" />
+            </div>
+        </div>
+
+        <div class="fe-card">
+            <h2 class="fe-card__title">2. Művelet</h2>
+            <p class="fe-muted" style="margin-top:0">
+                @(string.IsNullOrEmpty(SelectedClassId) ? "Az osztályhoz kötött műveletekhez előbb válasszon osztályt." : $"Kiválasztva: {_classes?.FirstOrDefault(c => c.Id == SelectedClassId)?.DisplayName}")
+            </p>
+            <div class="fe-stack">
+                <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.TaskListSquareLtr())" OnClick="Feladat_btn" Disabled="@(string.IsNullOrEmpty(SelectedClassId))">Feladatok ellenőrzése</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.Trophy())" OnClick="Pont_btn" Disabled="@(string.IsNullOrEmpty(SelectedClassId))">Pontok</FluentButton>
+            </div>
+            <h2 class="fe-card__title" style="margin-top:16px">Összesítők</h2>
+            <div class="fe-stack">
+                <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.DocumentDismiss())" OnClick="Hiany_btn">Hiányzó feladatok</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.DocumentError())" OnClick="Hiba_btn">Hibás feladatok</FluentButton>
+                @if (data.Szovegek.Count > 0)
+                {
+                    <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.TextBulletListSquareEdit())" OnClick="ManageSzovegOpen">Szövegsablonok</FluentButton>
+                }
+            </div>
+            <h2 class="fe-card__title" style="margin-top:16px">Karbantartás</h2>
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.ArrowSync())" OnClick="ManageTanulok" Title="Új tanulók átvétele a Teams osztályból (ritkán szükséges)">Tanulók szinkronizálása</FluentButton>
+        </div>
+    </div>
 }
 
-@if (classes is not null)
-{
-    <FluentSelect Label="Szűrés tantárgyra" TOption="string"
-                  Width="300px" Placeholder="Válasz tantárgyat"
-                  @onchange="e => SelectedSubject(e.Value)">
-        <FluentOption Value="">Összes tantárgy</FluentOption>
-        <FluentOption Value="matematika" Selected="true">Matematika</FluentOption>
-        <FluentOption Value="fizika">Fizika</FluentOption>
-         <FluentOption Value="digit">Digitális kultúra</FluentOption>
-    </FluentSelect>
-    <h3>Válassza ki a tanított osztályt:</h3>
-    <FluentListbox TOption="EducationClass" Items="_classes" OptionValue="c => c.Id" OptionText="c => c.DisplayName" @bind-Value="SelectedClassId" />
-    <hr/>
-        <FluentStack HorizontalAlignment="HorizontalAlignment.Center" HorizontalGap="10">
-        <FluentButton Onclick=Feladat_btn disabled="@(String.IsNullOrEmpty(SelectedClassId))">Feladatok</FluentButton>
-        <FluentButton Appearance="Appearance.Lightweight" Onclick=Hiany_btn>Hiányzó feladat</FluentButton>
-        <FluentButton Appearance="Appearance.Outline" Onclick=Hiba_btn>Feladat hibák</FluentButton>
-        <FluentButton Appearance="Appearance.Lightweight" OnClick="Pont_btn">Pontok</FluentButton>
-        <FluentButton Appearance="Appearance.Outline" OnClick="ManageTanulok">Tanuló szinkronizálása</FluentButton>
-    </FluentStack>
-}
-<FluentFooter>
-    <FluentDesignTheme @bind-Mode="@Mode"
-                       @bind-OfficeColor="@OfficeColor"
-                       StorageName="theme" />
-        <FluentGrid>
-            <FluentGridItem>
-                <FluentSelect Label="Theme"
-                              Width="250px"
-                              Items="@(Enum.GetValues<DesignThemeModes>())"
-                              @bind-SelectedOption="@Mode" />
-            </FluentGridItem>
-            <FluentGridItem>
-                <FluentSelect Label="Color"
-                              Items="@(Enum.GetValues<OfficeColor>().Select(i => (OfficeColor?)i))"
-                              Height="200px"
-                              Width="250px"
-                              @bind-SelectedOption="@OfficeColor">
-                    <OptionTemplate>
-                        <FluentStack>
-                            <FluentIcon Value="@(new Icons.Filled.Size20.RectangleLandscape())"
-                                        Color="Color.Custom"
-                                        CustomColor="@(@context.ToAttributeValue() != "default" ? context.ToAttributeValue() : "#036ac4")" />
-                            <FluentLabel>@context</FluentLabel>
-                        </FluentStack>
-                    </OptionTemplate>
-                </FluentSelect>
-            </FluentGridItem>
-        </FluentGrid>
-    <FluentSpacer />
-        <FluentLabel Id="version">1.3.0</FluentLabel>
-        <FluentTooltip Anchor="version">
-            2026.05.17
-        </FluentTooltip>
-</FluentFooter>
-
+<footer class="fe-footer">
+    <span>FeladatEllenőrző</span>
+    <span id="version">verzió 1.5.1</span>
+    <FluentTooltip Anchor="version">2026.11.18</FluentTooltip>
+</footer>
 @code{
     private EducationClassCollectionResponse classes;
     private List<EducationClass> _classes;
@@ -93,8 +98,8 @@ else
     private string SelectedClassId = string.Empty;
     string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
     public ICommand SignInOrOutCommand { get; private set; }
-    public DesignThemeModes Mode { get; set; }
-    public OfficeColor? OfficeColor { get; set; }
+    // public DesignThemeModes Mode { get; set; }
+    // public OfficeColor? OfficeColor { get; set; }
 
     public bool IsSignedIn
     {
@@ -130,7 +135,7 @@ else
                 //await ReadSzoveg();
             }
         }
-        GetUserDetailsAsync();
+        await GetUserDetailsAsync();
         auth.PropertyChanged += OnPropertyChanged;
     }
     private async Task<string> InitSzoveg()
@@ -151,7 +156,7 @@ else
             var response = await szoveg.Add(item);
             if (response.IsSuccess)
             {
-                toastService.ShowInfo("Az üzenet mentve a szövegek közé.");
+                await notificationService.ShowInfoToastAsync("Rendszer üzenet", response.Content.ToString(), 5000);
                 //await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
             }
             else
@@ -177,7 +182,8 @@ else
                 var response = await szoveg.Add(item);
                 if (response.IsSuccess)
                 {
-                    toastService.ShowInfo("Az üzenet mentve a szövegek közé.");
+                    //toastService.ShowInfo("Az üzenet mentve a szövegek közé.");
+                    await notificationService.ShowInfoToastAsync("Rendszer üzenet", "Az üzenet mentve a szövegek közé.", 5000);
                     //await alert.ShowAlertAsync(response.Content.ToString(),"Rendszer üzenet","Rendben");
                 }
                 else
@@ -213,6 +219,8 @@ else
     }
     private void Feladat_btn()
     {
+        // A Feladatok oldal fejléce az osztály nevét mutatja.
+        data.Class = classes?.Value?.Find(c => c.Id == SelectedClassId) ?? data.Class;
         navi.NavigateTo($"feladatok/{SelectedClassId}");
     }
     private void Hiany_btn()
@@ -223,11 +231,11 @@ else
     {
         navi.NavigateTo("hiba");
     }
-    private void Pont_btn()
+    private async Task Pont_btn()
     {
         if (string.IsNullOrEmpty(SelectedClassId))
         {
-            toastService.ShowError("Kérem válasszon ki egy osztályt a pontok megtekintéséhez.");
+            await notificationService.ShowErrorToastAsync("Rendszer üzenet", "Kérem válasszon ki egy osztályt a pontok megtekintéséhez.", 5000);
             return;
         }
         data.Class = classes.Value.Find(c => c.Id == SelectedClassId);
@@ -250,7 +258,7 @@ else
     private async Task HandleSignInChangeAsync()
     {
         // Update the button text
-        SignInOrOutText = IsSignedIn ? "Kijelentkez" : "Bejelentkez";
+        SignInOrOutText = IsSignedIn ? "Kijelentkezés" : "Bejelentkezés";
 
         if (IsSignedIn)
         {
@@ -294,26 +302,40 @@ else
 
     private async Task OnSignInOrOut()
     {
-        if (IsSignedIn)
+        try
         {
-            await auth.SignOutAsync();
-            //await _navigationService.NavigatePostSignOut();
+            Debug.WriteLine("=== OnSignInOrOut meghívva ===");
+            Debug.WriteLine($"IsSignedIn: {IsSignedIn}");
+            
+            if (IsSignedIn)
+            {
+                Debug.WriteLine("Kijelentkezés kezdése...");
+                await auth.SignOutAsync();
+                Debug.WriteLine("Kijelentkezés sikeres");
+            }
+            else
+            {
+                Debug.WriteLine("Bejelentkezés kezdése...");
+                var success = await auth.SignInAsync();
+                Debug.WriteLine($"Bejelentkezés eredménye: {success}");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var success = await auth.SignInAsync();
-            //await _navigationService.NavigatePostSignIn();
+            Debug.WriteLine($"HIBA az OnSignInOrOut-ban: {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            await alert.ShowAlertAsync($"Bejelentkezési hiba: {ex.Message}", "Hiba", "Rendben");
         }
     }
 
-    protected void HandleSignInChange()
+    protected async Task HandleSignInChange()
     {
         // Update the button text
         SignInOrOutText = IsSignedIn ? "Kijelentkezés" : "Bejelentkezés";
 
         if (IsSignedIn)
         {
-            GetUserDetailsAsync();
+            await GetUserDetailsAsync();
         }
         else
         {
@@ -385,7 +407,7 @@ else
     {
         if (string.IsNullOrEmpty(SelectedClassId))
         {
-            toastService.ShowError("Kérem válasszon ki egy osztályt a tanulók szinkronizálásához.");
+            await notificationService.ShowErrorToastAsync("Rendszer üzenet", "Kérem válasszon ki egy osztályt a tanulók szinkronizálásához.", 5000);
             return;
         }
         data.Class = classes.Value.Find(c => c.Id == SelectedClassId);

@@ -4,72 +4,92 @@
 @using FeladatEllenorzo_CP.Services
 @using FeladatLibrary.Data
 @using Microsoft.FluentUI.AspNetCore.Components
-@inject GlobalData data
-@inject NavigationManager navi
 @inject ISzovegService szovegService
 @inject IAlertService alert
-@inject IToastService toastService
-<h3>ManageSzoveg</h3>
-<button @onclick=Save>Mentés</button>
-<FluentButton OnClick="@(() => Edit(new() { Text=string.Empty, Type="poz"}))">Új felvétele</FluentButton>
-<button class="btn btn-close d-flex justify-content-end" @onclick=Close></button>
-<table class="table table-sm table-striped" hidden="@(!EditHiden)">
-    <thead>
-        <tr>
-            <th scope="col">Típusa</th>
-            <th scope="col">Szöveg</th>
-            <th scope="col">Művelet</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in data.Szovegek)
-        {
-            <tr>
-                <td>@item.Type</td>
-                <td>@item.Text</td>
-                <td>
-                    <button @onclick=@(()=>Edit(item))>Szerkesztés</button>
-                    <button class="btn btn-danger" @onclick=@(()=>Delete(item))>Törlés</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<dir hidden="@EditHiden">
-    <FeladatEllenorzo_CP.Components.NewSzoveg szoveg="editedSzoveg" SaveText="EditingEnd"></FeladatEllenorzo_CP.Components.NewSzoveg>
-</dir>
+
+<PageHeader Title="Szövegsablonok" Subtitle="A visszajelzésekhez gyorsan beszúrható szövegek" OnBack="Close">
+    <Actions>
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Add())" OnClick="@(() => Edit(new() { Text = string.Empty, Type = "poz" }))">Új sablon</FluentButton>
+    </Actions>
+</PageHeader>
+
+@if (!EditHiden)
+{
+    <div class="fe-card" style="max-width:640px">
+        <h2 class="fe-card__title">@(string.IsNullOrEmpty(editedSzoveg.Text) ? "Új sablon" : "Sablon szerkesztése")</h2>
+        <FeladatEllenorzo_CP.Components.NewSzoveg szoveg="editedSzoveg" SaveText="EditingEnd"></FeladatEllenorzo_CP.Components.NewSzoveg>
+    </div>
+}
+
+@if (data.Szovegek.Count == 0)
+{
+    <p class="fe-muted">Még nincs szövegsablon.</p>
+}
+else
+{
+    <div class="fe-table-wrap">
+        <table class="fe-table">
+            <thead>
+                <tr>
+                    <th>Típus</th>
+                    <th>Szöveg</th>
+                    <th class="fe-table__actions">Művelet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in data.Szovegek.OrderBy(s => s.Type == "poz" ? 0 : 1))
+                {
+                    <tr>
+                        <td>
+                            <span class="status @(item.Type == "poz" ? "status-visszakuldve" : "status-megtekintve")">@(item.Type == "poz" ? "pozitív" : "negatív")</span>
+                        </td>
+                        <td>@item.Text</td>
+                        <td class="fe-table__actions">
+                            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Edit())" OnClick="@(() => Edit(item))">Szerkesztés</FluentButton>
+                            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Delete())" OnClick="@(() => Delete(item))">Törlés</FluentButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 @code {
     [Parameter] public string Url { get; set; } = "/";
     string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
     bool EditHiden = true;
-    DataSzoveg editedSzoveg = new(){ Text = string.Empty, Type = "poz" };
+    DataSzoveg editedSzoveg = new() { Text = string.Empty, Type = "poz" };
+
     void Edit(DataSzoveg szoveg)
     {
         EditHiden = false;
         editedSzoveg = szoveg;
     }
+
     void EditingEnd()
     {
         EditHiden = true;
     }
-    async void Delete(DataSzoveg szoveg)
+
+    async Task Delete(DataSzoveg szoveg)
     {
-        data.Szovegek.Remove(szoveg);
-        var response=await szovegService.Remove(szoveg);
+        if (!await alert.DisplayConfirm("Sablon törlése", $"Biztosan törli ezt a sablont?\n\n{szoveg.Text}", "Törlés", "Mégsem")) return;
+        var response = await szovegService.Remove(szoveg);
         if (response.IsSuccess)
         {
-            toastService.ShowInfo("A szöveg mentve az adatbázisba.");
-            await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
+            data.Szovegek.Remove(szoveg);
+            SaveLocal();
+            await notificationService.ShowInfoToastAsync("A sablon törölve.");
         }
         else
         {
             await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
         }
-
-        Save();
-        StateHasChanged();
     }
-    void Save()
+
+    /// <summary>A sablonok helyi másolata (offline használathoz).</summary>
+    void SaveLocal()
     {
         var text = JsonSerializer.Serialize(data.Szovegek);
         using (StreamWriter sw = new StreamWriter(path))
@@ -77,16 +97,14 @@
             sw.WriteLine(text);
         }
     }
+
     void Close()
     {
-        if (Url is null)
+        var cel = string.IsNullOrEmpty(Url) ? "/" : Url;
+        if (cel.Equals("feladatok"))
         {
-            Url = "/";
+            cel = cel + $"/{data.ClassId}";
         }
-        else if (Url.Equals("feladatok"))
-        {
-            Url = Url + $"/{data.ClassId}";
-        }
-        navi.NavigateTo(Url);
+        navi.NavigateTo(cel);
     }
 }

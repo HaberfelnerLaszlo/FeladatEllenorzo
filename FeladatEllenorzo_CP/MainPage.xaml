@@ -4,7 +4,10 @@
              xmlns:local="clr-namespace:FeladatEllenorzo_CP"
              xmlns:pages="clr-namespace:FeladatEllenorzo_CP.Pages"
              x:Class="FeladatEllenorzo_CP.MainPage"
+             SafeAreaEdges="All"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <!-- .NET 10: a ContentPage alapból edge-to-edge (SafeAreaEdges=None), Androidon ezért
+         a WebView a navigációs sáv alá rajzolt. Az "All" a rendszersávokat és a billentyűzetet is kikerüli. -->
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>

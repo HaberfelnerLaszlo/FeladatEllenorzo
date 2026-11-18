@@ -2,7 +2,7 @@
 @using Microsoft.Graph.Models
 @using ApexCharts
 @inject IPontService pService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @inject ILogger<TanuloPontok> logger
 @if (tanuloData is not null)
 {
@@ -85,8 +85,8 @@ else
                     }
                     else
                     {
-                        ToastService.ShowWarning("Nincsenek pontjaid rögzítve.");
-                        ToastService.ShowInfo($"Szerepköröd {user.PrimaryRole}");
+                        await NotificationService.ShowWarningToastAsync("Nincsenek pontjaid rögzítve.");
+                        await NotificationService.ShowInfoToastAsync($"Szerepköröd {user.PrimaryRole}");
                         return;
                     }
                 }

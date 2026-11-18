@@ -10,7 +10,7 @@ using Microsoft.Graph.Models;
 using Microsoft.Identity.Client;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
-
+using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime;
 using System.Runtime.CompilerServices;
@@ -60,10 +60,12 @@ namespace FeladatEllenorzo_CP.Services
 
         public async Task<bool> SignInAsync()
         {
+            Debug.WriteLine("SignInAsync - Attempting to sign in.");
             // First attempt to get a token silently
             var result = await GetTokenSilentlyAsync();
             if (result == null)
             {
+                Debug.WriteLine("Silent token acquisition failed. Attempting interactive sign-in.");
                 // If silent attempt didn't work, try an
                 // interactive sign in
                 result = await GetTokenInteractivelyAsync();
@@ -80,8 +82,10 @@ namespace FeladatEllenorzo_CP.Services
             // Get all accounts (there should only be one)
             // and remove them from the cache
             var accounts = await pca.GetAccountsAsync();
+            Debug.WriteLine($"Signing out. Found {accounts.Count()} account(s) in the cache.");
             foreach (var account in accounts)
-            {
+            {                                                                                         
+                Debug.WriteLine($"Removing account: {account.Username}");
                 await pca.RemoveAsync(account);
             }
 
@@ -149,15 +153,30 @@ namespace FeladatEllenorzo_CP.Services
             try
             {
                 var pca = await _pca.Value;
-
+                Debug.WriteLine("Attempting silent token acquisition.");
                 var account = await GetUserAccountAsync();
                 if (account == null) return null;
 
                 return await pca.AcquireTokenSilent(_settingsService.GraphScopes, account)
                     .ExecuteAsync();
             }
-            catch (MsalUiRequiredException)
+            catch (MsalUiRequiredException ex)
             {
+                Debug.WriteLine("MsalUiRequiredException: User interaction required to acquire token. {0}", ex.Message);
+                return null;
+            }
+            catch (MsalServiceException ex)
+            {
+                var pca = await _pca.Value;
+
+                var accounts = await pca.GetAccountsAsync();
+                Debug.WriteLine($"MsalServiceException: {ex.Message}. Removing {accounts.Count()} account(s) from cache.");
+
+                foreach (var account in accounts)
+                {
+                    await pca.RemoveAsync(account);
+                }
+                Debug.WriteLine($"MsalServiceException: {ex.Message}");
                 return null;
             }
         }
@@ -168,7 +187,7 @@ namespace FeladatEllenorzo_CP.Services
         private async Task<AuthenticationResult> GetTokenInteractivelyAsync()
         {
             var pca = await _pca.Value;
-
+            Debug.WriteLine("Attempting interactive token acquisition.");
             var result = await pca.AcquireTokenInteractive(_settingsService.GraphScopes)
                 .WithUseEmbeddedWebView(false)
                 .ExecuteAsync();
@@ -189,6 +208,7 @@ namespace FeladatEllenorzo_CP.Services
                 var result = await GetTokenSilentlyAsync();
                 if (result == null)
                 {
+                    Debug.WriteLine("Silent token acquisition failed. Attempting interactive sign-in.");
                     // If silent acquisition fails, try interactive
                     result = await GetTokenInteractivelyAsync();
                 }

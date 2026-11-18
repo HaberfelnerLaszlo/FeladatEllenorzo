@@ -1,0 +1,54 @@
+@* Egységes, ragadó oldal-fejléc: Vissza gomb, cím (+ alcím) és oldal-specifikus műveletek. *@
+<header class="page-header">
+    @if (ShowBack)
+    {
+        <FluentButton Appearance="ButtonAppearance.Subtle"
+                      IconStart="@(new Icons.Regular.Size20.ArrowLeft())"
+                      Title="Vissza"
+                      OnClick="GoBack">Vissza</FluentButton>
+    }
+    <div class="page-header__titles">
+        <h1 class="page-header__title" title="@Title">@Title</h1>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <span class="page-header__subtitle" title="@Subtitle">@Subtitle</span>
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="page-header__actions">
+            @Actions
+        </div>
+    }
+</header>
+
+@code {
+    /// <summary>Az oldal címe.</summary>
+    [Parameter] public string Title { get; set; } = string.Empty;
+
+    /// <summary>Opcionális alcím (pl. osztály, feladat neve).</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Hová navigáljon a Vissza gomb, ha nincs <see cref="OnBack"/> megadva.</summary>
+    [Parameter] public string BackHref { get; set; } = "/";
+
+    /// <summary>Saját vissza-logika (pl. állapot törlése navigálás előtt).</summary>
+    [Parameter] public EventCallback OnBack { get; set; }
+
+    [Parameter] public bool ShowBack { get; set; } = true;
+
+    /// <summary>A fejléc jobb oldalán megjelenő gombok, szűrők.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private async Task GoBack()
+    {
+        if (OnBack.HasDelegate)
+        {
+            await OnBack.InvokeAsync();
+        }
+        else
+        {
+            navi.NavigateTo(BackHref);
+        }
+    }
+}

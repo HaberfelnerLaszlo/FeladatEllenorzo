@@ -5,158 +5,177 @@
 @inject IHibaService hiba
 @inject IAlertService alert
 @inject IGraphService graph
-<div class="container">
-    <div class="row">
-        <div class="col-2 col-md-4">
-            <a href="/" hidden="@(!isSaved)">Vissza...</a>
-            <button class="btn btn-outline-info" @onclick=Save hidden="@isSaved">Mentés</button>
-        </div>
-        <div class="col col-md">
-            <h5>Leckét nem feltöltött tanulók</h5>
-        </div>
-        <div class="col-3 col-md-4">
-            <InputDate DisplayName="Időpont" Value=datum ValueChanged="((DateTime value)=>ChangeDatum(value))" ValueExpression="(()=>datum)" />
-        </div>
-    </div>
-    <div class="row-cols-2">
-        <button class="btn btn-light" @onclick=Send>Küldés</button>
-        <button class="btn btn-danger" @onclick=DeleteAll>Minden törlése</button>
-    </div>
-    @if (hibak.Count == 0)
-    {
-        <p>@message</p>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Név</th>
-                        <th>Hibák</th>
-                        <th>Művelet</th>
+@inject ICsoportService csoportService
+
+<PageHeader Title="Hibás feladatok" Subtitle="@datum.ToString("yyyy. MM. dd.")" BackHref="/">
+    <Actions>
+        <input type="date" class="fe-input fe-select--auto" aria-label="Dátum"
+               value="@datum.ToString("yyyy-MM-dd")" @onchange="ChangeDatum" />
+        <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.Send())" OnClick="Send" Disabled="@(LathatoTanulok.Count == 0)">Küldés magamnak</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.DeleteDismiss())" Title="Az összes rögzített hiba törlése, minden napról" OnClick="DeleteAll">Minden törlése</FluentButton>
+    </Actions>
+</PageHeader>
+
+@if (LathatoTanulok.Count == 0)
+{
+    <p class="fe-muted">@message</p>
+}
+else
+{
+    <div class="fe-table-wrap">
+        <table class="fe-table">
+            <thead>
+                <tr>
+                    <th>Név</th>
+                    <th>Hiba leírása</th>
+                    <th class="fe-table__actions">Művelet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var osztaly in osztalyok)
+                {
+                    var tanulok = LathatoTanulok.Where(h => h.Osztaly == osztaly).ToList();
+                    if (tanulok.Count == 0) continue;
+                    <tr class="fe-table__group">
+                        <td colspan="2">@CsoportNev(osztaly) <span class="fe-muted">(@tanulok.Count fő)</span></td>
+                        <td class="fe-table__actions">
+                            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Delete())" Title="Az osztály aznapi hibáinak törlése" OnClick="@(() => DeleteClass(osztaly))">Osztály törlése</FluentButton>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var osztaly in osztalyok)
+                    @foreach (var item in tanulok)
                     {
-                        <tr>
-                            <td colspan="2">@osztaly</td>
-                            <td>
-                                <button class="btn btn-danger" @onclick=@(()=>DeleteClass(osztaly))>Törlés</button>
-                            </td>
-                        </tr>
-                        @foreach (var item in hibak.Where(h => h.Osztaly == osztaly))
+                        @foreach (var h in item.Hibak)
                         {
                             <tr>
                                 <td>@item.Name</td>
-                                @if (item.Hibak.Count > 0)
-                                {
-                                    <ul>
-                                        @foreach (var hiba in item.Hibak)
-                                        {
-                                        <td>
-                                            <li>@hiba.Leiras</li>
-                                        </td>
-                                        <td>
-                                            <button class="btn-sm" @onclick="(()=>Delete(item, hiba))">Törlés</button>
-                                        </td>
-                                    }
-                                        </ul>
-                                    }
-                                    else
-                                    {
-                                        <td colspan="2">Nincs hiábás leckéje</td>
-                                    }
+                                <td>@h.Leiras</td>
+                                <td class="fe-table__actions">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Delete())" OnClick="(() => Delete(item, h))">Törlés</FluentButton>
+                                </td>
                             </tr>
                         }
                     }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 @code {
     List<Tanulo> hibak = new();
-    List<HibasFeladat> changed = new();
-    string[] osztalyok;
+    string[] osztalyok = [];
+    Dictionary<string, string> csoportNevek = new();
     string message = string.Empty;
-    bool isSaved = true;
     DateTime datum = DateTime.Today;
+
+    /// <summary>Csak azok a tanulók, akiknek van hibája a kiválasztott napon.</summary>
+    List<Tanulo> LathatoTanulok => hibak.Where(t => t.Hibak.Count > 0).ToList();
+
     protected async override Task OnInitializedAsync()
+    {
+        message = "Betöltés alatt...";
+        await BetoltCsoportNevek();
+        hibak = await hiba.GetMaiHibak();
+        Frissit();
+    }
+
+    async Task BetoltCsoportNevek()
     {
         try
         {
-            message = "Betöltés alatt...";
-            hibak = await hiba.GetMaiHibak();
-            message = "Nincsenek a mai napon lecke hiányok.";
-            osztalyok = hibak.Select(h => h.Osztaly).Distinct().ToArray();
+            var csoportok = await csoportService.GetCsoportok() ?? [];
+            csoportNevek = csoportok.GroupBy(c => c.Id.ToString()).ToDictionary(g => g.Key, g => g.First().Name);
         }
         catch (Exception)
         {
-            throw;
+            // A csoportnév csak megjelenítés; ha nem érhető el, az azonosító látszik.
         }
     }
-    async void ChangeDatum(DateTime arg)
-    {//datum = DateTime.Parse(arg);
-        datum = arg;
-        hibak = await hiba.GetHibak(datum.ToShortDateString());
-        StateHasChanged();
-    }
-    async Task Save()
+
+    string CsoportNev(string osztaly) => csoportNevek.TryGetValue(osztaly ?? string.Empty, out var nev) ? nev : osztaly;
+
+    void Frissit()
     {
-        foreach (var item in changed)
-        {
-            var response = await hiba.Update(item);
-            if (!response.IsSuccess)
-            {
-                message = response.ErrorMessage;
-            }
-        }
-        isSaved = true;
+        osztalyok = LathatoTanulok.Select(h => h.Osztaly).Distinct().OrderBy(CsoportNev).ToArray();
+        message = $"Nincs rögzített hibás feladat ({datum:yyyy. MM. dd.}).";
     }
+
+    async Task Ujratolt()
+    {
+        message = "Betöltés alatt...";
+        // Kultúrafüggetlen formátum az API felé.
+        hibak = await hiba.GetHibak(datum.ToString("yyyy-MM-dd"));
+        Frissit();
+    }
+
+    async Task ChangeDatum(ChangeEventArgs e)
+    {
+        if (!DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var uj)) return;
+        datum = uj;
+        await Ujratolt();
+    }
+
     async Task Delete(Tanulo tanulo, HibasFeladat item)
     {
-        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a {tanulo.Name} lecke hiányát?", "Igen", "Nem"))
+        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törli {tanulo.Name} hibáját?", "Igen", "Nem"))
         {
             var response = await hiba.Remove(item);
             if (response.IsSuccess)
             {
-                await alert.ShowAlertAsync(response.Content.ToString(), "Sikeres művelet", "Ok");
-                hibak.FirstOrDefault(t=>t.Id==tanulo.Id).Hibak.Remove(item);
-                StateHasChanged();
+                await notificationService.ShowInfoToastAsync("A hiba törölve.");
+                hibak.FirstOrDefault(t => t.Id == tanulo.Id)?.Hibak.Remove(item);
+                Frissit();
+            }
+            else
+            {
+                await alert.ShowAlertAsync(response.ErrorMessage, "Hiba", "Rendben");
             }
         }
     }
-    public void Send()
+
+    public async Task Send()
     {
-        string data = datum.ToLongDateString() + ": ";
-        foreach (var item in hibak)
+        string szoveg = datum.ToLongDateString() + ": ";
+        foreach (var item in LathatoTanulok)
         {
-            data = data + item.Name + System.Environment.NewLine;
+            szoveg = szoveg + item.Name + System.Environment.NewLine;
         }
-        var response = graph.SendMe(data).GetAwaiter().GetResult();
+        // await: a GetAwaiter().GetResult() a UI szálon blokkolt.
+        var response = await graph.SendMe(szoveg);
         if (response)
         {
-            alert.ShowAlertAsync( "Sikeres küldés.", "Rendszer üzenet", "Rendben");
+            await notificationService.ShowSuccessToastAsync("Az üzenet elküldve.");
         }
-        else alert.ShowAlertAsync("Sikertelen küldés.","Rendszer üzenet", "Rendben");
+        else await notificationService.ShowErrorToastAsync("Az üzenet küldése sikertelen.");
     }
-    async void DeleteAll()
-    {
-        var response = await hiba.RemoveAll();
 
+    async Task DeleteAll()
+    {
+        if (!await alert.DisplayConfirm("Minden hiba törlése", "Biztosan törli az ÖSSZES rögzített hibát, minden napról? Ez nem vonható vissza.", "Törlés", "Mégsem")) return;
+        var response = await hiba.RemoveAll();
         if (response.IsSuccess)
         {
-            await alert.ShowAlertAsync( response.Content.ToString(), "Rendszer üzenet", "Rendben");
+            await notificationService.ShowInfoToastAsync("Minden hiba törölve.");
+            await Ujratolt();
         }
         else
         {
-            await alert.ShowAlertAsync( response.ErrorMessage, "Rendszer üzenet", "Rendben");
+            await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
         }
     }
-    async void DeleteClass(string osztaly)
-    {
 
+    async Task DeleteClass(string osztaly)
+    {
+        if (!await alert.DisplayConfirm("Osztály hibáinak törlése", $"Biztosan törli a(z) {CsoportNev(osztaly)} {datum:yyyy. MM. dd.} napi hibáit?", "Törlés", "Mégsem")) return;
+        var response = await hiba.RemoveClass(osztaly, datum.ToString("yyyy-MM-dd"));
+        if (response.IsSuccess)
+        {
+            await notificationService.ShowInfoToastAsync("Az osztály hibái törölve.");
+            await Ujratolt();
+        }
+        else
+        {
+            await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+        }
     }
 }

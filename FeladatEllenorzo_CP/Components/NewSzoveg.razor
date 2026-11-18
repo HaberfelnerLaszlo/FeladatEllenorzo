@@ -4,71 +4,92 @@
 @inject GlobalData data
 @inject ISzovegService szService
 @inject IAlertService alert
-<form class="form-control" method="dialog">
-	<label for="tipus">A szöveg típusa</label>
-	<select class="form-select" id="tipus" @bind=selectedType>
-		<option disabled selected>Válaszd ki a szöveg típusát...</option>
-		<option value="poz">pozitív</option>
-		<option value="neg">negatív</option>
-	</select>
-	<label for="text">A szöveg:</label>
-	<input id="text" placeholder="A szöveg" class="form-control" @bind-value=Text/>
-	<button type="submit" @onclick=Save>Mentés</button>
-	<button type="reset" @onclick=@(()=>SaveText.InvokeAsync())>Mégsem</button>
-</form>
-@code {
-	[Parameter] public EventCallback SaveText { get; set; }
-	[Parameter] public DataSzoveg szoveg { get; set; }
-	string selectedType,Text;
-	bool editing = false;
-	string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
-	protected override void OnParametersSet()
-	{
-		if (szoveg is not null)
-		{
-			editing = true;
-			selectedType = szoveg.Type;
-			Text = szoveg.Text;
-		}
-		base.OnParametersSet();
-	}
-	List<DataSzoveg> dataSzoveg = new();
-	async void Save()
-	{
-		if (editing)
-		{
-			var updateSzoveg = data.Szovegek.FirstOrDefault(s => s.Equals(szoveg));
-			updateSzoveg.Type = selectedType;
-			updateSzoveg.Text = Text;
-			var response= await szService.Update(updateSzoveg);
-			if (response.IsSuccess)
-			{
-				await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
-			}
-			else
-			{
-				await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
-			}
-		}
-		else{
-			var newSzoveg = new DataSzoveg() { Type = selectedType, Text = Text };
-			data.Szovegek.Add(newSzoveg) ;
-			var response = await szService.Add(newSzoveg);
-			if (response.IsSuccess)
-			{
-				await alert.ShowAlertAsync(response.Content.ToString(), "Rendszer üzenet", "Rendben");
-			}
-			else
-			{
-				await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
-			}
 
-		}
-		var text = JsonSerializer.Serialize(data.Szovegek);
-		using (StreamWriter sw = new StreamWriter(path))
-		{
-			sw.WriteLine(text);
-		}
-		await SaveText.InvokeAsync();
-	}
+<div class="fe-stack">
+    <div>
+        <label class="fe-label" for="tipus">Típus</label>
+        <select class="fe-select fe-select--auto" id="tipus" @bind="selectedType">
+            <option value="" disabled>Válassza ki a típust...</option>
+            <option value="poz">pozitív</option>
+            <option value="neg">negatív</option>
+        </select>
+    </div>
+    <div>
+        <label class="fe-label" for="text">Szöveg</label>
+        <input id="text" placeholder="A sablon szövege" class="fe-input" @bind-value="Text" @bind-value:event="oninput" />
+    </div>
+    <div class="fe-row">
+        <FluentButton Appearance="ButtonAppearance.Primary" Disabled="@(string.IsNullOrWhiteSpace(Text) || string.IsNullOrEmpty(selectedType) || saving)" OnClick="Save">Mentés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="@(() => SaveText.InvokeAsync())">Mégsem</FluentButton>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback SaveText { get; set; }
+    [Parameter] public DataSzoveg szoveg { get; set; }
+    string selectedType = string.Empty, Text = string.Empty;
+    bool editing = false, saving = false;
+    string path = Path.Combine(FileSystem.Current.AppDataDirectory, "szoveg.json");
+
+    protected override void OnParametersSet()
+    {
+        if (szoveg is not null)
+        {
+            // Üres szövegű sablon = új felvétel (a Szövegsablonok oldal így adja át).
+            editing = !string.IsNullOrEmpty(szoveg.Text);
+            selectedType = szoveg.Type ?? string.Empty;
+            Text = szoveg.Text ?? string.Empty;
+        }
+        base.OnParametersSet();
+    }
+
+    async Task Save()
+    {
+        if (saving) return;
+        saving = true;
+        try
+        {
+            if (editing)
+            {
+                var updateSzoveg = data.Szovegek.FirstOrDefault(s => s.Equals(szoveg));
+                if (updateSzoveg is null) return;
+                updateSzoveg.Type = selectedType;
+                updateSzoveg.Text = Text;
+                var response = await szService.Update(updateSzoveg);
+                if (response.IsSuccess)
+                {
+                    await notificationService.ShowInfoToastAsync("A sablon módosítva.");
+                }
+                else
+                {
+                    await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+                }
+            }
+            else
+            {
+                var newSzoveg = new DataSzoveg() { Type = selectedType, Text = Text };
+                var response = await szService.Add(newSzoveg);
+                if (response.IsSuccess)
+                {
+                    data.Szovegek.Add(newSzoveg);
+                    await notificationService.ShowInfoToastAsync("A sablon elmentve.");
+                }
+                else
+                {
+                    await alert.ShowAlertAsync(response.ErrorMessage, "Rendszer üzenet", "Rendben");
+                }
+            }
+            var text = JsonSerializer.Serialize(data.Szovegek);
+            using (StreamWriter sw = new StreamWriter(path))
+            {
+                sw.WriteLine(text);
+            }
+            Text = string.Empty;
+            await SaveText.InvokeAsync();
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
 }

@@ -1,102 +1,129 @@
 ﻿@page "/hiany"
 @using FeladatEllenorzo_CP.Services
 @using FeladatLibrary.Data
-@inject GlobalData data
 @inject IHianyService hiany
 @inject IAlertService alert
 @inject IGraphService graph
-@inject Microsoft.FluentUI.AspNetCore.Components.IToastService toastService
-<div class="container">
-    <div class="row">
-        <div class="col-2 col-md-4">
-            <a href="/" hidden="@(!isSaved)">Vissza...</a>
-            <button class="btn btn-outline-info" @onclick=Save hidden="@isSaved">Mentés</button>
-        </div>
-        <div class="col col-md">
-            <h5>Leckét nem feltöltött tanulók</h5>
-        </div>
-        <div class="col-3 col-md-4">
-            <InputDate DisplayName="Időpont" Value=datum ValueChanged="((DateTime value)=>ChangeDatum(value))" ValueExpression="(()=>datum)" />
-        </div>
-        <button class="btn btn-outline-light" @onclick=Send>Küldés</button>
-    </div>
-    @if (hianyok.Count == 0)
-    {
-        <p>@message</p>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Név</th>
-                        <th>Tényleges hiány</th>
-                        <th>Művelet</th>
+@inject ICsoportService csoportService
+
+<PageHeader Title="Hiányzó feladatok" Subtitle="@datum.ToString("yyyy. MM. dd.")" OnBack="Back">
+    <Actions>
+        <input type="date" class="fe-input fe-select--auto" aria-label="Dátum"
+               value="@datum.ToString("yyyy-MM-dd")" @onchange="ChangeDatum" />
+        @if (!isSaved)
+        {
+            <span class="fe-warning">Mentetlen változás</span>
+            <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size20.Save())" OnClick="Save">Mentés</FluentButton>
+        }
+        <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.Send())" OnClick="Send" Disabled="@(LathatoTanulok.Count == 0)">Küldés magamnak</FluentButton>
+    </Actions>
+</PageHeader>
+
+@if (LathatoTanulok.Count == 0)
+{
+    <p class="fe-muted">@message</p>
+}
+else
+{
+    <div class="fe-table-wrap">
+        <table class="fe-table">
+            <thead>
+                <tr>
+                    <th>Név</th>
+                    <th title="Kapcsold be, ha a tanuló valóban nem készítette el a feladatot">Tényleges hiány</th>
+                    <th class="fe-table__actions">Művelet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var osztaly in osztalyok)
+                {
+                    var tanulok = LathatoTanulok.Where(h => h.Osztaly == osztaly).ToList();
+                    if (tanulok.Count == 0) continue;
+                    <tr class="fe-table__group">
+                        <td colspan="3">@CsoportNev(osztaly) <span class="fe-muted">(@tanulok.Count fő)</span></td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var osztaly in osztalyok)
+                    @foreach (var item in tanulok)
                     {
-                        <tr>
-                            <td colspan="3">@osztaly</td>
-                        </tr>
-                        @foreach (var item in hianyok.Where(h => h.Osztaly == osztaly))
+                        @foreach (var lecke in item.Hianyok)
                         {
                             <tr>
                                 <td>@item.Name</td>
-                                @foreach (var lecke in item.Hianyok)
-                                {
-                                    <td>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" role="switch" checked=@lecke.Hianyzik @onclick="(() => ChangeHiany(lecke))" />
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button class="btn-sm" @onclick="(()=>Delete(item, lecke))">Törlés</button>
-                                    </td>
-                                }
+                                <td>
+                                    <FluentSwitch Value="lecke.Hianyzik" @onclick="(() => ChangeHiany(lecke))" />
+                                </td>
+                                <td class="fe-table__actions">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Delete())" Title="Hiány törlése (a -2 pont visszajár)" OnClick="(() => Delete(item, lecke))">Törlés</FluentButton>
+                                </td>
                             </tr>
                         }
                     }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 @code {
     List<Tanulo> hianyok = new();
     List<FeladatHiany> changed = new();
-    string[] osztalyok;
+    string[] osztalyok = [];
+    Dictionary<string, string> csoportNevek = new();
     string message = string.Empty;
     bool isSaved = true;
     DateTime datum = DateTime.Today;
+
+    /// <summary>Csak azok a tanulók, akiknek van hiánya a kiválasztott napon.</summary>
+    List<Tanulo> LathatoTanulok => hianyok.Where(t => t.Hianyok.Count > 0).ToList();
+
     protected async override Task OnInitializedAsync()
+    {
+        message = "Betöltés alatt...";
+        await BetoltCsoportNevek();
+        hianyok = await hiany.GetMaiHiany();
+        Frissit();
+    }
+
+    async Task BetoltCsoportNevek()
     {
         try
         {
-            message = "Betöltés alatt...";
-            hianyok = await hiany.GetMaiHiany();
-            message = "Nincsenek a mai napon lecke hiányok.";
-            osztalyok = hianyok.Select(h => h.Osztaly).Distinct().ToArray();
+            var csoportok = await csoportService.GetCsoportok() ?? [];
+            csoportNevek = csoportok.GroupBy(c => c.Id.ToString()).ToDictionary(g => g.Key, g => g.First().Name);
         }
         catch (Exception)
         {
-            throw;
+            // A csoportnév csak megjelenítés; ha nem érhető el, az azonosító látszik.
         }
     }
+
+    string CsoportNev(string osztaly) => csoportNevek.TryGetValue(osztaly ?? string.Empty, out var nev) ? nev : osztaly;
+
+    void Frissit()
+    {
+        osztalyok = LathatoTanulok.Select(h => h.Osztaly).Distinct().OrderBy(CsoportNev).ToArray();
+        message = $"Nincs rögzített lecke hiány ({datum:yyyy. MM. dd.}).";
+    }
+
     void ChangeHiany(FeladatHiany hiany)
     {
         isSaved = false;
-        hiany.Hianyzik = hiany.Hianyzik ? false : true;
-        changed.Add(hiany);
+        hiany.Hianyzik = !hiany.Hianyzik;
+        if (!changed.Contains(hiany)) changed.Add(hiany);
     }
-    async void ChangeDatum(DateTime arg)
-    {//datum = DateTime.Parse(arg);
-        datum = arg;
-        hianyok = await hiany.GetHianyok(datum.ToShortDateString());
-        StateHasChanged();
+
+    async Task ChangeDatum(ChangeEventArgs e)
+    {
+        if (!DateTime.TryParse(e.Value?.ToString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var uj)) return;
+        if (!isSaved && !await alert.DisplayConfirm("Mentetlen változás", "A módosítások elvesznek. Folytatja?", "Igen", "Nem")) return;
+        datum = uj;
+        changed.Clear();
+        isSaved = true;
+        message = "Betöltés alatt...";
+        // Kultúrafüggetlen formátum: a magyar rövid dátumot az API nem biztosan tudja értelmezni.
+        hianyok = await hiany.GetHianyok(datum.ToString("yyyy-MM-dd"));
+        Frissit();
     }
+
     public async Task Save()
     {
         foreach (var item in changed)
@@ -105,35 +132,52 @@
             if (!response.IsSuccess)
             {
                 message = response.ErrorMessage;
+                await notificationService.ShowErrorToastAsync($"Mentési hiba: {response.ErrorMessage}");
+                return;
             }
         }
+        changed.Clear();
         isSaved = true;
+        await notificationService.ShowSuccessToastAsync("A változások mentve.");
     }
+
     public async Task Delete(Tanulo tanulo, FeladatHiany _hiany)
     {
-        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törölni szeretné a lecke hiányát?", "Igen", "Nem"))
+        if (await alert.DisplayConfirm("Művelet megerősítése", $"Biztosan törli {tanulo.Name} lecke hiányát?", "Igen", "Nem"))
         {
             var response = await hiany.Remove(_hiany.Id);
             if (response.IsSuccess)
             {
-                toastService.ShowInfo("A szöveg törlésre került.");
-                hianyok.FirstOrDefault(t=>t.Id==tanulo.Id).Hianyok.Remove(_hiany);
-                StateHasChanged();
+                await notificationService.ShowInfoToastAsync("A hiány törölve.");
+                hianyok.FirstOrDefault(t => t.Id == tanulo.Id)?.Hianyok.Remove(_hiany);
+                Frissit();
+            }
+            else
+            {
+                await alert.ShowAlertAsync(response.ErrorMessage, "Hiba", "Rendben");
             }
         }
     }
-    public void Send()
+
+    async Task Back()
     {
-        string data = datum.ToLongDateString() + ": ";
-        foreach (var item in hianyok)
+        if (!isSaved && !await alert.DisplayConfirm("Mentetlen változás", "A módosítások elvesznek. Kilép?", "Igen", "Nem")) return;
+        navi.NavigateTo("/");
+    }
+
+    public async Task Send()
+    {
+        string szoveg = datum.ToLongDateString() + ": ";
+        foreach (var item in LathatoTanulok)
         {
-            data = data + item.Name + System.Environment.NewLine;
+            szoveg = szoveg + item.Name + System.Environment.NewLine;
         }
-        var response = graph.SendMe(data).GetAwaiter().GetResult();
+        // await: a GetAwaiter().GetResult() a UI szálon blokkolt.
+        var response = await graph.SendMe(szoveg);
         if (response)
         {
-            toastService.ShowSuccess("Az üzenet mentése sikerült.");
+            await notificationService.ShowSuccessToastAsync("Az üzenet elküldve.");
         }
-        else toastService.ShowError("Az üzenet mentése sikertelen.");
+        else await notificationService.ShowErrorToastAsync("Az üzenet küldése sikertelen.");
     }
 }

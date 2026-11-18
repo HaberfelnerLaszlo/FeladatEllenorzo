@@ -3,59 +3,93 @@
 @inject GlobalData data
 @inject NavigationManager nav
 @inject IDialogService DialogService
-@inject IToastService toastService
 @inject IGraphService graphService
-<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch">
-    <h3>@osztaly csoport pontjai</h3>
-    <FluentButton OnClick="@(()=> { data.Osztalynev = string.Empty; nav.NavigateTo("/"); })">Vissza</FluentButton>
-</FluentStack>
+@inject IAlertService alert
+
+<PageHeader Title="Pontok" Subtitle="@osztaly" OnBack="Back" />
+
 @if (tanulok.Count == 0)
 {
-    <p>Nincsenek pontok.</p>
+    <p class="fe-muted">Nincsenek pontok.</p>
 }
 else
 {
-    //if (pontok.Count > 0) { magas = "50%"; }
-     <FluentGrid>
-        <FluentGridItem xs="12" sm="6">
+    <div class="fe-split fe-split--half">
+        <div class="fe-card">
+            <h2 class="fe-card__title">Tanulók (@tanulok.Count)</h2>
             <FluentDataGrid TGridItem="Tanulo" Items="@tanulok.OrderBy(t => t.Name).AsQueryable()" Style="width: 100%;" AutoFit="true">
-                <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
-                <PropertyColumn Property="@(p => p.Pont)" Sortable="true" />
-                <TemplateColumn>
-                                <FluentButton OnClick="@(()=>{pontok=context.Pontok??new();selectedTanulo=context.Id;})" IconStart="@(new Icons.Regular.Size20.SearchInfo())"/>
-                                <FluentButton OnClick="@(()=>Pont_100(context))" Disabled="@(context.Pont <= 100)">100</FluentButton>
-                                <FluentButton OnClick="@(()=>Pont_50(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
-                     <FluentButton OnClick="@(() => Pont_Change(context))" Disabled="@(context.Pont <= 50)">50</FluentButton>
+                <PropertyColumn Title="Név" Property="@(p => p.Name)" Sortable="true" />
+                <PropertyColumn Title="Pont" Property="@(p => p.Pont)" Sortable="true" />
+                <TemplateColumn Title="Műveletek">
+                    <FluentButton Appearance="ButtonAppearance.Subtle" Title="Pontok részletei" OnClick="@(() => Kivalaszt(context))" IconStart="@(new Icons.Regular.Size20.SearchInfo())" />
+                    <FluentButton Appearance="ButtonAppearance.Subtle" Title="Pont jóváírása / levonása" OnClick="@(() => Pont_Change(context))">+/-</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Outline" Title="100%-os ötös beváltása (100 pont)" OnClick="@(() => Pont_100(context))" Disabled="@(context.Pont <= 100)">5-ös (100 p)</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Outline" Title="50%-os ötös beváltása (50 pont)" OnClick="@(() => Pont_50(context))" Disabled="@(context.Pont <= 50)">5-ös (50 p)</FluentButton>
                 </TemplateColumn>
             </FluentDataGrid>
-        </FluentGridItem>
-        <FluentGridItem xs="12" sm="6">
-            @if (pontok.Count > 0)
+        </div>
+        <div class="fe-card">
+            @if (selectedTanulo == Guid.Empty)
             {
-                <FluentDataGrid TGridItem="Pont" Items="@pontok.AsQueryable()" Style="width: 100%;" AutoFit="true">
-                    <PropertyColumn Property="@(p => p.Datum)" Format="yyyy-MM-dd" Sortable="true" />
-                    <PropertyColumn Property="@(p => p.PontTipus)" Sortable="true" />
-                    <PropertyColumn Property="@(p => p.PontSzam)" Sortable="true" />
-                    <PropertyColumn Property="@(p => p.Jegyzet)" />
-                    <TemplateColumn>
-                        <FluentButton OnClick="@(() => Update(context))" IconStart="@(new Icons.Regular.Size20.ClipboardEdit())" />
-                        <FluentButton OnClick="@(() => Delete(context.Id))" IconStart="@(new Icons.Regular.Size20.Delete())")" />
-                    </TemplateColumn>
-                </FluentDataGrid>
-             }
-        </FluentGridItem>
-    </FluentGrid> 
+                <h2 class="fe-card__title">Részletek</h2>
+                <p class="fe-muted">Válasszon tanulót a részletek megtekintéséhez (nagyító ikon).</p>
+            }
+            else
+            {
+                <h2 class="fe-card__title">@KivalasztottNev pontjai (utolsó 25)</h2>
+                @if (pontok.Count == 0)
+                {
+                    <p class="fe-muted">Nincs rögzített pont.</p>
+                }
+                else
+                {
+                    <FluentDataGrid TGridItem="Pont" Items="@pontok.OrderByDescending(p => p.Datum).AsQueryable()" Style="width: 100%;" AutoFit="true">
+                        <PropertyColumn Title="Dátum" Property="@(p => p.Datum)" Format="yyyy-MM-dd" Sortable="true" />
+                        <PropertyColumn Title="Típus" Property="@(p => p.PontTipus)" Sortable="true" />
+                        <PropertyColumn Title="Pont" Property="@(p => p.PontSzam)" Sortable="true" />
+                        <PropertyColumn Title="Jegyzet" Property="@(p => p.Jegyzet)" />
+                        <TemplateColumn>
+                            <FluentButton Appearance="ButtonAppearance.Subtle" Title="Szerkesztés" OnClick="@(() => Update(context))" IconStart="@(new Icons.Regular.Size20.ClipboardEdit())" />
+                            <FluentButton Appearance="ButtonAppearance.Subtle" Title="Törlés" OnClick="@(() => Delete(context.Id))" IconStart="@(new Icons.Regular.Size20.Delete())" />
+                        </TemplateColumn>
+                    </FluentDataGrid>
+                }
+            }
+        </div>
+    </div>
 }
-
 @code {
     [Parameter] public string Id { get; set; }
     private List<Tanulo> tanulok = new();
     private List<Pont> pontok = new();
     string osztaly = string.Empty;
     Guid selectedTanulo = Guid.Empty;
+
+    string KivalasztottNev => tanulok.FirstOrDefault(t => t.Id == selectedTanulo)?.Name ?? string.Empty;
+
+    void Kivalaszt(Tanulo tanulo)
+    {
+        selectedTanulo = tanulo.Id;
+        pontok = tanulo.Pontok ?? new();
+    }
+
+    /// <summary>Újratölti az osztály pontjait, és frissíti a kiválasztott tanuló részleteit is.</summary>
+    async Task Ujratolt()
+    {
+        tanulok = await pService.GetPontByOsztaly(Id);
+        pontok = tanulok.FirstOrDefault(t => t.Id == selectedTanulo)?.Pontok ?? new();
+        StateHasChanged();
+    }
+
+    void Back()
+    {
+        data.Osztalynev = string.Empty;
+        nav.NavigateTo("/");
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        osztaly = data.Osztalynev;
+        osztaly = !string.IsNullOrEmpty(data.Osztalynev) ? data.Osztalynev : data.Class?.DisplayName ?? string.Empty;
         tanulok = await pService.GetPontByOsztaly(Id);
         if (tanulok.Count == 0)
         {
@@ -65,6 +99,7 @@ else
     }
     private async Task Pont_50(Tanulo tanulo)
     {
+        if (!await alert.DisplayConfirm("Ötös beváltása", $"{tanulo.Name}: 50%-os ötös beváltása 50 pontért?", "Beváltás", "Mégsem")) return;
         await pService.Add(new Pont
         {
             Datum = DateTime.Now,
@@ -73,11 +108,11 @@ else
             Jegyzet = "50% 5-ös",
             TanuloId = tanulo.Id,
         });
-        tanulok = await pService.GetPontByOsztaly(Id);
-        StateHasChanged();
+        await Ujratolt();
     }
     private async Task Pont_100(Tanulo tanulo)
     {
+        if (!await alert.DisplayConfirm("Ötös beváltása", $"{tanulo.Name}: 100%-os ötös beváltása 100 pontért?", "Beváltás", "Mégsem")) return;
         await pService.Add(new Pont
         {
             Datum = DateTime.Now,
@@ -86,8 +121,7 @@ else
             Jegyzet = "100% 5-ös",
             TanuloId = tanulo.Id,
         });
-        tanulok = await pService.GetPontByOsztaly(Id);
-        StateHasChanged();
+        await Ujratolt();
     }
     private async Task Pont_Change(Tanulo tanulo)
     {
@@ -99,66 +133,62 @@ else
             Jegyzet = string.Empty,
             TanuloId = tanulo.Id,
         };
-        var dialog = await DialogService.ShowDialogAsync<EditPontDialog>(newPont, new DialogParameters()
+        var result = await DialogService.ShowDialogAsync<EditPontDialog>(options=>
         {
-            Title = $"{tanulo.Name} pontjainak módosítása",
-            PreventDismissOnOverlayClick = true,
-            PreventScroll = true,
+        options.Header.Title = $"{tanulo.Name} pontjainak módosítása";
+            options.Parameters.Add(nameof(EditPontDialog.Content), newPont);
         });
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        if (!result.Cancelled && result.Value != null)
         {
-            newPont = (Pont)result.Data;
+            newPont = (Pont)result.Value;
             var response = await pService.Add(newPont);
-            if (response != null)
+            if (response is not null && response.IsSuccess)
             {
-                toastService.ShowInfo("Pont hozzáadva.");
-                tanulok = await pService.GetPontByOsztaly(Id);
+                await notificationService.ShowInfoToastAsync("Pont hozzáadva.");
+                await Ujratolt();
             }
             else
             {
-                toastService.ShowError($"Hiba a pont hozzáadása során: {pService.ErrorMessage}");
+                await notificationService.ShowErrorToastAsync($"Hiba a pont hozzáadása során: {response?.ErrorMessage ?? pService.ErrorMessage}");
             }
         }
     }
     private async Task Update(Pont pont)
     {
-        var dialog = await DialogService.ShowDialogAsync<EditPontDialog>(pont, new DialogParameters()
-            {
-                Title = $"{pont.PontTipus} típusú pont szerkesztése",
-                PreventDismissOnOverlayClick = true,
-                PreventScroll = true,
-            });
-
-        var result = await dialog.Result;
-        if (!result.Cancelled && result.Data != null)
+        var result = await DialogService.ShowDialogAsync<EditPontDialog>(options=>
         {
-            var updatedPont = (Pont)result.Data;
+            options.Header.Title = $"{pont.PontTipus} típusú pont szerkesztése";
+            options.Parameters.Add(nameof(EditPontDialog.Content), pont);
+        });
+
+        if (!result.Cancelled && result.Value != null)
+        {
+            var updatedPont = (Pont)result.Value;
             var response = await pService.Update(updatedPont);
             if (response != null)
             {
                 pont = response;
-                toastService.ShowInfo("Pont frissítve.");
-                tanulok = await pService.GetPontByOsztaly(Id);
+                await notificationService.ShowInfoToastAsync("Pont frissítve.");
+                await Ujratolt();
             }
             else
             {
-                toastService.ShowError($"Hiba a pont frissítése során: {pService.ErrorMessage}");
+                await notificationService.ShowErrorToastAsync($"Hiba a pont frissítése során: {pService.ErrorMessage}");
             }
         }
    }
     private async Task Delete(int id)
     {
+        if (!await alert.DisplayConfirm("Pont törlése", "Biztosan törli ezt a pontot? A tanuló összpontszáma is változik.", "Törlés", "Mégsem")) return;
         if (await pService.Remove(id))
         {
-            toastService.ShowInfo("Pont törölve.");
-            tanulok = await pService.GetPontByOsztaly(Id);
-            pontok = pontok.Where(p => p.TanuloId == selectedTanulo).ToList();
-            StateHasChanged();
+            await notificationService.ShowInfoToastAsync("Pont törölve.");
+            // A törölt (IsDeleted) pont az újratöltés után már nem jelenik meg.
+            await Ujratolt();
         }
         else
         {
-            toastService.ShowError($"Hiba a pont törlése során: {pService.ErrorMessage}");
+            await notificationService.ShowErrorToastAsync($"Hiba a pont törlése során: {pService.ErrorMessage}");
         }
     }
 }

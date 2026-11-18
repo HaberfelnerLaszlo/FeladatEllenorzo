@@ -24,9 +24,9 @@ namespace FeladatEllenorzo_CP.Services
         /// Using the MSAL public app redirect format
         /// </remarks>
 #if ANDROID
-        public string RedirectUri { get => $"msal{_settings.ClientId}://auth"; }
+        public string RedirectUri { get => "msauth://hu.haberfelner.feladatellenorzo/A2gt1lEwxmDQi0nNlYuzmBInmIc="; }
 #else    
-        public string RedirectUri { get => $"http://localhost"; }
+        public string RedirectUri { get => "http://localhost"; }
 #endif
         //public string RedirectUri { get => $"msal{_settings.ClientId}://auth"; }
        //public string RedirectUri { get => $"http://localhost"; }

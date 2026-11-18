@@ -33,7 +33,7 @@ namespace Data_Api.Services
         {
             response.Clear();
             var hibasFeladat = await db.Tanulok.Where(t => t.Osztaly == osztaly)
-                                                            .Include(h => h.Hibak.Where(h => h.Datum == DateOnly.Parse(DateTime.Today.ToShortDateString())))
+                                                            .Include(h => h.Hibak.Where(h => h.Datum == DateOnly.FromDateTime(DateTime.Today)))
                                                             .ToListAsync();
             if (hibasFeladat == null)
             {
@@ -51,7 +51,7 @@ namespace Data_Api.Services
         public async Task<MainResponse> GetHibasFeladatByMa()
         {
             response.Clear();
-            var hibasFeladat = await db.Tanulok.Include(h => h.Hibak.Where(h => h.Datum == DateOnly.Parse(DateTime.Today.ToShortDateString()))).ToListAsync();
+            var hibasFeladat = await db.Tanulok.Include(h => h.Hibak.Where(h => h.Datum == DateOnly.FromDateTime(DateTime.Today))).ToListAsync();
             if (hibasFeladat == null)
             {
                 response.ErrorMessage = "Nincs hibás feladat.";

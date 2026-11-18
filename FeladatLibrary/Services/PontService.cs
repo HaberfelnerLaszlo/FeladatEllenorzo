@@ -46,8 +46,16 @@ namespace FeladatLibrary.Services
                 }
                 else
                 {
+                    // Az API BadRequest esetén MainResponse-t küld az okkal (pl. már jóváírt lecke pont).
+                    string? apiHiba = null;
+                    try
+                    {
+                        var body = await apiResponse.Content.ReadAsStringAsync();
+                        apiHiba = JsonSerializer.Deserialize<MainResponse>(body, _jsonOptions)?.ErrorMessage;
+                    }
+                    catch (JsonException) { }
                     returnResponse.IsSuccess = false;
-                    returnResponse.ErrorMessage = $"Hiba a pont hozzáadásakor: {apiResponse.StatusCode}";
+                    returnResponse.ErrorMessage = string.IsNullOrWhiteSpace(apiHiba) ? $"Hiba a pont hozzáadásakor: {apiResponse.StatusCode}" : apiHiba;
                     ErrorMessage = returnResponse.ErrorMessage;
                 }
             }
@@ -76,7 +84,9 @@ namespace FeladatLibrary.Services
                     var deserilizeResponse = JsonSerializer.Deserialize<MainResponse>(response, _jsonOptions) ?? new MainResponse();
                     if (deserilizeResponse.IsSuccess)
                     {
-                        returnResponse = JsonSerializer.Deserialize<List<Pont>>(deserilizeResponse.Content?.ToString() ?? string.Empty, _jsonOptions) ?? new List<Pont>();
+                        // Az API egyetlen pontot ad vissza, nem listát.
+                        var pont = JsonSerializer.Deserialize<Pont>(deserilizeResponse.Content?.ToString() ?? string.Empty, _jsonOptions);
+                        if (pont is not null) returnResponse.Add(pont);
                     }
                     else
                     {

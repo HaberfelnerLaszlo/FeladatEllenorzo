@@ -10,14 +10,14 @@ namespace Data_Api.Endpoints
             app.MapPost("/pont", async (Pont pont, PontsService pontService) =>
             {
                 var createdPont = await pontService.CreatePont(pont);
-                if (createdPont is null || createdPont.Content is null)
+                if (createdPont is null)
                 {
                     return Results.BadRequest("Hiba történt a pont létrehozásakor.");
                 }
-                var newPont = (Pont)createdPont.Content;
-                if (createdPont.IsSuccess == false)
+                if (!createdPont.IsSuccess || createdPont.Content is not Pont newPont)
                 {
-                    return Results.BadRequest(createdPont.ErrorMessage);
+                    // MainResponse-ként adjuk vissza, hogy a kliens az ErrorMessage-et meg tudja jeleníteni.
+                    return Results.BadRequest(createdPont);
                 }
                 return Results.Created($"/pont/{newPont.Id}", createdPont);
             });

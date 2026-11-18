@@ -1,18 +1,14 @@
 ﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-
+#app {
+    padding-top: env(safe-area-inset-top);
+}
 html {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+/* A body alapstílusát (betűtípus, színek, magasság) a Fluent UI v5 adja (default-fuib.css). */
 body {
     margin: 0;
     padding: 0;
-    height: 100vh;
-    font-family: var(--body-font);
-    font-size: var(--type-ramp-base-font-size);
-    line-height: var(--type-ramp-base-line-height);
-    font-weight: var(--font-weight);
-    color: var(--neutral-foreground-rest);
-    background: var(--neutral-fill-layer-rest);
 }
 h1:focus {
     outline: none;
@@ -29,7 +25,8 @@ a, .btn-link {
 }
 
 .content {
-    padding-top: 1.1rem;
+    padding-top: 0;
+    padding-bottom: 1.5rem;
 }
 
 .valid.modified:not([type=checkbox]) {

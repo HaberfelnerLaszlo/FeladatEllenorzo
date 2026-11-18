@@ -10,6 +10,13 @@ using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Development-ben SSL tanúsítvány-validáció kihagyása (csak fejlesztéshez!)
+if (builder.Environment.IsDevelopment())
+{
+    System.Net.ServicePointManager.ServerCertificateValidationCallback =
+        (sender, certificate, chain, sslPolicyErrors) => true;
+}
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 

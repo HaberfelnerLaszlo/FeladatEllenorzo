@@ -12,7 +12,7 @@
     @if (NeedConsent)
     {
         <p>Kérlek jelentkez be az applikációba,hogy lekérhesem a pontjaidat.</p>
-        <FluentButton Appearance="Appearance.Accent" Disabled="@IsLoading" @onclick="ConsentAndShow">Bejelentkezés</FluentButton>
+        <FluentButton Appearance="ButtonAppearance.Primary" Disabled="@IsLoading" @onclick="ConsentAndShow">Bejelentkezés</FluentButton>
     }
     @if (IsLoading)
     {

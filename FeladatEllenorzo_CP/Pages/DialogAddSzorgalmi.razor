@@ -1,13 +1,22 @@
 ﻿@using FeladatLibrary.Data
-@implements IDialogContentComponent<Szorgalmi>
+@inherits FluentDialogInstance
 
 <FluentDialogBody>
-    <FluentNumberField @bind-Value="@Content.Feladatok_szama" Label="Feladatok száma"/>
-    <FluentNumberField @bind-Value="@Content.Pont" Label="Pont"/>
-    <FluentTextArea @bind-Value="@Content.Jegyzet" Label="Jegyzet" Rows="3"/>
+    <FluentNumberInput @bind-Value="@Content.Feladatok_szama" Label="Feladatok száma"/>
+    <FluentNumberInput @bind-Value="@Content.Pont" Label="Pont"/>
+    <FluentTextInput @bind-Value="@Content.Jegyzet" Label="Jegyzet" Rows="3"/>
 </FluentDialogBody>
 
 @code {
     [Parameter]
     public Szorgalmi Content { get; set; } = default!;
+    protected override Task OnActionClickedAsync(bool primary)
+    {
+        // Fluent UI v5: az eredményt a CloseAsync(T) túlterheléssel kell visszaadni,
+        // a paraméter nélküli CloseAsync() után a DialogResult.Value null.
+        return primary
+        ? DialogInstance.CloseAsync(Content)
+        : DialogInstance.CancelAsync();
+    }
+
 }

@@ -16,7 +16,7 @@ namespace Data_Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("CsoportTanulo", b =>
@@ -72,7 +72,7 @@ namespace Data_Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("Datum")
+                    b.Property<DateTime>("Datum")
                         .HasColumnType("date");
 
                     b.Property<Guid>("FeladatId")

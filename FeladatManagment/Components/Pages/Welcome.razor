@@ -25,20 +25,19 @@ else
             else
             {
                 <FluentTabs style="width: 80%; justify-content: space-between; margin: 4rem auto;">
-                    <FluentTab style="font-size: 14px; min-height: 32px;">
-                        <Header>Pontjaid</Header>
-                        <Content>
+                    <FluentTab style="font-size: 14px; min-height: 32px;" Header="Pontjaid">
+                        <ChildContent>
                             <div style="display:block; min-width:max-content;">
-                                <Graph ErrorMessage="@errorMessage" />
-                            </div>
-                        </Content>
+                                itt lenne a pontjaid, de mivel még nem jelentkeztél be, ezért nem tudom lekérni őket.
+@*                                 <Graph ErrorMessage="@errorMessage" />
+ *@                            </div>
+                        </ChildContent>
                     </FluentTab>
-                    <FluentTab>
-                        <Header>Matek gyakorló</Header>
-                        <Content>
+                    <FluentTab Header="MATEK GYAKORLÓ">
+                        <ChildContent>
                             <MathCourse StudentId="userId" />
                             <Deploy />
-                        </Content>
+                        </ChildContent>
                     </FluentTab>
                 </FluentTabs>
             }
@@ -58,39 +57,43 @@ else
 }
 
 @code {
-    string userName =string.Empty;
-    string errorMessage =string.Empty;
+    string userName = string.Empty;
+    string errorMessage = string.Empty;
     bool isLoading = true;
     Guid userId;
     List<Lesson> lessons = new();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        await base.OnAfterRenderAsync(firstRender);
-
-        if (firstRender)
-        {
-            await LoadUserDataAsync();
-        }
+        await base.OnInitializedAsync();
+        await LoadUserDataAsync();
     }
 
     private async Task LoadUserDataAsync()
     {
         try
         {
-            // Timeout beállítása 30 másodpercre az Azure autentikációhoz
-            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+            // Timeout beállítása 60 másodpercre az Azure autentikációhoz
+            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
                 var user = await teamsUserCredential.GetUserInfoAsync();
                 userName = user.DisplayName;
                 userId = Guid.Parse(user.ObjectId);
-                lessons = await mService.GetLessons(Guid.Parse(user.ObjectId), cts.Token);
+                lessons = await mService.GetLessons(userId, cts.Token);
                 errorMessage = string.Empty;
             }
         }
         catch (OperationCanceledException)
         {
             errorMessage = "A bejelentkezés időtúllépés miatt meg lett szakítva. Kérjük próbálja újra!";
+        }
+        catch (System.Security.Authentication.AuthenticationException ex)
+        {
+            errorMessage = $"Tanúsítvány-validálási hiba. Kérjük, ellenőrizze az Azure konfigurációt: {ex.Message}";
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Hálózati hiba az Azure-hoz való csatlakozáskor: {ex.Message}";
         }
         catch (Exception ex)
         {

@@ -3,201 +3,160 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
 @using FeladatLibrary.Data
-
 @inject IGraphService graph
 @inject GlobalData data
 @inject NavigationManager navi
 @inject IAlertService alert
-@inject IToastService toastService
+@inject INotificationService notificationService
 @inject IDialogService dialogService
 @inject IHibaService hibaService
 @inject IHianyService hianyService
 @inject ISzorgalmiService szorgalmiService
 @inject IPontService pontService
-<FluentGrid Justify="JustifyContent.FlexStart">
-    <FluentGridItem xs="12" Justify="JustifyContent.FlexStart" Gap="10px">
-        <FluentButton OnClick=Back>Vissza</FluentButton>
+
+<PageHeader Title="@(string.IsNullOrEmpty(data.Name) ? "Ellenőrzés" : data.Name)" Subtitle="@AssignmentName" OnBack="Back">
+    <Actions>
+        @if (AktualisTag is not null)
+        {
+            <span class="status @StatusClass(AktualisTag.Status)">@AktualisTag.Status</span>
+        }
         @if (data.Members.Count > 0)
         {
-            <select @onchange="(e) => SelectedMember(e.Value)">
-                <optgroup label="Beadta">
-                    @{
-                        i = 0;
-                        @foreach (var item in data.Members.Where(m => m.Status == "Beadva"))
-                        {
-
-                            if (item.SubmissionId == data.SubmissionId)
-                            {
-                                //submitted = true;
-                                index = i;
-                                <option value="@item.SubmissionId" selected>@item.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@item.SubmissionId">@item.Name  (@i)</option>
-                            }
-                            i++;
-                        }
-                    }
-                </optgroup>
-                <optgroup label="Visszaküldve">
-                    @foreach (var item in data.Members.Where(m => m.Status == "Visszaküldve"))
+            <select class="fe-select fe-select--auto" aria-label="Tanuló kiválasztása" @onchange="(e) => SelectedMember(e.Value)">
+                @foreach (var csoport in TanuloCsoportok)
+                {
+                    @if (csoport.Tagok.Count > 0)
                     {
-
-                        if (item.SubmissionId == data.SubmissionId)
-                        {
-                            //submitted = false;
-                            index = i;
-                            <option value="@item.SubmissionId" selected>@item.Name</option>
-                        }
-                        else
-                        {
-                            <option value="@item.SubmissionId">@item.Name (@i)</option>
-                        }
-                        i++;
+                        <optgroup label="@csoport.Nev">
+                            @foreach (var item in csoport.Tagok)
+                            {
+                                <option value="@item.SubmissionId" selected="@(item.SubmissionId == data.SubmissionId)">@item.Name</option>
+                            }
+                        </optgroup>
                     }
-                </optgroup>
-                <optgroup label="Többiek">
-                    @foreach (var item in data.Members.Where(m => m.Status != "Visszaküldve" && m.Status != "Beadva"))
-                    {
-
-                        if (item.SubmissionId == data.SubmissionId)
-                        {
-                            index = i;
-                            <option value="@item.SubmissionId" selected>@item.Name</option>
-                        }
-                        else
-                        {
-                            <option value="@item.SubmissionId">@item.Name (@i)</option>
-                        }
-                        i++;
-                    }
-                </optgroup>
                 }
             </select>
-            <button @onclick="Next">Next</button>
+            <FluentButton Appearance="ButtonAppearance.Outline" IconStart="@(new Icons.Regular.Size20.ChevronLeft())" Title="Előző tanuló" OnClick="Previous">Előző</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Outline" IconEnd="@(new Icons.Regular.Size20.ChevronRight())" Title="Következő tanuló" OnClick="Next">Következő</FluentButton>
         }
-        <FluentButton OnClick="ViewAssigment">@AssignmentName feladat megtekintése</FluentButton>
-        <FluentLabel>
-            @DisplayMessage
-        </FluentLabel>
-    </FluentGridItem>
-    <FluentGridItem xs="12" md="8">
-        @if (url.Equals(string.Empty))
-        {
-            <p>Nincs beküldve ...</p>
-        }
-        else
-        {
-            <iframe width="100%" height="600" src="@url"></iframe>
-        }
-    </FluentGridItem>
-    <FluentGridItem xs="12" md="4">
-        <div>
-            @if (mediaResource.Count > 0)
-            {
-                @foreach (var item in mediaResource)
+        <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.DocumentText())" Title="A feladat kiírása" OnClick="ViewAssigment">Feladat</FluentButton>
+    </Actions>
+</PageHeader>
+
+<div class="fe-split">
+    @* ---------- Bal oldal: csatolmányok és előnézet ---------- *@
+    <section>
+        <div class="fe-row fe-row--spread">
+            <div class="chip-list">
+                @foreach (var csatolmany in Csatolmanyok)
                 {
-                    <button @onclick="() => ShowImage(item.FileUrl)">@item.DisplayName</button>
+                    <button type="button"
+                            class="chip @(csatolmany.FileUrl == aktivFileUrl ? "chip--active" : "")"
+                            title="@csatolmany.Nev"
+                            @onclick="() => ShowImage(csatolmany.FileUrl)">
+                        @csatolmany.Nev
+                    </button>
                 }
-            }
-            @if (fileResource.Count > 0)
-            {
-                @foreach (var item in fileResource)
-                {
-                    <button @onclick="() => ShowImage(item.FileUrl)">@item.DisplayName</button>
-                }
-            }
-            @if (excelResource.Count > 0)
-            {
-                @foreach (var item in excelResource)
-                {
-                    <button @onclick="() => ShowImage(item.FileUrl)">@item.DisplayName</button>
-                }
-            }
-            @if (wordResource.Count > 0)
-            {
-                @foreach (var item in wordResource)
-                {
-                    <button @onclick="() => ShowImage(item.FileUrl)">@item.DisplayName</button>
-                }
-            }
-            @if (ppResource.Count > 0)
-            {
-                @foreach (var item in ppResource)
-                {
-                    <button @onclick="() => ShowImage(item.FileUrl)">@item.DisplayName</button>
-                }
-            }
-        </div>@* Média elemek*@
-        <div class="row">
-            <div class="col">
-                <ul style="list-style-type:none">
-                    @foreach (var item in data.Szovegek.Where(s => s.Type == "poz"))
-                    {
-                        if (item.Text.Length > 15)
-                        {
-                            <li @onclick=@(() => AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
-                        }
-                        else
-                        {
-                            <li @onclick=@(() => AddText(item.Text))>@item.Text</li>
-                        }
-                    }
-                </ul>
-            </div>@* Szövegek poz*@
-            <div class="col">
-                <ul style="list-style-type:none">
-                    @foreach (var item in data.Szovegek.Where(s => s.Type == "neg"))
-                    {
-                        if (item.Text.Length > 15)
-                        {
-                            <li @onclick=@(() => AddText(item.Text)) title="@item.Text">@item.Text.Substring(0, 15)</li>
-                        }
-                        else
-                        {
-                            <li @onclick=@(() => AddText(item.Text))>@item.Text</li>
-                        }
-                    }
-                </ul>
-            </div>@* Szövegek neg*@
-            <div>
-                <FluentButton @onclick=AddNewText>Új</FluentButton>
-                @if (data.Szovegek.Count > 0)
-                {
-                    <FluentButton  @onclick=ManageSzovegOpen>Szövegek</FluentButton>
-                }
-                <FluentButton OnClick="@(() => { Valasz = "Kedves " + nev; })">Új válasz</FluentButton>
             </div>
-            <div hidden="@visibleNewText">
-                <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
+            @if (!string.IsNullOrEmpty(url))
+            {
+                <FluentButton Appearance="ButtonAppearance.Subtle"
+                              IconStart="@(showPreview ? new Icons.Regular.Size20.EyeOff() : new Icons.Regular.Size20.Eye())"
+                              OnClick="@(() => showPreview = !showPreview)">
+                    @(showPreview ? "Előnézet elrejtése" : "Előnézet mutatása")
+                </FluentButton>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayMessage))
+        {
+            <p class="fe-warning">@DisplayMessage</p>
+        }
+        @if (string.IsNullOrEmpty(url))
+        {
+            <div class="preview-empty">Nincs beküldött csatolmány.</div>
+        }
+        else if (showPreview)
+        {
+            <iframe class="preview-frame" src="@url" title="Csatolmány előnézete"></iframe>
+        }
+    </section>
+
+    @* ---------- Jobb oldal: visszajelzés, pontozás, könyvelés ---------- *@
+    <aside class="fe-card fe-has-fixed-bar">
+        <h2 class="fe-card__title">Visszajelzés</h2>
+        <textarea class="fe-textarea"
+                  placeholder="Visszajelzés..."
+                  oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
+                  @onchange=@((e) => Valtozas(false, e))
+                  value="@Valasz"
+                  lang="hu"
+                  spellcheck="false"></textarea>
+        @if (data.Szovegek.Count > 0)
+        {
+            <div class="chip-list" aria-label="Szövegsablonok">
+                @foreach (var item in data.Szovegek.Where(s => s.Type == "poz"))
+                {
+                    <button type="button" class="chip chip--poz" title="@item.Text" @onclick="() => AddText(item.Text)">@item.Text</button>
+                }
+                @foreach (var item in data.Szovegek.Where(s => s.Type == "neg"))
+                {
+                    <button type="button" class="chip chip--neg" title="@item.Text" @onclick="() => AddText(item.Text)">@item.Text</button>
+                }
             </div>
-        </div>@* Szövegek*@
-        <div>
-            <textarea rows="3"
-                      placeholder="Visszajelzés..."
-                      style="resize:vertical; width:100%; max-height:50%"
-                      oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-                      @onchange=@((e) => Valtozas(false, e))
-                      value="@Valasz"
-                      lang="hu"
-                      spellcheck="false">
-						@Valasz
-			</textarea>
+        }
+        <div class="fe-row">
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.ArrowReset())" OnClick="@(() => { Valasz = "Kedves " + nev; })">Új válasz</FluentButton>
+            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.Add())" OnClick="AddNewText">Új sablon</FluentButton>
+            @if (data.Szovegek.Count > 0)
+            {
+                <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size20.TextBulletListSquareEdit())" OnClick="ManageSzovegOpen">Sablonok</FluentButton>
+            }
         </div>
-        <div>
-            <FluentSwitch Label="Hibaként menteni:" Value="isHiba" @onclick="(() => ChangeHiba())" />
-            <FluentSwitch Label="Hiányként menteni:" Value="isHiany" @onclick="(() => ChangeHiany())" />
-            <FluentSwitch Label="Szorgalmi? " Value="isSzorg" @onclick="(() => ChangeSzorgalmi())" />
-            <FluentSwitch Label="Szorgalmi és lecke? " Value="isSzorgLecke" @onclick="(() => ChangeSzorgalmiLecke())" />
-            <FluentSwitch Label="Pótlás? " Value="isPotlas" @onclick="(() => isPotlas = isPotlas ? false : true)" />
-            <FluentSwitch Label="Nincs mentés? " Value="noSave" @onclick="(() => noSave = noSave ? false : true)" />
-            <hr />
-            <input type="number" style="width: 20%;" value="@Pont" @onchange=@((e) => Valtozas(true, e)) /> pont <span style="color:green" hidden="@IsNotSaved"> ✔️</span>
-            <FluentButton Appearance="Appearance.Accent" disabled="@(!changed)" OnClick=Save>Mentés</FluentButton>
+        <div hidden="@visibleNewText">
+            <FeladatEllenorzo_CP.Components.NewSzoveg SaveText="SaveText"></FeladatEllenorzo_CP.Components.NewSzoveg>
         </div>
-    </FluentGridItem>
-</FluentGrid>
+
+        <h2 class="fe-card__title" style="margin-top:16px">Pontozás</h2>
+        <div class="fe-row">
+            <input id="pont" type="number" class="fe-input fe-input--narrow" value="@Pont" @onchange=@((e) => Valtozas(true, e)) />
+            <label for="pont">pont</label>
+            @if (FeladatHelper.MaxPont(AktualisFeladat) is float max)
+            {
+                <span class="fe-muted" title="A Teams-feladatnál beállított maximális pontszám">max. @max</span>
+            }
+            @if (!IsNotSaved)
+            {
+                <span class="fe-saved" title="A Teamsben már szerepel pontszám">✔ Mentve</span>
+            }
+        </div>
+
+        <h2 class="fe-card__title" style="margin-top:16px">Könyvelés</h2>
+        <div class="fe-switch-group">
+            <span class="fe-switch-group__label">Hiba / hiány</span>
+            <FluentSwitch Label="Hibaként menteni" Value="isHiba" @onclick="(() => ChangeHiba())" />
+            <FluentSwitch Label="Hiányként menteni" Value="isHiany" @onclick="(() => ChangeHiany())" />
+            <span class="fe-switch-group__label">Szorgalmi</span>
+            <FluentSwitch Label="Szorgalmi" Value="isSzorg" @onclick="(() => ChangeSzorgalmi())" />
+            <FluentSwitch Label="Szorgalmi és lecke" Value="isSzorgLecke" @onclick="(() => ChangeSzorgalmiLecke())" />
+            <span class="fe-switch-group__label">Egyéb</span>
+            <FluentSwitch Label="Pótlás" Value="isPotlas" @onclick="(() => isPotlas = !isPotlas)" />
+            <FluentSwitch Label="Nincs mentés az adatbázisba" Value="noSave" @onclick="(() => noSave = !noSave)" />
+        </div>
+
+        <div class="fe-action-bar fe-action-bar--fixed-mobile">
+            <FluentButton Appearance="ButtonAppearance.Primary"
+                          IconStart="@(new Icons.Regular.Size20.Send())"
+                          Disabled="@(!changed || isSaving)"
+                          OnClick="Save">
+                @(isSaving ? "Mentés..." : "Mentés és visszaküldés")
+            </FluentButton>
+            @if (!changed)
+            {
+                <span class="fe-muted">Nincs mentetlen változás</span>
+            }
+        </div>
+    </aside>
+</div>
 @code {
     private EducationSubmissionResourceCollectionResponse feladatForrasok;
     private List<EducationMediaResource> mediaResource = new();
@@ -210,22 +169,48 @@
     private EducationPointsOutcome pont;
     private Szorgalmi szorgalmi;
     private string DriveId = string.Empty, ItemId = string.Empty, url = string.Empty, Valasz = string.Empty, nev = string.Empty, DisplayMessage = string.Empty, AssignmentName = string.Empty;
-    private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave = false;
+    private bool changed = false, changedValasz = false, changedPont = false, IsNotSaved = true, visibleNewText = true, isHiba = false, isHiany = false, isSzorg = false, isPotlas = false, isSzorgLecke = false, noSave = false, isSaving = false;
     private int index = 0, i = 0;
     private float Pont = 0;
-    private IDialogReference _dialog;
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    private string aktivFileUrl = string.Empty;
+    private bool showPreview = true;
+   // private IDialogReference _dialog;
+
+    private MemberData AktualisTag => data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId);
+
+    private EducationAssignment AktualisFeladat => data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId)?.Feladat;
+
+    private static string StatusClass(string statusz) => StatuszHelper.StatusClass(statusz);
+
+    /// <summary>A tanulóválasztó csoportjai: előbb a beadottak, aztán a visszaküldöttek, végül a többiek.</summary>
+    private IEnumerable<(string Nev, List<MemberData> Tagok)> TanuloCsoportok =>
+    [
+        ("Beadta", data.Members.Where(m => m.Status == StatuszHelper.Beadva).ToList()),
+        ("Visszaküldve", data.Members.Where(m => m.Status == StatuszHelper.Visszakuldve).ToList()),
+        ("Többiek", data.Members.Where(m => m.Status != StatuszHelper.Beadva && m.Status != StatuszHelper.Visszakuldve).ToList()),
+    ];
+
+    /// <summary>Az összes megnyitható csatolmány egy listában (név + fájl URL).</summary>
+    private IEnumerable<(string Nev, string FileUrl)> Csatolmanyok =>
+        mediaResource.Select(r => (r.DisplayName, r.FileUrl))
+            .Concat(fileResource.Select(r => (r.DisplayName, r.FileUrl)))
+            .Concat(excelResource.Select(r => (r.DisplayName, r.FileUrl)))
+            .Concat(wordResource.Select(r => (r.DisplayName, r.FileUrl)))
+            .Concat(ppResource.Select(r => (r.DisplayName, r.FileUrl)))
+            .Where(c => !string.IsNullOrEmpty(c.FileUrl))
+            .Select(c => (c.DisplayName ?? "Csatolmány", c.FileUrl));
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            nev = data.Name.Split(" ")[1];
+            nev = NevHelper.KeresztNev(data.Name);
             isHiany = data.IsHiany > 0;
-            AssignmentName = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId).Feladat.DisplayName;
-            DataInit();
+            AssignmentName = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId)?.Feladat.DisplayName ?? string.Empty;
+            await DataInit();
         }
-        return base.OnAfterRenderAsync(firstRender);
+        await base.OnAfterRenderAsync(firstRender);
     }
-    private async void DataInit()
+    private async Task DataInit()
     {
         NetworkAccess accessType = Connectivity.Current.NetworkAccess;
         if (accessType != NetworkAccess.Internet)
@@ -244,76 +229,84 @@
         ppResource.Clear();
         url = string.Empty;
         Pont = 0;
+        // Az előző tanuló outcome-jait nem szabad továbbvinni.
+        valasz = null;
+        pont = null;
+        Valasz = "Kedves " + nev;
         try
         {
+            string elsoFileUrl = null;
             feladatForrasok = await graph.GetFeladatForras(data.ClassId, data.AssignmentId, data.SubmissionId);
-            foreach (var item in feladatForrasok.Value)
+            foreach (var item in feladatForrasok?.Value ?? [])
             {
-                string fileUrl = string.Empty;
-                switch (item.Resource.GetType().Name)
+                string fileUrl = null;
+                switch (item.Resource)
                 {
-                    case nameof(EducationMediaResource):
-                        mediaResource.Add((EducationMediaResource)item.Resource);
-                        fileUrl = mediaResource.FirstOrDefault().FileUrl;
+                    case EducationMediaResource r:
+                        mediaResource.Add(r);
+                        fileUrl = r.FileUrl;
                         break;
-                    case nameof(EducationFileResource):
-                        fileResource.Add((EducationFileResource)item.Resource);
-                        fileUrl = fileResource.FirstOrDefault().FileUrl;
+                    case EducationFileResource r:
+                        fileResource.Add(r);
+                        fileUrl = r.FileUrl;
                         break;
-                    case nameof(EducationExcelResource):
-                        excelResource.Add((EducationExcelResource)item.Resource);
-                        fileUrl = excelResource.FirstOrDefault().FileUrl;
+                    case EducationExcelResource r:
+                        excelResource.Add(r);
+                        fileUrl = r.FileUrl;
                         break;
-                    case nameof(EducationWordResource):
-                        wordResource.Add((EducationWordResource)item.Resource);
-                        fileUrl = wordResource.FirstOrDefault().FileUrl;
+                    case EducationWordResource r:
+                        wordResource.Add(r);
+                        fileUrl = r.FileUrl;
                         break;
-                    case nameof(EducationPowerPointResource):
-                        ppResource.Add((EducationPowerPointResource)item.Resource);
-                        fileUrl = ppResource.FirstOrDefault().FileUrl;
+                    case EducationPowerPointResource r:
+                        ppResource.Add(r);
+                        fileUrl = r.FileUrl;
                         break;
                     default:
                         break;
                 }
-                if (fileUrl.Length > 0)
+                if (!string.IsNullOrEmpty(fileUrl))
                 {
-                    url = await GetUrl(fileUrl);
-                    Pont = 2;
-                    changedPont = true;
-                }
-                else
-                {
-                    Pont = 0;
-                    url = string.Empty;
+                    elsoFileUrl ??= fileUrl;
                 }
             }
-            feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
-            foreach (var item in feladatValaszok.Value)
+            aktivFileUrl = elsoFileUrl ?? string.Empty;
+            if (elsoFileUrl is not null)
             {
-                valasz = (EducationFeedbackOutcome)item;
-                @if (valasz is not null && valasz.Feedback is not null)
+                url = await GetUrl(elsoFileUrl);
+            }
+            feladatValaszok = await graph.GetFeladatValasz(data.ClassId, data.AssignmentId, data.SubmissionId);
+            foreach (var item in feladatValaszok?.Value ?? [])
+            {
+                if (item is EducationFeedbackOutcome v)
                 {
-                    Valasz = valasz.Feedback.Text.Content;
-                }
-                else
-                {
-                    Valasz = "Kedves " + nev;
+                    valasz = v;
+                    if (!string.IsNullOrEmpty(v.Feedback?.Text?.Content))
+                    {
+                        Valasz = v.Feedback.Text.Content;
+                    }
                 }
             }
             var feladatPontok = await graph.GetFeladatPont(data.ClassId, data.AssignmentId, data.SubmissionId);
-            foreach (var item in feladatPontok.Value)
+            foreach (var item in feladatPontok?.Value ?? [])
             {
-                pont = (EducationPointsOutcome)item;
-                @if (pont is not null && pont.Points is not null)
+                if (item is EducationPointsOutcome p)
                 {
-                    Pont = pont.Points.Points.Value;
-                    if (!String.IsNullOrEmpty(url) && Pont == 0)
+                    pont = p;
+                    if (p.Points?.Points is float meglevoPont)
                     {
-                        Pont = 2;
-                        changedPont = true;
+                        Pont = meglevoPont;
+                        IsNotSaved = false;
                     }
-                    IsNotSaved = false;
                 }
+            }
+            // Csak akkor javasolunk új pontot (a Teams-feladat maximuma, ennek hiányában 2), ha van csatolmány
+            // és még nincs (vagy 0) a pontszám. Már értékelt beadásnál a changedPont hamis marad,
+            // így újramentéskor nem kerül be újra a lecke pont.
+            if (elsoFileUrl is not null && Pont == 0)
+            {
+                Pont = FeladatHelper.AlapPont(AktualisFeladat);
+                changedPont = true;
             }
         }
         catch (Exception e)
@@ -322,28 +315,18 @@
         }
         StateHasChanged();
     }
-    private void Next()
+    private async Task Next()
     {
+        if (data.Members.Count == 0) return;
         var j = data.Members.FindIndex(m => m.SubmissionId == data.SubmissionId);
-        if (j < data.Members.Count - 1)
-        {
-            data.SubmissionId = data.Members[j + 1].SubmissionId;
-            data.Name = data.Members[j + 1].Name.Split(" ")[1];
-            nev = data.Members[j + 1].Name.Split(" ")[1];
-            data.StudentId = data.Members[j + 1].Id;
-            isHiany = data.Members[j + 1].IsHiany > 0;
-            data.IsHiany = data.Members[j + 1].IsHiany;
-        }
-        else
-        {
-            data.SubmissionId = data.Members[0].SubmissionId;
-            data.Name = data.Members[0].Name.Split(" ")[1];
-            nev = data.Members[0].Name.Split(" ")[1];
-            data.StudentId = data.Members[0].Id;
-            isHiany = data.Members[0].IsHiany > 0;
-            data.IsHiany = data.Members[0].IsHiany;
-        }
-        DataInit();
+        var kovetkezo = (j >= 0 && j < data.Members.Count - 1) ? data.Members[j + 1] : data.Members[0];
+        data.SubmissionId = kovetkezo.SubmissionId;
+        data.Name = kovetkezo.Name;
+        nev = NevHelper.KeresztNev(kovetkezo.Name);
+        data.StudentId = kovetkezo.Id;
+        isHiany = kovetkezo.IsHiany > 0;
+        data.IsHiany = kovetkezo.IsHiany;
+        await DataInit();
     }
     private async Task<string> GetUrl(string fileUrl)
     {
@@ -353,13 +336,14 @@
             await alert.ShowAlertAsync("Nincs internet, állítsa helyre a kapcsolatot!", "Internet hiba", "Rendben");
             return string.Empty;
         }
-        var lenght = fileUrl.Length;
-        if (lenght > 34)
+        // A fix pozíciós Substring helyett a .../drives/{driveId}/items/{itemId} részt keressük meg.
+        var match = System.Text.RegularExpressions.Regex.Match(fileUrl ?? string.Empty, @"drives/([^/]+)/items/([^/?#]+)");
+        if (match.Success)
         {
             try
             {
-                ItemId = fileUrl.Substring(lenght - 34);
-                DriveId = fileUrl.Substring(40, 66);
+                DriveId = match.Groups[1].Value;
+                ItemId = match.Groups[2].Value;
                 var fileInfo = await graph.GetFile(DriveId, ItemId);
                 if (fileInfo is not null)
                 {
@@ -381,27 +365,37 @@
         }
         return string.Empty;
     }
-    private async void ShowImage(string fileUrl)
+    private async Task Previous()
     {
+        if (data.Members.Count == 0) return;
+        var j = data.Members.FindIndex(m => m.SubmissionId == data.SubmissionId);
+        var elozo = j > 0 ? data.Members[j - 1] : data.Members[^1];
+        data.SubmissionId = elozo.SubmissionId;
+        data.Name = elozo.Name;
+        nev = NevHelper.KeresztNev(elozo.Name);
+        data.StudentId = elozo.Id;
+        isHiany = elozo.IsHiany > 0;
+        data.IsHiany = elozo.IsHiany;
+        await DataInit();
+    }
+    private async Task ShowImage(string fileUrl)
+    {
+        aktivFileUrl = fileUrl;
+        showPreview = true;
         url = await GetUrl(fileUrl);
         StateHasChanged();
     }
-    private void SelectedMember(object args)
+    private async Task SelectedMember(object args)
     {
-        data.SubmissionId = args.ToString();
-        try
-        {
-            var tanulo = data.Members.FirstOrDefault(m => m.SubmissionId == args.ToString());
-            nev = tanulo.Name.Split(" ")[1];
-            data.Name = tanulo.Name;
-            isHiany = tanulo.IsHiany > 0;
-            data.IsHiany = tanulo.IsHiany;
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message, e);
-        }
-        DataInit();
+        var tanulo = data.Members.FirstOrDefault(m => m.SubmissionId == args?.ToString());
+        if (tanulo is null) return;
+        data.SubmissionId = tanulo.SubmissionId;
+        nev = NevHelper.KeresztNev(tanulo.Name);
+        data.Name = tanulo.Name;
+        data.StudentId = tanulo.Id;
+        isHiany = tanulo.IsHiany > 0;
+        data.IsHiany = tanulo.IsHiany;
+        await DataInit();
     }
     private void Valtozas(bool changePont, ChangeEventArgs args)
     {
@@ -409,8 +403,13 @@
         IsNotSaved = true;
         if (changePont)
         {
+            // A number input mindig ponttal küldi a tizedest, ezért kultúrafüggetlenül olvassuk.
+            if (!float.TryParse(args.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var ujPont))
+            {
+                return;
+            }
             changedPont = true;
-            Pont = float.Parse(args.Value.ToString());
+            Pont = ujPont;
         }
         else
         {
@@ -422,7 +421,26 @@
     {
         navi.NavigateTo($"feladatok/{data.ClassId}");
     }
-    private async void Save()
+    private async Task Save()
+    {
+        // Dupla kattintás / párhuzamos mentés ellen: különben a pontok kétszer kerülnének be.
+        if (isSaving) return;
+        isSaving = true;
+        try
+        {
+            await SaveCore();
+        }
+        catch (Exception ex)
+        {
+            await alert.ShowAlertAsync(ex.Message, "Hiba a mentéskor", "Rendben");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+    private async Task SaveCore()
     {
         NetworkAccess accessType = Connectivity.Current.NetworkAccess;
         if (accessType != NetworkAccess.Internet)
@@ -435,7 +453,7 @@
         {
             response = await graph.UpdateValasz(data.ClassId, data.AssignmentId, data.SubmissionId, valasz.Id, Valasz);
         }
-        if (valasz is not null && changedPont)
+        if (pont is not null && changedPont)
         {
             response = await graph.UpdatePont(data.ClassId, data.AssignmentId, data.SubmissionId, pont.Id, Pont);
             if (isPotlas)
@@ -444,7 +462,8 @@
                 isPotlas = false;
                 if (res.IsSuccess)
                 {
-                    toastService.ShowInfo("A pótlás mentve az adatbázisba.");
+                    //toastService.ShowInfo("A pótlás mentve az adatbázisba.");
+                    await notificationService.ShowInfoToastAsync("A pótlás mentve az adatbázisba.");
                 }
                 else if (res.ErrorMessage is not null)
                 {
@@ -460,7 +479,8 @@
                 var res = await pontService.Add(new() { Datum = DateTime.Today, PontSzam = (int)Pont, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}", PontTipus = PontTipus.Lecke });
                 if (res.IsSuccess)
                 {
-                    toastService.ShowInfo("A pont mentve az adatbázisba.");
+                    //toastService.ShowInfo("A pont mentve az adatbázisba.");
+                    await notificationService.ShowInfoToastAsync("Üzenet","A pont mentve az adatbázisba.",5);
                     //await alert.ShowAlertAsync(res.Content.ToString(), "Rendszer üzenet", "Rendben");
                 }
                 else
@@ -475,34 +495,38 @@
             isHiba = false;
             if (res.IsSuccess)
             {
-                toastService.ShowInfo("Az üzenet mentve a hibákhoz.");
+                await notificationService.ShowInfoToastAsync("Az üzenet mentve a hibákhoz.");
             }
             else
             {
                 await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
             }
         }
-        if (isHiany)
+        // Csak akkor rögzítünk új hiányt, ha még nincs; különben minden mentés újabb -2 pontot vonna le.
+        if (isHiany && data.IsHiany == 0)
         {
             var res = await hianyService.Add(new() { Datum = DateTime.Today, Hianyzik = false, TanuloId = data.StudentId, FeladatId = Guid.Parse(data.AssignmentId), Osztaly = data.Osztalynev });
             isHiany = false;
             if (res.IsSuccess)
             {
-                toastService.ShowInfo("A tanuló feladata mentve a lecke hiányhoz.");
+                await notificationService.ShowInfoToastAsync("A tanuló feladata mentve a lecke hiányhoz.");
             }
             else
             {
                 await alert.ShowAlertAsync(res.ErrorMessage, "Rendszer üzenet", "Rendben");
             }
         }
-        else
+        else if (!isHiany)
         {
             if (data.IsHiany > 0)
             {
                 var res = await hianyService.Remove(data.IsHiany);
                 if (res.IsSuccess)
                 {
-                    toastService.ShowInfo("A tanuló lecke hiánya eltávolítva.");
+                    await notificationService.ShowInfoToastAsync("A tanuló lecke hiánya eltávolítva.");
+                    var tag = data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId);
+                    if (tag is not null) tag.IsHiany = 0;
+                    data.IsHiany = 0;
                 }
                 else
                 {
@@ -515,7 +539,7 @@
             var res = await szorgalmiService.Add(szorgalmi);
             if (res.IsSuccess)
             {
-                toastService.ShowInfo("A szorgalmi mentve az adatbázisba.");
+                await notificationService.ShowInfoToastAsync("A szorgalmi mentve az adatbázisba.");
                 isSzorg = false;
                 isSzorgLecke = false;
             }
@@ -524,21 +548,22 @@
                 Console.Write("Hiba a szorgalmi mentésekor: " + res.ErrorMessage);
                 isSzorg = false;
                 isSzorgLecke = false;
-                toastService.ShowError($"Hiba a szorgalmi mentésekor! Üzenet: {res.ErrorMessage}");
+                await notificationService.ShowErrorToastAsync($"Hiba a szorgalmi mentésekor! Üzenet: {res.ErrorMessage}");
             }
         }
         if (!response)
         {
-            toastService.ShowError("A mentés nem sikerült!");
+            await notificationService.ShowErrorToastAsync("A mentés nem sikerült!");
         }
         else
         {
             var returned = await graph.Return(data.ClassId, data.AssignmentId, data.SubmissionId);
             if (returned)
             {
-                data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId).Status = "Visszaküldve";
+                var tag = data.Members.FirstOrDefault(m => m.SubmissionId == data.SubmissionId);
+                if (tag is not null) tag.Status = "Visszaküldve";
             }
-            Next();
+            await Next();
         }
     }
     private void AddText(string text)
@@ -569,71 +594,72 @@
     }
     async Task ChangeSzorgalmi()
     {
-        isSzorg = isSzorg ? false : true;
-        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId ,Jegyzet = string.Empty};
-        var par = new DialogParameters<Szorgalmi>()
+        isSzorg = !isSzorg;
+        if (!isSzorg)
         {
-            Content = szorgalmi,
-            Alignment = HorizontalAlignment.Right,
-            Title = "Szorgalmi felvétele",
-            ShowDismiss = false,
-            PrimaryActionEnabled = true,
-            SecondaryActionEnabled = true,
-            PrimaryAction = "Mentés",
-            SecondaryAction = "Mégsem",
-        };
+            // Kikapcsoláskor nem kell újra megnyitni a dialógust.
+            if (!isSzorgLecke) szorgalmi = null;
+            return;
+        }
+        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId ,Jegyzet = string.Empty};
 
-        _dialog = await dialogService.ShowPanelAsync<DialogAddSzorgalmi>(szorgalmi, par);
-        DialogResult result = await _dialog.Result;
+        //dialog
+        DialogResult result=await dialogService.ShowDialogAsync<DialogAddSzorgalmi>(options =>
+        {
+            options.Alignment = DialogAlignment.Default;
+            options.Header.Title = "Szorgalmi felvétele";
+            options.Parameters.Add(nameof(DialogAddSzorgalmi.Content), szorgalmi);
+            options.Footer.PrimaryAction.Label = "Mentés";
+            options.Footer.PrimaryAction.Disabled = false;
+            options.Footer.SecondaryAction.Label = "Mégsem";
+            options.Footer.SecondaryAction.Disabled = false;
+        });
         if (!result.Cancelled)
         {
-            szorgalmi = result.Data as Szorgalmi;
+            // A kötés miatt a helyben módosított objektum is helyes, ha a Value mégis üres lenne.
+            szorgalmi = result.Value as Szorgalmi ?? szorgalmi;
         }
-        else { isSzorg = false; }
+        else { isSzorg = false; szorgalmi = null; }
 
     }
     async Task ChangeSzorgalmiLecke()
     {
-        isSzorgLecke = isSzorgLecke ? false : true;
-        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}" };
-        var par = new DialogParameters<Szorgalmi>()
+        isSzorgLecke = !isSzorgLecke;
+        if (!isSzorgLecke)
         {
-            Content = szorgalmi,
-            Alignment = HorizontalAlignment.Right,
-            Title = "Szorgalmi felvétele",
-            ShowDismiss = false,
-            PrimaryActionEnabled = true,
-            SecondaryActionEnabled = true,
-            PrimaryAction = "Mentés",
-            SecondaryAction = "Mégsem",
-        };
+            if (!isSzorg) szorgalmi = null;
+            return;
+        }
+        szorgalmi = new() { Feladatok_szama = 1, Pont = 2, Osztaly = data.ClassId, TanuloId = data.StudentId, Jegyzet = $"{AssignmentName} ; {data.AssignmentId}" };
+        DialogResult result = await dialogService.ShowDialogAsync<DialogAddSzorgalmi>(options =>
+        {
+            options.Alignment = DialogAlignment.Default;
+            options.Header.Title = "Szorgalmi felvétele";
+            options.Parameters.Add(nameof(DialogAddSzorgalmi.Content),szorgalmi);
+            options.Footer.PrimaryAction.Label = "Mentés";
+            options.Footer.PrimaryAction.Disabled = false;
+            options.Footer.SecondaryAction.Label = "Mégsem";
+            options.Footer.SecondaryAction.Disabled = false;
 
-        _dialog = await dialogService.ShowPanelAsync<DialogAddSzorgalmi>(szorgalmi, par);
-        DialogResult result = await _dialog.Result;
+        });
         if (!result.Cancelled)
         {
-            szorgalmi = result.Data as Szorgalmi;
+            szorgalmi = result.Value as Szorgalmi ?? szorgalmi;
         }
-        else { isSzorgLecke = false; }
+        else { isSzorgLecke = false; szorgalmi = null; }
 
     }
 
-    async void ViewAssigment()
+    async Task ViewAssigment()
     {
-        var message = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId).Feladat.Instructions.Content;
-        var dialog = await dialogService.ShowMessageBoxAsync(new DialogParameters<MessageBoxContent>
-            ()
-        {
-            Content = new()
+        var message = data.Feladatok.Find(f => f.Feladat.Id == data.AssignmentId)?.Feladat.Instructions?.Content ?? "Nincs feladatleírás.";
+        var dialog = await dialogService.ShowMessageBoxAsync(new MessageBoxOptions()
             {
                 Title = "Feladat kiírása",
-                MarkupMessage = new MarkupString(message),
+                Message = message,
                 Icon = new Icons.Regular.Size24.Textbox(),
                 IconColor = Color.Success,
-            },
-            PrimaryAction = "Bezár",
-            SecondaryActionEnabled = false,
-            Width = "300px",
-        });
+                PrimaryButton = "Bezár", 
+            });
     }
 }

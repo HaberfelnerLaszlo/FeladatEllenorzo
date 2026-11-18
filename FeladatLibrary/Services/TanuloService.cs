@@ -44,13 +44,8 @@ namespace FeladatLibrary.Services
             catch (Exception ex)
             {
                 if (returnResponse is null) throw new NullReferenceException();
-                if (ex.Message.Contains("409"))
-                {
-                    returnResponse.IsSuccess = false;
-                    returnResponse.ErrorMessage = "Már létezik ilyen tanuló a rendszerben!";
-                }
                 returnResponse.IsSuccess = false;
-                returnResponse.ErrorMessage = ex.Message;
+                returnResponse.ErrorMessage = ex.Message.Contains("409") ? "Már létezik ilyen tanuló a rendszerben!" : ex.Message;
             }
             return returnResponse;
         }
@@ -154,7 +149,7 @@ namespace FeladatLibrary.Services
             {
                 using (var client = new HttpClient())
                 {
-                    string url = $"{_baseUrl}/tanuloids/{osztaly}";
+                    string url = $"{_baseUrl}/tanulokids/{osztaly}";
                     var apiResponse = await client.GetAsync(url);
 
                     if (apiResponse.StatusCode == System.Net.HttpStatusCode.OK)
